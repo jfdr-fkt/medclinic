@@ -1,202 +1,218 @@
 @extends('layouts.app')
+@section('title', 'Dashboard')
+@section('page-title', 'Dashboard')
 
 @section('content')
 <div class="space-y-6">
-    <!-- Page Header -->
-    <div class="flex items-center justify-between">
-        <div>
-            <h2 class="text-2xl font-bold text-gray-800">Dashboard</h2>
-            <p class="text-sm text-gray-500">Welcome back, here's what's happening today.</p>
-        </div>
-        <div class="text-right hidden sm:block">
-            <p class="text-sm font-medium text-gray-900">{{ date('l, F j, Y') }}</p>
-        </div>
-    </div>
 
-    <!-- Stats Grid -->
-    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        <!-- Patients Card -->
-        <div class="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-gray-200">
-            <div class="p-5">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0 rounded-md bg-blue-500 p-3">
-                        <i class="fa-solid fa-user-group text-white text-xl"></i>
-                    </div>
-                    <div class="ml-5 w-0 flex-1">
-                        <dl>
-                            <dt class="truncate text-sm font-medium text-gray-500">Patients Today</dt>
-                            <dd class="text-2xl font-bold text-gray-900">12</dd>
-                        </dl>
-                    </div>
+    <!-- ── Welcome strip ── -->
+    <div class="card overflow-hidden">
+        <div class="relative bg-gradient-to-r from-brand-600 via-brand-700 to-brand-800 px-6 py-7 text-white">
+            <div class="absolute -top-10 -right-10 w-40 h-40 bg-white/5 rounded-full"></div>
+            <div class="absolute top-1/2 right-32 w-24 h-24 bg-white/5 rounded-full"></div>
+            <div class="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div>
+                    <h1 class="text-2xl font-bold">
+                        Good {{ now()->hour < 12 ? 'morning' : (now()->hour < 18 ? 'afternoon' : 'evening') }},
+                        {{ Str::before(Auth::user()->name, ' ') }}
+                    </h1>
+                    <p class="text-white/80 text-sm mt-1">{{ date('l, F j, Y') }} &bull; Here's what's happening at the clinic today</p>
                 </div>
-            </div>
-            <div class="bg-gray-50 px-5 py-3">
-                <div class="text-sm">
-                    <span class="text-green-600 font-medium"><i class="fa-solid fa-arrow-up"></i> 4.5%</span>
-                    <span class="text-gray-500 ml-1">from yesterday</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Low Stock Card -->
-        <div class="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-gray-200">
-            <div class="p-5">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0 rounded-md bg-red-500 p-3">
-                        <i class="fa-solid fa-triangle-exclamation text-white text-xl"></i>
-                    </div>
-                    <div class="ml-5 w-0 flex-1">
-                        <dl>
-                            <dt class="truncate text-sm font-medium text-gray-500">Low Stock Items</dt>
-                            <dd class="text-2xl font-bold text-red-600">3</dd>
-                        </dl>
-                    </div>
-                </div>
-            </div>
-            <div class="bg-gray-50 px-5 py-3">
-                <div class="text-sm">
-                    <span class="text-red-600 font-medium">Action Required</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Expiring Soon Card -->
-        <div class="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-gray-200">
-            <div class="p-5">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0 rounded-md bg-orange-500 p-3">
-                        <i class="fa-solid fa-calendar-xmark text-white text-xl"></i>
-                    </div>
-                    <div class="ml-5 w-0 flex-1">
-                        <dl>
-                            <dt class="truncate text-sm font-medium text-gray-500">Expiring Soon</dt>
-                            <dd class="text-2xl font-bold text-gray-900">5</dd>
-                        </dl>
-                    </div>
-                </div>
-            </div>
-            <div class="bg-gray-50 px-5 py-3">
-                <div class="text-sm">
-                    <span class="text-gray-500">Within 30 days</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Staff Online Card -->
-        <div class="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-gray-200">
-            <div class="p-5">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0 rounded-md bg-green-500 p-3">
-                        <i class="fa-solid fa-user-nurse text-white text-xl"></i>
-                    </div>
-                    <div class="ml-5 w-0 flex-1">
-                        <dl>
-                            <dt class="truncate text-sm font-medium text-gray-500">Staff Online</dt>
-                            <dd class="text-2xl font-bold text-gray-900">4</dd>
-                        </dl>
-                    </div>
-                </div>
-            </div>
-            <div class="bg-gray-50 px-5 py-3">
-                <div class="text-sm">
-                    <span class="text-green-600 font-medium">Active Now</span>
-                </div>
+                <a href="{{ route('patients.index') }}" class="inline-flex items-center gap-2 bg-white/15 hover:bg-white/25 backdrop-blur-sm border border-white/20 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors w-fit">
+                    <i class="fa-solid fa-user-plus"></i> Add New Patient
+                </a>
             </div>
         </div>
     </div>
 
-    <!-- Lower Section Grid -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        <!-- Low Stock Table -->
-        <div class="lg:col-span-2 overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-gray-200">
-            <div class="border-b border-gray-200 px-6 py-4 flex justify-between items-center bg-red-50/50">
-                <h3 class="text-base font-semibold leading-6 text-red-700">
-                    <i class="fa-solid fa-triangle-exclamation mr-1"></i> Low Stock Medicines
+    <!-- ── Stat cards (4) ── -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <a href="{{ route('patients.index') }}" class="card p-5 hover:shadow-md transition-shadow group">
+            <div class="flex items-center justify-between mb-3">
+                <div class="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
+                    <i class="fa-solid fa-user-group text-blue-500"></i>
+                </div>
+                <i class="fa-solid fa-arrow-right text-gray-300 group-hover:text-blue-500 transition-colors"></i>
+            </div>
+            <p class="text-3xl font-extrabold text-gray-900">{{ $todayPatients }}</p>
+            <p class="text-sm font-medium text-gray-500 mt-1">Patients today</p>
+        </a>
+
+        <a href="{{ route('medicines.index', ['low_stock'=>1]) }}" class="card p-5 hover:shadow-md transition-shadow group">
+            <div class="flex items-center justify-between mb-3">
+                <div class="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center">
+                    <i class="fa-solid fa-triangle-exclamation text-amber-500"></i>
+                </div>
+                <i class="fa-solid fa-arrow-right text-gray-300 group-hover:text-amber-500 transition-colors"></i>
+            </div>
+            <p class="text-3xl font-extrabold {{ $lowStockMedicines->count() > 0 ? 'text-amber-600' : 'text-gray-900' }}">{{ $lowStockMedicines->count() }}</p>
+            <p class="text-sm font-medium text-gray-500 mt-1">Low stock items</p>
+        </a>
+
+        <a href="{{ route('medicines.index', ['expiring'=>1]) }}" class="card p-5 hover:shadow-md transition-shadow group">
+            <div class="flex items-center justify-between mb-3">
+                <div class="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center">
+                    <i class="fa-solid fa-calendar-xmark text-red-500"></i>
+                </div>
+                <i class="fa-solid fa-arrow-right text-gray-300 group-hover:text-red-500 transition-colors"></i>
+            </div>
+            <p class="text-3xl font-extrabold {{ $expiringSoon->count() > 0 ? 'text-red-600' : 'text-gray-900' }}">{{ $expiringSoon->count() }}</p>
+            <p class="text-sm font-medium text-gray-500 mt-1">Expiring ≤30 days</p>
+        </a>
+
+        <a href="{{ route('staff.index') }}" class="card p-5 hover:shadow-md transition-shadow group">
+            <div class="flex items-center justify-between mb-3">
+                <div class="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center">
+                    <i class="fa-solid fa-user-doctor text-emerald-500"></i>
+                </div>
+                <i class="fa-solid fa-arrow-right text-gray-300 group-hover:text-emerald-500 transition-colors"></i>
+            </div>
+            <p class="text-3xl font-extrabold text-gray-900">{{ $onlineStaff->count() }}</p>
+            <p class="text-sm font-medium text-gray-500 mt-1">Staff online</p>
+        </a>
+    </div>
+
+    <!-- ── Quick Actions ── -->
+    <div class="card p-5">
+        <h3 class="font-bold text-gray-900 text-sm mb-4 flex items-center gap-2">
+            <i class="fa-solid fa-bolt text-brand-500"></i> Quick Actions
+        </h3>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <a href="{{ route('patients.index') }}" class="flex items-center gap-3 p-3 rounded-xl border border-gray-100 hover:border-brand-300 hover:bg-brand-50/40 transition-all">
+                <div class="w-10 h-10 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center flex-shrink-0">
+                    <i class="fa-solid fa-user-injured"></i>
+                </div>
+                <div class="min-w-0">
+                    <p class="text-sm font-semibold text-gray-800 truncate">Patients</p>
+                    <p class="text-xs text-gray-400">Manage records</p>
+                </div>
+            </a>
+            <a href="{{ route('scan.index') }}" class="flex items-center gap-3 p-3 rounded-xl border border-gray-100 hover:border-brand-300 hover:bg-brand-50/40 transition-all">
+                <div class="w-10 h-10 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center flex-shrink-0">
+                    <i class="fa-solid fa-barcode"></i>
+                </div>
+                <div class="min-w-0">
+                    <p class="text-sm font-semibold text-gray-800 truncate">Smart Scan</p>
+                    <p class="text-xs text-gray-400">Scan barcode</p>
+                </div>
+            </a>
+            <a href="{{ route('medicines.index') }}" class="flex items-center gap-3 p-3 rounded-xl border border-gray-100 hover:border-brand-300 hover:bg-brand-50/40 transition-all">
+                <div class="w-10 h-10 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center flex-shrink-0">
+                    <i class="fa-solid fa-pills"></i>
+                </div>
+                <div class="min-w-0">
+                    <p class="text-sm font-semibold text-gray-800 truncate">Inventory</p>
+                    <p class="text-xs text-gray-400">View stock</p>
+                </div>
+            </a>
+            <a href="{{ route('chat.index') }}" class="flex items-center gap-3 p-3 rounded-xl border border-gray-100 hover:border-brand-300 hover:bg-brand-50/40 transition-all">
+                <div class="w-10 h-10 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center flex-shrink-0">
+                    <i class="fa-solid fa-comments"></i>
+                </div>
+                <div class="min-w-0">
+                    <p class="text-sm font-semibold text-gray-800 truncate">Messages</p>
+                    <p class="text-xs text-gray-400">Staff chat</p>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <!-- ── Two-column section ── -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+
+        <!-- Pinned Patients -->
+        <div class="card p-5 lg:col-span-2">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="font-bold text-gray-900 text-sm flex items-center gap-2">
+                    <i class="fa-solid fa-thumbtack text-amber-500"></i> Pinned Patients
                 </h3>
-                <span class="inline-flex items-center rounded-full bg-red-100 px-2 py-1 text-xs font-medium text-red-800">3 Items</span>
+                <a href="{{ route('patients.index') }}" class="text-xs text-brand-600 hover:underline font-medium">View all →</a>
             </div>
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-300">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Medicine</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Batch</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Remaining</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-200 bg-white">
-                        <tr>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Amoxicillin 500mg</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">B-2024-001</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">12 Units</td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="inline-flex items-center rounded-full bg-red-100 px-2 py-1 text-xs font-medium text-red-800">Critical</span>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Paracetamol Syrup</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">B-2024-042</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">5 Bottles</td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="inline-flex items-center rounded-full bg-orange-100 px-2 py-1 text-xs font-medium text-orange-800">Low</span>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Ibuprofen 400mg</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">B-2024-112</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">20 Units</td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="inline-flex items-center rounded-full bg-yellow-100 px-2 py-1 text-xs font-medium text-yellow-800">Restock</span>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+            @if($myPinnedPatients->count() > 0)
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                @foreach($myPinnedPatients as $p)
+                <a href="{{ route('patients.show', $p) }}" class="flex items-center gap-3 p-3 rounded-xl border border-gray-100 hover:border-brand-300 hover:bg-brand-50/30 transition-all">
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-brand-400 to-brand-700 flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+                        {{ strtoupper(substr($p->name, 0, 2)) }}
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <p class="text-sm font-semibold text-gray-800 truncate">{{ $p->name }}</p>
+                        <p class="text-xs text-gray-400 truncate">{{ $p->doctor?->name ?? 'No doctor' }}</p>
+                    </div>
+                </a>
+                @endforeach
             </div>
+            @else
+            <div class="text-center py-8">
+                <div class="w-12 h-12 bg-amber-50 rounded-2xl flex items-center justify-center mx-auto mb-2">
+                    <i class="fa-solid fa-thumbtack text-amber-300"></i>
+                </div>
+                <p class="text-sm text-gray-500">No pinned patients yet</p>
+                <p class="text-xs text-gray-400 mt-0.5">Pin patients from the Patients page for quick access</p>
+            </div>
+            @endif
         </div>
 
-        <!-- Online Staff List -->
-        <div class="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-gray-200">
-            <div class="border-b border-gray-200 px-6 py-4 flex justify-between items-center bg-green-50/50">
-                <h3 class="text-base font-semibold leading-6 text-green-700">
-                    <i class="fa-solid fa-circle-check mr-1"></i> Online Staff
+        <!-- Online Staff -->
+        <div class="card p-5">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="font-bold text-gray-900 text-sm flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Online Staff
                 </h3>
-                <div class="h-2 w-2 rounded-full bg-green-500 animate-pulse"></div>
+                <a href="{{ route('staff.index') }}" class="text-xs text-brand-600 hover:underline font-medium">All →</a>
             </div>
-            <ul role="list" class="divide-y divide-gray-200">
-                <li class="flex items-center justify-between px-6 py-4 hover:bg-gray-50">
-                    <div class="flex items-center gap-3">
-                        <img class="h-10 w-10 rounded-full" src="https://ui-avatars.com/api/?name=Sarah+J&background=random" alt="">
-                        <div>
-                            <p class="text-sm font-medium text-gray-900">Sarah Johnson</p>
-                            <p class="text-xs text-gray-500">Front Desk</p>
+            @if($onlineStaff->count() > 0)
+            <div class="space-y-2.5">
+                @foreach($onlineStaff->take(5) as $s)
+                <a href="{{ route('chat.index', ['with' => $s->id]) }}" class="flex items-center gap-3 p-2 rounded-xl hover:bg-gray-50 transition-colors">
+                    <div class="relative">
+                        <div class="w-9 h-9 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center text-white text-xs font-bold">
+                            {{ strtoupper(substr($s->name, 0, 2)) }}
                         </div>
+                        <span class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-400 rounded-full ring-2 ring-white"></span>
                     </div>
-                    <span class="inline-flex items-center rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-800">Active</span>
-                </li>
-                <li class="flex items-center justify-between px-6 py-4 hover:bg-gray-50">
-                    <div class="flex items-center gap-3">
-                        <img class="h-10 w-10 rounded-full" src="https://ui-avatars.com/api/?name=Mike+R&background=random" alt="">
-                        <div>
-                            <p class="text-sm font-medium text-gray-900">Mike Ross</p>
-                            <p class="text-xs text-gray-500">Pharmacist</p>
-                        </div>
+                    <div class="min-w-0 flex-1">
+                        <p class="text-sm font-semibold text-gray-800 truncate">{{ $s->name }}</p>
+                        <p class="text-xs text-gray-400 capitalize">{{ $s->role }}</p>
                     </div>
-                    <span class="inline-flex items-center rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-800">Active</span>
-                </li>
-                <li class="flex items-center justify-between px-6 py-4 hover:bg-gray-50">
-                    <div class="flex items-center gap-3">
-                        <img class="h-10 w-10 rounded-full" src="https://ui-avatars.com/api/?name=Emily+C&background=random" alt="">
-                        <div>
-                            <p class="text-sm font-medium text-gray-900">Emily Chen</p>
-                            <p class="text-xs text-gray-500">Nurse</p>
-                        </div>
-                    </div>
-                    <span class="inline-flex items-center rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-800">Active</span>
-                </li>
-            </ul>
+                    <i class="fa-solid fa-message text-gray-300 text-xs"></i>
+                </a>
+                @endforeach
+            </div>
+            @else
+            <div class="text-center py-6">
+                <p class="text-sm text-gray-400">No staff online right now</p>
+            </div>
+            @endif
         </div>
     </div>
+
+    <!-- ── Low Stock alerts ── -->
+    @if($lowStockMedicines->count() > 0)
+    <div class="card p-5">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="font-bold text-gray-900 text-sm flex items-center gap-2">
+                <i class="fa-solid fa-triangle-exclamation text-amber-500"></i> Low Stock Alerts
+            </h3>
+            <a href="{{ route('medicines.index', ['low_stock'=>1]) }}" class="text-xs text-brand-600 hover:underline font-medium">View all →</a>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            @foreach($lowStockMedicines as $m)
+            @php $qty = $m->latestInventory?->quantity ?? 0; @endphp
+            <a href="{{ route('medicines.show', $m) }}" class="flex items-center gap-3 p-3 rounded-xl border border-amber-100 bg-amber-50/40 hover:bg-amber-50 transition-colors">
+                <div class="w-9 h-9 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center font-bold text-xs flex-shrink-0">
+                    {{ strtoupper(substr($m->name, 0, 1)) }}
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm font-semibold text-gray-800 truncate">{{ $m->name }}</p>
+                    <p class="text-xs text-gray-500 truncate">{{ $m->location?->full_location ?? 'No location' }}</p>
+                </div>
+                <span class="text-sm font-bold {{ $qty <= 5 ? 'text-red-600' : 'text-amber-700' }} flex-shrink-0">{{ $qty }}u</span>
+            </a>
+            @endforeach
+        </div>
+    </div>
+    @endif
+
 </div>
 @endsection

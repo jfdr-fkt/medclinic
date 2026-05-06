@@ -1,9 +1,8 @@
 <?php
-
 namespace App\Http\Controllers;
 
-use App\Models\User;
 use App\Models\Shift;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
@@ -11,32 +10,64 @@ class StaffController extends Controller
 {
     public function index()
     {
-        $staff = User::where('role', '!=', 'patient')->get();
+        $staff = User::orderBy('name')->get();
         $shifts = Shift::with('user')->get();
         return view('staff.index', compact('staff', 'shifts'));
+    }
+
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'name'           => 'required|string|max:255',
+            'email'          => 'required|email|unique:users',
+            'password'       => 'required|string|min:6',
+            'role'           => 'required|in:admin,doctor,nurse,assistant',
+            'phone'          => 'nullable|string',
+            'specialization' => 'nullable|string',
+        ]);
+        $validated['password'] = Hash::make($validated['password']);
+        User::create($validated);
+        return back()->with('success', 'Staff member added successfully!');
+    }
+
+    public function show(User $user)
+    {
+        $shifts = $user->shifts()->orderBy('shift_date', 'desc')->take(10)->get();
+        return view('staff.show', compact('user', 'shifts'));
     }
 
     public function storeShift(Request $request)
     {
         $request->validate([
-            'user_id' => 'required|exists:users,id',
-            'shift_type' => 'required|in:morning,afternoon,night',
+            'user_id'    => 'required|exists:users,id',
+            'shift_type' => 'required|in:morning,afternoon,night,on_call',
             'shift_date' => 'required|date',
             'start_time' => 'required',
-            'end_time' => 'required|after:start_time',
+            'end_time'   => 'required',
         ]);
 
-        Shift::create($request->all());
+        Shift::updateOrCreate(
+            ['user_id' => $request->user_id, 'shift_date' => $request->shift_date],
+            $request->only('shift_type', 'start_time', 'end_time')
+        );
 
-        return redirect()->back()->with('success', 'Shift assigned successfully!');
+        return back()->with('success', 'Shift assigned!');
     }
 
     public function toggleStatus(User $user)
     {
-        $user->update([
-            'is_online' => !$user->is_online
-        ]);
+        // Mark as online by updating last_seen_at, or clear it to mark offline
+        if ($user->isOnline()) {
+            $user->update(['last_seen_at' => null]);
+            $status = 'offline';
+        } else {
+            $user->update(['last_seen_at' => now()]);
+            $status = 'online';
+        }
 
-        return redirect()->back()->with('success', 'Status updated!');
+        if (request()->wantsJson()) {
+            return response()->json(['status' => $status, 'is_online' => $user->isOnline()]);
+        }
+        return back()->with('success', "Status updated to {$status}");
     }
 }

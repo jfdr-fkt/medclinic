@@ -1,215 +1,284 @@
 @extends('layouts.app')
+@section('title', 'Patients')
+@section('page-title', 'Patients')
 
 @section('content')
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+<div class="space-y-5">
+
     <!-- Header -->
-    <div class="flex justify-between items-center mb-8">
+    <div class="flex items-center justify-between">
         <div>
-            <h1 class="text-3xl font-bold text-gray-900">Patients</h1>
-            <p class="mt-1 text-sm text-gray-500">Manage patient records and medical folders</p>
+            <h1 class="text-2xl font-bold text-gray-900">Patients</h1>
+            <p class="text-sm text-gray-500 mt-0.5">{{ $patients->total() }} records total</p>
         </div>
-        <button onclick="openModal()" class="inline-flex items-center px-4 py-2 bg-brand-600 border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-widest hover:bg-brand-700 focus:bg-brand-700 active:bg-brand-900 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 transition ease-in-out duration-150 shadow-lg">
-            <i class="fa-solid fa-plus mr-2"></i> Add Patient
+        <button onclick="openModal()" class="btn-primary">
+            <i class="fa-solid fa-plus"></i> Add Patient
         </button>
     </div>
 
-    <!-- Search & Filter Bar -->
-    <div class="bg-white rounded-xl shadow-sm p-4 mb-6">
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div class="md:col-span-2">
-                <div class="relative">
-                    <input type="text" id="searchInput" 
-                           class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-brand-500 focus:border-brand-500 sm:text-sm" 
-                           placeholder="Search by name, ID, or phone...">
-                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <i class="fa-solid fa-search text-gray-400"></i>
-                    </div>
-                </div>
+    <!-- Search & Filters -->
+    <form method="GET" action="{{ route('patients.index') }}" class="card p-4">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+            <div class="md:col-span-2 relative">
+                <i class="fa-solid fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm pointer-events-none"></i>
+                <input type="text" name="search" value="{{ request('search') }}" placeholder="Search by name, ID, nurse or doctor..." class="input pl-10">
             </div>
-            <div>
-                <select id="filterStatus" class="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-brand-500 focus:border-brand-500 sm:text-sm rounded-lg">
-                    <option value="">All Status</option>
-                    <option value="active">Active</option>
-                    <option value="discharged">Discharged</option>
-                </select>
+            <select name="nurse_id" class="input">
+                <option value="">All Nurses</option>
+                @foreach($nurses as $n)
+                <option value="{{ $n->id }}" {{ request('nurse_id')==$n->id ? 'selected' : '' }}>{{ $n->name }}</option>
+                @endforeach
+            </select>
+            <select name="doctor_id" class="input">
+                <option value="">All Doctors</option>
+                @foreach($doctors as $d)
+                <option value="{{ $d->id }}" {{ request('doctor_id')==$d->id ? 'selected' : '' }}>{{ $d->name }}</option>
+                @endforeach
+            </select>
+        </div>
+        <div class="flex items-center justify-between mt-3">
+            <div class="flex items-center gap-1 text-sm text-gray-500">
+                <span>Sort:</span>
+                @foreach(['name'=>'Name','last_visit'=>'Last Visit','patient_id'=>'Patient ID'] as $f=>$label)
+                <a href="{{ request()->fullUrlWithQuery(['sort'=>$f,'direction'=>($sortField===$f&&$sortDir==='asc')?'desc':'asc']) }}"
+                   class="px-2.5 py-1 rounded-lg font-medium transition-colors {{ $sortField===$f ? 'bg-brand-600 text-white' : 'text-gray-500 hover:bg-gray-100' }}">
+                    {{ $label }}@if($sortField===$f) <i class="fa-solid fa-arrow-{{ $sortDir==='asc'?'up':'down' }} text-xs"></i>@endif
+                </a>
+                @endforeach
             </div>
-            <div>
-                <select id="sortBy" class="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-brand-500 focus:border-brand-500 sm:text-sm rounded-lg">
-                    <option value="latest">Latest First</option>
-                    <option value="oldest">Oldest First</option>
-                    <option value="name">Name (A-Z)</option>
-                </select>
+            <div class="flex gap-2">
+                <button type="submit" class="btn-primary py-1.5 text-xs">Apply</button>
+                <a href="{{ route('patients.index') }}" class="btn-secondary py-1.5 text-xs">Clear</a>
             </div>
         </div>
-    </div>
+    </form>
 
-    <!-- Patients Table -->
-    <div class="bg-white shadow-sm rounded-xl overflow-hidden">
+    <!-- Table -->
+    <div class="card overflow-hidden">
         <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            <input type="checkbox" class="rounded border-gray-300 text-brand-600 shadow-sm focus:border-brand-300 focus:ring focus:ring-brand-200 focus:ring-opacity-50">
-                        </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Patient</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Age/DOB</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Assigned To</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+            <table class="min-w-full">
+                <thead>
+                    <tr class="border-b border-gray-100 bg-gray-50/70">
+                        <th class="th">Patient</th>
+                        <th class="th">ID</th>
+                        <th class="th">Age</th>
+                        <th class="th">Assigned To</th>
+                        <th class="th">Last Visit</th>
+                        <th class="th text-right">Actions</th>
                     </tr>
                 </thead>
-                <tbody class="bg-white divide-y divide-gray-200" id="patientsTable">
-                    <tr class="hover:bg-gray-50">
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <input type="checkbox" class="rounded border-gray-300 text-brand-600 shadow-sm focus:border-brand-300 focus:ring focus:ring-brand-200 focus:ring-opacity-50">
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="flex items-center">
-                                <div class="flex-shrink-0 h-10 w-10">
-                                    <div class="h-10 w-10 rounded-full bg-gradient-to-r from-brand-400 to-brand-600 flex items-center justify-center text-white font-bold">
-                                        JD
-                                    </div>
+                <tbody class="divide-y divide-gray-50">
+                    @forelse($patients as $patient)
+                    @php $isPinned = in_array($patient->id, $pinnedIds); @endphp
+                    <tr onclick="window.location='{{ route('patients.show', $patient) }}'"
+                        class="hover:bg-brand-50/30 transition-colors group cursor-pointer">
+                        <td class="td">
+                            <div class="flex items-center gap-3">
+                                <div class="w-9 h-9 rounded-full bg-gradient-to-br from-brand-400 to-brand-700 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                                    {{ strtoupper(substr($patient->name,0,2)) }}
                                 </div>
-                                <div class="ml-4">
-                                    <div class="text-sm font-medium text-gray-900">John Doe</div>
-                                    <div class="text-sm text-gray-500">john.doe@email.com</div>
+                                <div>
+                                    <p class="font-semibold text-gray-900 group-hover:text-brand-700 transition-colors flex items-center gap-1.5">
+                                        {{ $patient->name }}
+                                        @if($isPinned)
+                                        <i class="fa-solid fa-thumbtack text-amber-400 text-xs"></i>
+                                        @endif
+                                    </p>
+                                    <p class="text-xs text-gray-400">{{ $patient->phone ?? 'No phone' }}</p>
                                 </div>
                             </div>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
-                                PT-2024-001
-                            </span>
+                        <td class="td">
+                            <span class="font-mono text-xs bg-slate-100 text-slate-700 px-2 py-1 rounded-lg">{{ $patient->patient_id }}</span>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            34 years<br>
-                            <span class="text-xs text-gray-400">May 15, 1989</span>
+                        <td class="td text-gray-600">
+                            @if($patient->date_of_birth)
+                                <p class="font-medium">{{ $patient->date_of_birth->age }} yrs</p>
+                                <p class="text-xs text-gray-400">{{ $patient->date_of_birth->format('M j, Y') }}</p>
+                            @else
+                                <span class="text-gray-300">—</span>
+                            @endif
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="text-sm text-gray-900">Dr. Sarah Smith</div>
-                            <div class="text-xs text-gray-500">Nurse: Mike Johnson</div>
+                        <td class="td">
+                            <p class="text-sm font-medium text-gray-800">{{ $patient->doctor?->name ?? 'Unassigned' }}</p>
+                            <p class="text-xs text-gray-400">Nurse: {{ $patient->nurse?->name ?? '—' }}</p>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                                Active
-                            </span>
+                        <td class="td">
+                            @if($patient->last_visit)
+                                <p class="text-sm text-gray-700">{{ $patient->last_visit->format('M j, Y') }}</p>
+                                <p class="text-xs text-gray-400">{{ $patient->last_visit->diffForHumans() }}</p>
+                            @else
+                                <span class="text-gray-300">—</span>
+                            @endif
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <button class="text-brand-600 hover:text-brand-900 mr-3"><i class="fa-solid fa-eye"></i></button>
-                            <button class="text-yellow-600 hover:text-yellow-900 mr-3"><i class="fa-solid fa-thumbtack"></i></button>
-                            <button class="text-gray-600 hover:text-gray-900"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+                        <td class="td text-right" onclick="event.stopPropagation()">
+                            <div class="flex items-center justify-end gap-1">
+                                <button onclick="togglePin({{ $patient->id }}, this); event.stopPropagation();"
+                                        class="w-8 h-8 rounded-lg flex items-center justify-center transition-colors
+                                            {{ $isPinned ? 'bg-amber-50 text-amber-500' : 'hover:bg-gray-100 text-gray-400 hover:text-amber-500' }}"
+                                        title="{{ $isPinned ? 'Unpin' : 'Pin' }}">
+                                    <i class="fa-solid fa-thumbtack text-sm"></i>
+                                </button>
+                                <form method="POST" action="{{ route('patients.destroy', $patient) }}" class="inline"
+                                      onsubmit="event.stopPropagation(); return confirm('Delete {{ $patient->name }}\'s record?')">
+                                    @csrf @method('DELETE')
+                                    <button type="submit" onclick="event.stopPropagation()"
+                                            class="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors">
+                                        <i class="fa-solid fa-trash text-sm"></i>
+                                    </button>
+                                </form>
+                            </div>
                         </td>
                     </tr>
+                    @empty
+                    <tr>
+                        <td colspan="6" class="py-16 text-center">
+                            <div class="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                                <i class="fa-solid fa-users text-gray-400 text-2xl"></i>
+                            </div>
+                            <p class="text-gray-500 font-medium">No patients found</p>
+                            <button onclick="openModal()" class="text-brand-600 hover:underline text-sm mt-1">Add the first one</button>
+                        </td>
+                    </tr>
+                    @endforelse
                 </tbody>
             </table>
         </div>
+        @if($patients->hasPages())
+        <div class="px-6 py-3 border-t border-gray-100 bg-gray-50/50">
+            {{ $patients->links() }}
+        </div>
+        @endif
     </div>
 </div>
 
-<!-- Add Patient Modal -->
-<div id="addPatientModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 backdrop-blur-sm">
-    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-2xl bg-white md:w-2/3 lg:w-1/2">
-        <!-- Modal Header -->
-        <div class="flex justify-between items-center pb-3 border-b border-gray-200">
-            <h3 class="text-xl font-bold text-gray-900">Add New Patient</h3>
-            <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
-                <i class="fa-solid fa-xmark text-xl"></i>
-            </button>
+<!-- ── Add Patient Modal (redesigned with colored sections + spaced buttons) ── -->
+<div id="addPatientModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <!-- Header with gradient -->
+        <div class="relative bg-gradient-to-r from-brand-600 to-brand-700 px-6 py-5 text-white">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                        <i class="fa-solid fa-user-plus text-white"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold">Add New Patient</h3>
+                        <p class="text-xs text-white/80">Fill in the patient's information</p>
+                    </div>
+                </div>
+                <button onclick="closeModal()" class="w-8 h-8 rounded-xl flex items-center justify-center text-white/80 hover:text-white hover:bg-white/20">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
         </div>
 
-        <!-- Modal Body -->
-        <form class="mt-4 space-y-4">
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Name <span class="text-red-500">*</span></label>
-                    <input type="text" required
-                           class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-brand-500 focus:border-brand-500 sm:text-sm">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Patient ID <span class="text-red-500">*</span></label>
-                    <input type="text" required
-                           class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-brand-500 focus:border-brand-500 sm:text-sm"
-                           placeholder="Auto-generated or manual">
-                </div>
-            </div>
+        <form method="POST" action="{{ route('patients.store') }}" class="px-6 py-5 space-y-5">
+            @csrf
 
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
-                <input type="date"
-                       class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-brand-500 focus:border-brand-500 sm:text-sm">
-            </div>
-
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Nurse</label>
-                    <select class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-brand-500 focus:border-brand-500 sm:text-sm">
-                        <option value="">Select Nurse</option>
-                        <option value="1">Nurse Johnson</option>
-                        <option value="2">Nurse Brown</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Doctor</label>
-                    <select class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-brand-500 focus:border-brand-500 sm:text-sm">
-                        <option value="">Select Doctor</option>
-                        <option value="1">Dr. Sarah Smith</option>
-                        <option value="2">Dr. James Wilson</option>
-                    </select>
+            <!-- SECTION: Identity -->
+            <div class="border-l-4 border-blue-400 bg-blue-50/30 rounded-r-xl p-4 space-y-3">
+                <p class="text-xs font-bold text-blue-700 uppercase tracking-wider flex items-center gap-2">
+                    <i class="fa-solid fa-id-card"></i> Identity
+                </p>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="label">Full Name <span class="text-red-500">*</span></label>
+                        <input type="text" name="name" required value="{{ old('name') }}" class="input" placeholder="Juan Dela Cruz">
+                    </div>
+                    <div>
+                        <label class="label">Patient ID <span class="text-red-500">*</span></label>
+                        <input type="text" name="patient_id" required value="{{ old('patient_id') }}" placeholder="P-2024-009" class="input">
+                    </div>
                 </div>
             </div>
 
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Contact Number</label>
-                <input type="tel"
-                       class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-brand-500 focus:border-brand-500 sm:text-sm">
+            <!-- SECTION: Personal -->
+            <div class="border-l-4 border-purple-400 bg-purple-50/30 rounded-r-xl p-4 space-y-3">
+                <p class="text-xs font-bold text-purple-700 uppercase tracking-wider flex items-center gap-2">
+                    <i class="fa-solid fa-user"></i> Personal Details
+                </p>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="label">Date of Birth</label>
+                        <input type="date" name="date_of_birth" value="{{ old('date_of_birth') }}" class="input">
+                    </div>
+                    <div>
+                        <label class="label">Phone</label>
+                        <input type="tel" name="phone" value="{{ old('phone') }}" placeholder="09XX-XXX-XXXX" class="input">
+                    </div>
+                </div>
+                <div>
+                    <label class="label">Address</label>
+                    <input type="text" name="address" value="{{ old('address') }}" class="input" placeholder="Street, Barangay, City">
+                </div>
             </div>
 
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Address</label>
-                <textarea rows="2"
-                          class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-brand-500 focus:border-brand-500 sm:text-sm"></textarea>
+            <!-- SECTION: Assignment -->
+            <div class="border-l-4 border-emerald-400 bg-emerald-50/30 rounded-r-xl p-4 space-y-3">
+                <p class="text-xs font-bold text-emerald-700 uppercase tracking-wider flex items-center gap-2">
+                    <i class="fa-solid fa-stethoscope"></i> Care Team
+                </p>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="label">Assigned Nurse</label>
+                        <select name="assigned_nurse_id" class="input">
+                            <option value="">Select Nurse</option>
+                            @foreach($nurses as $n)
+                            <option value="{{ $n->id }}" {{ old('assigned_nurse_id')==$n->id ? 'selected':'' }}>{{ $n->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div>
+                        <label class="label">Assigned Doctor</label>
+                        <select name="assigned_doctor_id" class="input">
+                            <option value="">Select Doctor</option>
+                            @foreach($doctors as $d)
+                            <option value="{{ $d->id }}" {{ old('assigned_doctor_id')==$d->id ? 'selected':'' }}>{{ $d->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
             </div>
 
-            <!-- Modal Footer -->
-            <div class="flex justify-end gap-3 pt-4 border-t border-gray-200">
-                <button type="button" onclick="closeModal()"
-                        class="px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium text-sm">
-                    Cancel
+            <!-- SECTION: Medical -->
+            <div class="border-l-4 border-amber-400 bg-amber-50/30 rounded-r-xl p-4 space-y-3">
+                <p class="text-xs font-bold text-amber-700 uppercase tracking-wider flex items-center gap-2">
+                    <i class="fa-solid fa-notes-medical"></i> Medical Notes
+                </p>
+                <textarea name="medical_history" rows="3" class="input resize-none" placeholder="Allergies, conditions, medications, family history…">{{ old('medical_history') }}</textarea>
+            </div>
+
+            <!-- Spaced buttons -->
+            <div class="flex justify-between items-center gap-3 pt-3 border-t border-gray-100">
+                <button type="button" onclick="closeModal()" class="btn-secondary">
+                    <i class="fa-solid fa-xmark"></i> Cancel
                 </button>
-                <button type="submit"
-                        class="px-4 py-2 bg-brand-600 border border-transparent rounded-lg text-white hover:bg-brand-700 font-medium text-sm shadow-lg">
-                    <i class="fa-solid fa-save mr-2"></i>Save Patient
+                <button type="submit" class="btn-primary">
+                    <i class="fa-solid fa-floppy-disk"></i> Save Patient
                 </button>
             </div>
         </form>
     </div>
 </div>
 
+@push('scripts')
 <script>
-function openModal() {
-    document.getElementById('addPatientModal').classList.remove('hidden');
-    document.body.style.overflow = 'hidden';
+function openModal()  { document.getElementById('addPatientModal').classList.remove('hidden'); document.body.style.overflow='hidden'; }
+function closeModal() { document.getElementById('addPatientModal').classList.add('hidden'); document.body.style.overflow=''; }
+document.getElementById('addPatientModal').addEventListener('click', e => { if(e.target===e.currentTarget) closeModal(); });
+document.addEventListener('keydown', e => { if(e.key==='Escape') closeModal(); });
+
+function togglePin(id, btn) {
+    fetch(`/patients/${id}/pin`, {
+        method:'POST',
+        headers:{ 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept':'application/json' }
+    })
+    .then(r => r.json())
+    .then(() => location.reload());
 }
 
-function closeModal() {
-    document.getElementById('addPatientModal').classList.add('hidden');
-    document.body.style.overflow = 'auto';
-}
-
-// Close modal when clicking outside
-document.getElementById('addPatientModal').addEventListener('click', function(e) {
-    if (e.target === this) {
-        closeModal();
-    }
-});
-
-// Close modal on Escape key
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') {
-        closeModal();
-    }
-});
+@if($errors->any()) openModal(); @endif
 </script>
+@endpush
 @endsection

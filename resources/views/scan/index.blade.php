@@ -1,193 +1,185 @@
 @extends('layouts.app')
+@section('title', 'Smart Scan')
+@section('page-title', 'Smart Scan')
 
 @section('content')
-<div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-900">Smart Scan</h1>
-        <p class="mt-1 text-sm text-gray-500">Scan medicine barcodes, QR codes, or NFC tags for quick inventory management</p>
+<div class="space-y-5">
+
+    <!-- Header -->
+    <div>
+        <h1 class="text-2xl font-bold text-gray-900">Smart Scan</h1>
+        <p class="text-sm text-gray-500 mt-0.5">Scan a barcode or QR code to instantly look up or add medicines to inventory</p>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <!-- Scanner Section -->
-        <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
-            <div class="bg-gradient-to-r from-brand-600 to-brand-700 px-6 py-4">
-                <h2 class="text-xl font-bold text-white flex items-center">
-                    <i class="fa-solid fa-camera mr-2"></i> Scanner
-                </h2>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+
+        <!-- ── Scanner Panel ── -->
+        <div class="card overflow-hidden">
+            <div class="px-5 py-4 border-b border-gray-100 bg-gray-50/60 flex items-center gap-2">
+                <i class="fa-solid fa-camera text-brand-500"></i>
+                <h2 class="font-bold text-gray-800 text-sm">Scanner</h2>
             </div>
-            
-            <div class="p-6">
-                <!-- Tab Buttons -->
-                <div class="flex gap-2 mb-6">
-                    <button onclick="switchTab('barcode')" id="tab-barcode" 
-                            class="flex-1 px-4 py-2 bg-brand-100 text-brand-700 rounded-lg font-medium text-sm transition-colors">
-                        <i class="fa-solid fa-barcode mr-2"></i>Barcode/QR
+
+            <div class="p-5 space-y-4">
+                <!-- Mode tabs -->
+                <div class="flex rounded-xl bg-gray-100 p-1 gap-1">
+                    <button onclick="switchTab('barcode')" id="tab-barcode" type="button"
+                            class="flex-1 py-2 text-xs font-semibold rounded-lg transition-all bg-white text-brand-600 shadow-sm">
+                        <i class="fa-solid fa-barcode mr-1"></i> Camera
                     </button>
-                    <button onclick="switchTab('nfc')" id="tab-nfc"
-                            class="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium text-sm transition-colors">
-                        <i class="fa-solid fa-nfc-symbol mr-2"></i>NFC Tag
-                    </button>
-                    <button onclick="switchTab('manual')" id="tab-manual"
-                            class="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium text-sm transition-colors">
-                        <i class="fa-solid fa-keyboard mr-2"></i>Manual
+                    <button onclick="switchTab('manual')" id="tab-manual" type="button"
+                            class="flex-1 py-2 text-xs font-semibold rounded-lg transition-all text-gray-500 hover:text-gray-700">
+                        <i class="fa-solid fa-keyboard mr-1"></i> Manual Entry
                     </button>
                 </div>
 
-                <!-- Barcode/QR Scanner -->
-                <div id="scanner-barcode" class="scan-section">
-                    <div id="reader" class="rounded-xl overflow-hidden shadow-inner mb-4"></div>
-                    <button onclick="startScanner()" id="startBtn"
-                            class="w-full px-4 py-3 bg-brand-600 text-white rounded-lg font-medium hover:bg-brand-700 transition-colors shadow-lg">
-                        <i class="fa-solid fa-play mr-2"></i>Start Camera
-                    </button>
-                    <button onclick="stopScanner()" id="stopBtn"
-                            class="w-full px-4 py-3 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors shadow-lg hidden">
-                        <i class="fa-solid fa-stop mr-2"></i>Stop Camera
-                    </button>
-                </div>
-
-                <!-- NFC Scanner -->
-                <div id="scanner-nfc" class="scan-section hidden">
-                    <div class="text-center py-12 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300">
-                        <i class="fa-solid fa-nfc-symbol text-6xl text-gray-400 mb-4"></i>
-                        <p class="text-gray-600 font-medium mb-2">Tap NFC Tag to Scan</p>
-                        <p class="text-sm text-gray-500">Make sure NFC is enabled on your device</p>
-                        <button onclick="scanNFC()" 
-                                class="mt-4 px-6 py-2 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition-colors">
-                            <i class="fa-solid fa-wifi mr-2"></i>Scan NFC
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Manual Input -->
-                <div id="scanner-manual" class="scan-section hidden">
-                    <div class="space-y-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Medicine Code</label>
-                            <input type="text" id="manualCode" 
-                                   class="block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-brand-500 focus:border-brand-500 text-lg"
-                                   placeholder="Enter barcode or QR code">
+                <!-- Camera scanner -->
+                <div id="scanner-barcode" class="scan-section space-y-3">
+                    <div id="reader" class="rounded-xl overflow-hidden bg-gray-900 min-h-[260px] flex items-center justify-center">
+                        <div class="text-center" id="cameraPlaceholder">
+                            <i class="fa-solid fa-camera text-gray-600 text-4xl mb-2"></i>
+                            <p class="text-gray-500 text-xs">Camera preview will appear here</p>
+                            <p class="text-gray-600 text-[10px] mt-1">Click "Start Camera" to begin scanning</p>
                         </div>
-                        <button onclick="processManualCode()"
-                                class="w-full px-4 py-3 bg-brand-600 text-white rounded-lg font-medium hover:bg-brand-700 transition-colors shadow-lg">
-                            <i class="fa-solid fa-search mr-2"></i>Lookup Code
-                        </button>
                     </div>
+                    <button onclick="startScanner()" id="startBtn" class="btn-primary w-full justify-center">
+                        <i class="fa-solid fa-play"></i> Start Camera
+                    </button>
+                    <button onclick="stopScanner()" id="stopBtn" class="hidden w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-red-600 text-white text-sm font-semibold rounded-xl hover:bg-red-700 transition-colors shadow-sm">
+                        <i class="fa-solid fa-stop"></i> Stop Camera
+                    </button>
+                </div>
+
+                <!-- Manual input -->
+                <div id="scanner-manual" class="scan-section hidden space-y-3">
+                    <div>
+                        <label class="label">Enter Code Manually</label>
+                        <input type="text" id="manualCode" class="input text-base tracking-wider" placeholder="Barcode or QR code value">
+                    </div>
+                    <button onclick="processManualCode()" class="btn-primary w-full justify-center">
+                        <i class="fa-solid fa-magnifying-glass"></i> Lookup Code
+                    </button>
+                </div>
+
+                <!-- Scan result indicator -->
+                <div id="scanResult" class="hidden p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-sm text-emerald-800 flex items-center gap-2">
+                    <i class="fa-solid fa-circle-check text-emerald-500 flex-shrink-0"></i>
+                    <span id="scanResultText">Code scanned!</span>
                 </div>
             </div>
         </div>
 
-        <!-- Medicine Details Section -->
-        <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
-            <div class="bg-gradient-to-r from-green-600 to-green-700 px-6 py-4">
-                <h2 class="text-xl font-bold text-white flex items-center">
-                    <i class="fa-solid fa-pills mr-2"></i> Medicine Details
-                </h2>
+        <!-- ── Medicine Form Panel ── -->
+        <div class="card overflow-hidden">
+            <div class="px-5 py-4 border-b border-gray-100 bg-gray-50/60 flex items-center gap-2">
+                <i class="fa-solid fa-pills text-brand-500"></i>
+                <h2 class="font-bold text-gray-800 text-sm">Medicine Details</h2>
             </div>
-            
-            <div class="p-6">
+
+            <div class="p-5">
                 <form id="medicineForm" class="space-y-4">
+                    @csrf
+                    <!-- Scanned Code -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Scanned Code</label>
+                        <label class="label">Scanned Code</label>
                         <div class="flex gap-2">
-                            <input type="text" id="scannedCode" readonly
-                                   class="flex-1 block w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg text-gray-600"
-                                   placeholder="Waiting for scan...">
-                            <button type="button" onclick="clearCode()" 
-                                    class="px-3 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">
-                                <i class="fa-solid fa-trash"></i>
+                            <input type="text" id="scannedCode" readonly class="input flex-1 bg-gray-50 text-gray-500 font-mono" placeholder="Waiting for scan…">
+                            <button type="button" onclick="clearCode()"
+                                    class="w-11 h-11 flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors border-2 border-gray-200">
+                                <i class="fa-solid fa-xmark text-sm"></i>
                             </button>
                         </div>
                     </div>
 
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Medicine Name <span class="text-red-500">*</span></label>
-                        <input type="text" name="name" required
-                               class="block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-brand-500 focus:border-brand-500">
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-4">
+                    <!-- Name + Form -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="col-span-2">
+                            <label class="label">Medicine Name <span class="text-red-500">*</span></label>
+                            <input type="text" name="name" required class="input" placeholder="e.g. Amoxicillin 500mg">
+                        </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Type <span class="text-red-500">*</span></label>
-                            <select name="type" required
-                                    class="block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-brand-500 focus:border-brand-500">
-                                <option value="">Select Type</option>
+                            <label class="label">Form <span class="text-red-500">*</span></label>
+                            <select name="type" required class="input">
+                                <option value="">Select…</option>
                                 <option value="tablet">Tablet</option>
+                                <option value="capsule">Capsule</option>
                                 <option value="syrup">Syrup</option>
                                 <option value="injection">Injection</option>
-                                <option value="cream">Cream/Ointment</option>
-                                <option value="capsule">Capsule</option>
+                                <option value="cream">Cream / Ointment</option>
                                 <option value="other">Other</option>
                             </select>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                            <select name="category"
-                                    class="block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-brand-500 focus:border-brand-500">
-                                <option value="normal">Normal</option>
-                                <option value="prescription">Prescription Only</option>
+                            <label class="label">Legal Category</label>
+                            <select name="category" class="input">
+                                <option value="otc">OTC (Over-the-Counter)</option>
+                                <option value="prescription">Rx (Prescription)</option>
                                 <option value="controlled">Controlled Substance</option>
                             </select>
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-2 gap-4">
+                    <!-- Category info banner -->
+                    <div class="text-xs text-gray-500 bg-blue-50/50 border border-blue-100 rounded-xl p-3 leading-relaxed">
+                        <p class="font-semibold text-blue-700 mb-1"><i class="fa-solid fa-circle-info"></i> Legal categories explained:</p>
+                        <ul class="space-y-0.5 ml-4 list-disc">
+                            <li><strong>OTC:</strong> No prescription required (paracetamol, ibuprofen)</li>
+                            <li><strong>Rx:</strong> Needs a doctor's prescription (antibiotics, blood pressure meds)</li>
+                            <li><strong>Controlled:</strong> Strictly regulated narcotics/opioids — extra tracking required (morphine, diazepam)</li>
+                        </ul>
+                    </div>
+
+                    <!-- Qty + Unit -->
+                    <div class="grid grid-cols-2 gap-3">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Quantity <span class="text-red-500">*</span></label>
-                            <input type="number" name="quantity" required min="1"
-                                   class="block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-brand-500 focus:border-brand-500">
+                            <label class="label">Quantity <span class="text-red-500">*</span></label>
+                            <input type="number" name="quantity" required min="1" class="input" placeholder="100">
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Unit</label>
-                            <select name="unit"
-                                    class="block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-brand-500 focus:border-brand-500">
+                            <label class="label">Unit</label>
+                            <select name="unit" class="input">
                                 <option value="pieces">Pieces</option>
                                 <option value="bottles">Bottles</option>
                                 <option value="boxes">Boxes</option>
-                                <option value="ml">Milliliters</option>
+                                <option value="ml">Milliliters (mL)</option>
                             </select>
                         </div>
                     </div>
 
+                    <!-- Location -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Storage Location <span class="text-red-500">*</span></label>
-                        <div class="space-y-2">
-                            <input type="text" name="location_cabinet" placeholder="Cabinet/Shelf (e.g., Cabinet A)"
-                                   class="block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-brand-500 focus:border-brand-500">
-                            <input type="text" name="location_level" placeholder="Level/Row (e.g., Level 3, Row B)"
-                                   class="block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-brand-500 focus:border-brand-500">
+                        <label class="label">Storage Location</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <input type="text" name="location_cabinet" class="input" placeholder="Cabinet (e.g. A)">
+                            <input type="text" name="location_level" class="input" placeholder="Level / Shelf">
                         </div>
-                        <p class="mt-1 text-xs text-gray-500">Example: Cabinet A, Level 2, Row C - Makes finding medicines easy!</p>
                     </div>
 
-                    <div class="grid grid-cols-2 gap-4">
+                    <!-- Batch + Expiry -->
+                    <div class="grid grid-cols-2 gap-3">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Batch Number</label>
-                            <input type="text" name="batch_number"
-                                   class="block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-brand-500 focus:border-brand-500">
+                            <label class="label">Batch Number</label>
+                            <input type="text" name="batch_number" class="input" placeholder="BTH-2024-001">
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Expiry Date <span class="text-red-500">*</span></label>
-                            <input type="date" name="expiry_date" required
-                                   class="block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-brand-500 focus:border-brand-500">
+                            <label class="label">Expiry Date <span class="text-red-500">*</span></label>
+                            <input type="date" name="expiry_date" required class="input">
                         </div>
                     </div>
 
+                    <!-- Notes -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
-                        <textarea name="notes" rows="2"
-                                  class="block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-brand-500 focus:border-brand-500"
-                                  placeholder="Additional information..."></textarea>
+                        <label class="label">Notes</label>
+                        <textarea name="notes" rows="2" class="input resize-none" placeholder="Additional info…"></textarea>
                     </div>
 
-                    <div class="pt-4 flex gap-3">
-                        <button type="reset"
-                                class="flex-1 px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium transition-colors">
-                            <i class="fa-solid fa-rotate-left mr-2"></i>Clear
+                    <!-- Actions -->
+                    <div class="flex justify-between gap-3 pt-3 border-t border-gray-100">
+                        <button type="reset" onclick="clearCode()" class="btn-secondary">
+                            <i class="fa-solid fa-rotate-left"></i> Clear
                         </button>
-                        <button type="submit"
-                                class="flex-1 px-4 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors shadow-lg">
-                            <i class="fa-solid fa-save mr-2"></i>Save to Inventory
+                        <button type="submit" class="btn-primary">
+                            <i class="fa-solid fa-floppy-disk"></i> Save to Inventory
                         </button>
                     </div>
                 </form>
@@ -198,49 +190,38 @@
 
 <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 <script>
-let html5QrcodeScanner;
+let html5QrcodeScanner = null;
 let isScanning = false;
 
 function switchTab(tab) {
-    // Hide all sections
     document.querySelectorAll('.scan-section').forEach(el => el.classList.add('hidden'));
-    document.querySelectorAll('[id^="tab-"]').forEach(el => {
-        el.classList.remove('bg-brand-100', 'text-brand-700');
-        el.classList.add('bg-gray-100', 'text-gray-700');
+    document.querySelectorAll('[id^="tab-"]').forEach(btn => {
+        btn.classList.remove('bg-white','text-brand-600','shadow-sm');
+        btn.classList.add('text-gray-500');
     });
 
-    // Show selected section
     document.getElementById(`scanner-${tab}`).classList.remove('hidden');
-    document.getElementById(`tab-${tab}`).classList.remove('bg-gray-100', 'text-gray-700');
-    document.getElementById(`tab-${tab}`).classList.add('bg-brand-100', 'text-brand-700');
+    const activeBtn = document.getElementById(`tab-${tab}`);
+    activeBtn.classList.add('bg-white','text-brand-600','shadow-sm');
+    activeBtn.classList.remove('text-gray-500');
 
-    // Stop scanner if switching away from barcode
-    if (tab !== 'barcode' && isScanning) {
-        stopScanner();
-    }
+    if (tab !== 'barcode' && isScanning) stopScanner();
 }
 
 function startScanner() {
-    html5QrcodeScanner = new Html5Qrcode("reader");
-    
-    const config = { 
-        fps: 10, 
-        qrbox: { width: 250, height: 250 },
-        aspectRatio: 1.0
-    };
-
+    document.getElementById('cameraPlaceholder')?.remove();
+    html5QrcodeScanner = new Html5Qrcode('reader');
     html5QrcodeScanner.start(
-        { facingMode: "environment" }, 
-        config, 
+        { facingMode: 'environment' },
+        { fps: 10, qrbox: { width: 240, height: 240 } },
         onScanSuccess,
-        onScanFailure
+        () => {}
     ).then(() => {
         isScanning = true;
         document.getElementById('startBtn').classList.add('hidden');
         document.getElementById('stopBtn').classList.remove('hidden');
-    }).catch(err => {
-        console.error("Unable to start scanning", err);
-        alert("Unable to access camera. Please make sure you've granted camera permissions.");
+    }).catch(() => {
+        alert('Cannot access camera. Please grant camera permission and use HTTPS.');
     });
 }
 
@@ -251,57 +232,44 @@ function stopScanner() {
             document.getElementById('startBtn').classList.remove('hidden');
             document.getElementById('stopBtn').classList.add('hidden');
             html5QrcodeScanner.clear();
-        }).catch(err => {
-            console.error("Unable to stop scanning", err);
-        });
+        }).catch(() => {});
     }
 }
 
-function onScanSuccess(decodedText, decodedResult) {
-    // Play success sound
-    const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBTGH0fPTgjMGHm7A7+OZUQ4PVqzn8K1hGgU7k9r0z3kpBS2A0PLaizsIGGS57OihURALTqXh8bllHAU2jdXzyn0tBSp+zfDdkUEKFWCy6+qnVRQLSKDh8r5uIQU0h9Hy04IzBh1rv+/mnVIOD1Wr5O+rYRoFOpHZ88p6KgUte87w15Y9CRZhtuvqp1QWCkef4PK9bSIFM4XP8tWDMwYfbsPv5p1SDg9Uq+Tvq2EbBTmP2PPKfC0FKn7N8NqSOwoYY7bt6qdUFgpHn+Dyvmwi');
-    audio.play().catch(() => {}); // Ignore play errors
-
+function onScanSuccess(decodedText) {
     document.getElementById('scannedCode').value = decodedText;
-    
-    // Auto-lookup medicine if code exists
+    showScanResult(`Scanned: ${decodedText}`);
     lookupMedicine(decodedText);
-    
-    // Optionally stop scanner after successful scan
-    // stopScanner();
 }
 
-function onScanFailure(error) {
-    // Handle scan failure silently
-    console.warn(`Code scan error = ${error}`);
+function showScanResult(msg) {
+    const el = document.getElementById('scanResult');
+    document.getElementById('scanResultText').textContent = msg;
+    el.classList.remove('hidden');
+    setTimeout(() => el.classList.add('hidden'), 4000);
 }
 
 function lookupMedicine(code) {
-    // Simulate API call - Replace with actual fetch
-    fetch(`/api/medicines/lookup/${code}`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.found) {
-                // Pre-fill form with existing medicine data
-                document.querySelector('input[name="name"]').value = data.name || '';
-                document.querySelector('select[name="type"]').value = data.type || '';
-                document.querySelector('select[name="category"]').value = data.category || 'normal';
-                // Fill other fields...
-            }
-        })
-        .catch(error => {
-            console.log('Medicine not found in database, will create new entry');
-        });
+    fetch(`/api/medicines/lookup/${encodeURIComponent(code)}`, {
+        headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content }
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.found) {
+            document.querySelector('input[name="name"]').value     = data.name    || '';
+            document.querySelector('select[name="category"]').value = data.category || 'otc';
+            showScanResult(`Found: ${data.name} — fields pre-filled`);
+        }
+    })
+    .catch(() => {});
 }
 
 function processManualCode() {
     const code = document.getElementById('manualCode').value.trim();
-    if (code) {
-        document.getElementById('scannedCode').value = code;
-        lookupMedicine(code);
-    } else {
-        alert('Please enter a code');
-    }
+    if (!code) { alert('Please enter a code first.'); return; }
+    document.getElementById('scannedCode').value = code;
+    showScanResult(`Code entered: ${code}`);
+    lookupMedicine(code);
 }
 
 function clearCode() {
@@ -309,69 +277,33 @@ function clearCode() {
     document.getElementById('medicineForm').reset();
 }
 
-async function scanNFC() {
-    if ('NDEFReader' in window) {
-        try {
-            const ndef = new NDEFReader();
-            await ndef.scan();
-            
-            ndef.addEventListener("reading", ({ message }) => {
-                for (const record of message.records) {
-                    const text = new TextDecoder().decode(record.data);
-                    document.getElementById('scannedCode').value = text;
-                    lookupMedicine(text);
-                }
-            });
-            
-            alert('NFC scanning started. Tap an NFC tag.');
-        } catch (error) {
-            alert('NFC is not supported or not enabled on your device.');
-        }
-    } else {
-        alert('NFC is not supported in your browser. Use Chrome on Android.');
-    }
-}
-
-// Form submission
-document.getElementById('medicineForm').addEventListener('submit', function(e) {
+document.getElementById('medicineForm').addEventListener('submit', function (e) {
     e.preventDefault();
-    
+    const code = document.getElementById('scannedCode').value;
+    if (!code) { alert('Please scan or enter a medicine code first.'); return; }
+
     const formData = new FormData(this);
-    const scannedCode = document.getElementById('scannedCode').value;
-    
-    if (!scannedCode) {
-        alert('Please scan or enter a medicine code first');
-        return;
-    }
-    
-    formData.append('code', scannedCode);
-    
-    // Simulate form submission - Replace with actual fetch
-    fetch('/api/medicines', {
+    formData.append('code', code);
+
+    fetch('{{ route("scan.save") }}', {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            'Accept': 'application/json',
         },
-        body: JSON.stringify(Object.fromEntries(formData))
+        body: formData,
     })
-    .then(response => response.json())
+    .then(r => r.json())
     .then(data => {
-        alert('Medicine saved successfully!');
-        this.reset();
-        document.getElementById('scannedCode').value = '';
+        if (data.success) {
+            showScanResult(data.message || 'Medicine saved to inventory!');
+            this.reset();
+            clearCode();
+        }
     })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('Error saving medicine. Please try again.');
-    });
+    .catch(() => alert('Error saving medicine. Please try again.'));
 });
 
-// Cleanup on page unload
-window.addEventListener('beforeunload', () => {
-    if (isScanning) {
-        stopScanner();
-    }
-});
+window.addEventListener('beforeunload', () => { if (isScanning) stopScanner(); });
 </script>
 @endsection
