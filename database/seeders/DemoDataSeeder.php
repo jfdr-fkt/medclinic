@@ -33,6 +33,7 @@ class DemoDataSeeder extends Seeder
             ['patient_id'=>'P-2024-006','name'=>'Gabriela Silang','date_of_birth'=>'1988-09-14','phone'=>'0933-666-7777','address'=>'888 Hero St, Mandaluyong','medical_history'=>'Migraine','assigned_nurse_id'=>$nurse2->id,'assigned_doctor_id'=>$doc2->id,'last_visit'=>now()->subDays(5)],
             ['patient_id'=>'P-2024-007','name'=>'Andres Bonifacio','date_of_birth'=>'1995-12-01','phone'=>'0933-777-8888','address'=>'111 Katipunan Rd, Marikina','medical_history'=>'None','assigned_nurse_id'=>$nurse1->id,'assigned_doctor_id'=>$doc1->id,'last_visit'=>now()->subDays(1)],
             ['patient_id'=>'P-2024-008','name'=>'Melchora Aquino','date_of_birth'=>'1945-08-18','phone'=>'0933-888-9999','address'=>'222 Tandang Sora, Quezon City','medical_history'=>'Diabetes, Hypertension, Arthritis','assigned_nurse_id'=>$nurse2->id,'assigned_doctor_id'=>$doc2->id,'last_visit'=>now()->subMinutes(45)],
+            ['patient_id'=>'P-67-420','name'=>'Sześć Siedem','date_of_birth'=>'1967-04-20','phone'=>'0911-420-6767','address'=>'67 Siedem Street, Warsaw, Polska','medical_history'=>'Chronic case of being a meme. Allergic to taking life seriously. Patient insists their lucky numbers are 67, 420, and 911.','assigned_nurse_id'=>$nurse1->id,'assigned_doctor_id'=>$doc1->id,'last_visit'=>now()->subMinutes(67)],
         ];
         foreach ($pats as $p) Patient::create($p);
 
@@ -81,11 +82,37 @@ class DemoDataSeeder extends Seeder
             ]);
         }
 
-        // Shifts
-        Shift::create(['user_id'=>$doc1->id,'shift_type'=>'morning','shift_date'=>today(),'start_time'=>'08:00','end_time'=>'12:00','is_active'=>true]);
-        Shift::create(['user_id'=>$doc2->id,'shift_type'=>'afternoon','shift_date'=>today(),'start_time'=>'13:00','end_time'=>'17:00','is_active'=>false]);
-        Shift::create(['user_id'=>$nurse1->id,'shift_type'=>'morning','shift_date'=>today(),'start_time'=>'07:00','end_time'=>'15:00','is_active'=>true]);
-        Shift::create(['user_id'=>$nurse2->id,'shift_type'=>'afternoon','shift_date'=>today(),'start_time'=>'15:00','end_time'=>'23:00','is_active'=>false]);
+        // Standard healthcare shift patterns
+        $shiftPatterns = [
+            'morning'   => ['07:00', '15:00'],   // Day shift
+            'afternoon' => ['15:00', '23:00'],   // Evening shift
+            'night'     => ['23:00', '07:00'],   // Night shift
+            'on_call'   => ['09:00', '17:00'],   // On-call hours
+        ];
+
+        // Generate 7 days of randomized rotating shifts for clinical staff
+        $clinicalStaff = [$doc1, $doc2, $nurse1, $nurse2, $asst];
+        $shiftKeys = ['morning', 'afternoon', 'night', 'on_call'];
+
+        foreach ($clinicalStaff as $i => $staffMember) {
+            for ($d = 0; $d < 7; $d++) {
+                // Skip ~1 day per week (rest day) randomly
+                if (rand(1, 7) === 1) continue;
+
+                // Rotate shifts so each staff cycles through patterns differently
+                $shiftKey = $shiftKeys[($i + $d) % count($shiftKeys)];
+                [$start, $end] = $shiftPatterns[$shiftKey];
+
+                Shift::create([
+                    'user_id'    => $staffMember->id,
+                    'shift_type' => $shiftKey,
+                    'shift_date' => today()->addDays($d),
+                    'start_time' => $start,
+                    'end_time'   => $end,
+                    'is_active'  => $d === 0,
+                ]);
+            }
+        }
 
         // Demo chat messages
         Message::create(['sender_id'=>$nurse1->id,'receiver_id'=>$doc1->id,'body'=>'Good morning Dr. Wilson! Patient Juan Dela Cruz is ready for his check-up.','is_read'=>true]);

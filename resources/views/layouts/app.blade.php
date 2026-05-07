@@ -27,11 +27,6 @@
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
-        .nav-link { @apply flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-200 hover:bg-slate-700/60 hover:text-white transition-all duration-150; }
-        .nav-link.active { @apply bg-brand-500/15 text-white border border-brand-500/40 shadow-sm; }
-        .nav-link.active i { @apply text-brand-300; }
-        .nav-link i { @apply text-slate-300; }
-
         .card { @apply bg-white rounded-2xl shadow-sm border border-gray-100; }
         .badge-rx     { @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-700; }
         .badge-otc    { @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700; }
@@ -55,16 +50,16 @@
         .status-dot.away      { @apply bg-amber-400; }
         .status-dot.offline   { @apply bg-gray-400; }
 
-        /* sidebar */
+        /* Sidebar collapse: only icons remain */
         @media (min-width: 768px) {
             .sidebar-collapsed { width: 4.5rem !important; }
             .sidebar-collapsed .nav-text,
-            .sidebar-collapsed .sidebar-logo-text,
+            .sidebar-collapsed .sidebar-logo-group,
             .sidebar-collapsed .sidebar-section-title,
-            .sidebar-collapsed .sidebar-user-info,
-            .sidebar-collapsed .nav-badge { display: none !important; }
-            .sidebar-collapsed .nav-link { @apply justify-center px-2; }
-            .sidebar-collapsed .sidebar-footer-row { @apply flex-col gap-2; }
+            .sidebar-collapsed .sidebar-user-info { display: none !important; }
+            .sidebar-collapsed .sidebar-header { justify-content: center !important; padding-left: 0 !important; padding-right: 0 !important; }
+            .sidebar-collapsed .sidebar-footer-link { justify-content: center !important; }
+            .sidebar-collapsed nav a { justify-content: center !important; padding-left: 0.5rem !important; padding-right: 0.5rem !important; }
         }
     </style>
     @stack('head')
@@ -76,76 +71,103 @@
     <!-- ========== DESKTOP SIDEBAR ========== -->
     <aside id="sidebar" class="hidden md:flex w-64 flex-shrink-0 flex-col bg-slate-900 transition-all duration-200">
         <!-- Logo + collapse toggle -->
-        <div class="h-16 flex items-center justify-between gap-3 px-5 border-b border-slate-800">
-            <div class="flex items-center gap-3 overflow-hidden">
+        <div class="sidebar-header h-16 flex items-center justify-between gap-3 px-4 border-b border-slate-800">
+            <div class="sidebar-logo-group flex items-center gap-3 overflow-hidden">
                 <div class="w-9 h-9 bg-gradient-to-br from-brand-400 to-brand-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-brand-500/30">
                     <i class="fa-solid fa-staff-snake text-white text-base"></i>
                 </div>
-                <div class="sidebar-logo-text">
+                <div>
                     <p class="text-white font-bold text-base leading-none">ClinicMS</p>
-                    <p class="text-slate-400 text-xs mt-0.5">Management System</p>
+                    <p class="text-slate-300 text-xs mt-0.5">Management System</p>
                 </div>
             </div>
-            <button onclick="toggleDesktopSidebar()" class="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 transition-colors" title="Collapse">
+            <button onclick="toggleDesktopSidebar()" class="text-slate-200 hover:text-white p-2 rounded-lg hover:bg-slate-700 transition-colors flex-shrink-0" title="Toggle sidebar">
                 <i class="fa-solid fa-bars text-sm"></i>
             </button>
         </div>
 
         <!-- Nav -->
         <nav class="flex-1 overflow-y-auto py-5 px-3 space-y-6">
+            <!-- Overview -->
             <div>
-                <p class="sidebar-section-title text-xs font-semibold text-slate-500 uppercase tracking-wider px-3 mb-2">Overview</p>
+                <p class="sidebar-section-title text-[11px] font-bold text-slate-400 uppercase tracking-widest px-3 mb-2">Overview</p>
                 <ul class="space-y-1">
-                    <li><a href="{{ route('dashboard') }}" class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" title="Dashboard">
-                        <i class="fa-solid fa-gauge-high w-5 text-center"></i>
-                        <span class="nav-text">Dashboard</span>
-                    </a></li>
+                    <li>
+                        <a href="{{ route('dashboard') }}" title="Dashboard"
+                           class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold transition-all
+                               {{ request()->routeIs('dashboard') ? 'bg-brand-500/20 text-white border border-brand-400/40 shadow-sm' : 'text-slate-100 hover:bg-slate-700 hover:text-white' }}">
+                            <i class="fa-solid fa-gauge-high w-5 text-center {{ request()->routeIs('dashboard') ? 'text-brand-300' : 'text-slate-300' }}"></i>
+                            <span class="nav-text">Dashboard</span>
+                        </a>
+                    </li>
                 </ul>
             </div>
+            <!-- Clinical -->
             <div>
-                <p class="sidebar-section-title text-xs font-semibold text-slate-500 uppercase tracking-wider px-3 mb-2">Clinical</p>
+                <p class="sidebar-section-title text-[11px] font-bold text-slate-400 uppercase tracking-widest px-3 mb-2">Clinical</p>
                 <ul class="space-y-1">
-                    <li><a href="{{ route('patients.index') }}" class="nav-link {{ request()->routeIs('patients.*') ? 'active' : '' }}" title="Patients">
-                        <i class="fa-solid fa-user-injured w-5 text-center"></i>
-                        <span class="nav-text">Patients</span>
-                    </a></li>
-                    <li><a href="{{ route('medicines.index') }}" class="nav-link {{ request()->routeIs('medicines.*') ? 'active' : '' }}" title="Medicines">
-                        <i class="fa-solid fa-pills w-5 text-center"></i>
-                        <span class="nav-text">Medicines</span>
-                    </a></li>
-                    <li><a href="{{ route('scan.index') }}" class="nav-link {{ request()->routeIs('scan.*') ? 'active' : '' }}" title="Smart Scan">
-                        <i class="fa-solid fa-barcode w-5 text-center"></i>
-                        <span class="nav-text">Smart Scan</span>
-                    </a></li>
+                    <li>
+                        <a href="{{ route('patients.index') }}" title="Patients"
+                           class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold transition-all
+                               {{ request()->routeIs('patients.*') ? 'bg-brand-500/20 text-white border border-brand-400/40 shadow-sm' : 'text-slate-100 hover:bg-slate-700 hover:text-white' }}">
+                            <i class="fa-solid fa-user-injured w-5 text-center {{ request()->routeIs('patients.*') ? 'text-brand-300' : 'text-slate-300' }}"></i>
+                            <span class="nav-text">Patients</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('medicines.index') }}" title="Medicines"
+                           class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold transition-all
+                               {{ request()->routeIs('medicines.*') ? 'bg-brand-500/20 text-white border border-brand-400/40 shadow-sm' : 'text-slate-100 hover:bg-slate-700 hover:text-white' }}">
+                            <i class="fa-solid fa-pills w-5 text-center {{ request()->routeIs('medicines.*') ? 'text-brand-300' : 'text-slate-300' }}"></i>
+                            <span class="nav-text">Medicines</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('scan.index') }}" title="Smart Scan"
+                           class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold transition-all
+                               {{ request()->routeIs('scan.*') ? 'bg-brand-500/20 text-white border border-brand-400/40 shadow-sm' : 'text-slate-100 hover:bg-slate-700 hover:text-white' }}">
+                            <i class="fa-solid fa-barcode w-5 text-center {{ request()->routeIs('scan.*') ? 'text-brand-300' : 'text-slate-300' }}"></i>
+                            <span class="nav-text">Smart Scan</span>
+                        </a>
+                    </li>
                 </ul>
             </div>
+            <!-- Team -->
             <div>
-                <p class="sidebar-section-title text-xs font-semibold text-slate-500 uppercase tracking-wider px-3 mb-2">Team</p>
+                <p class="sidebar-section-title text-[11px] font-bold text-slate-400 uppercase tracking-widest px-3 mb-2">Team</p>
                 <ul class="space-y-1">
-                    <li><a href="{{ route('staff.index') }}" class="nav-link {{ request()->routeIs('staff.*') ? 'active' : '' }}" title="Staff">
-                        <i class="fa-solid fa-user-doctor w-5 text-center"></i>
-                        <span class="nav-text">Staff</span>
-                    </a></li>
-                    <li><a href="{{ route('chat.index') }}" class="nav-link {{ request()->routeIs('chat.*') ? 'active' : '' }}" title="Chat">
-                        <i class="fa-solid fa-comments w-5 text-center"></i>
-                        <span class="nav-text">Staff Chat</span>
-                    </a></li>
+                    <li>
+                        <a href="{{ route('staff.index') }}" title="Staff"
+                           class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold transition-all
+                               {{ request()->routeIs('staff.*') ? 'bg-brand-500/20 text-white border border-brand-400/40 shadow-sm' : 'text-slate-100 hover:bg-slate-700 hover:text-white' }}">
+                            <i class="fa-solid fa-user-doctor w-5 text-center {{ request()->routeIs('staff.*') ? 'text-brand-300' : 'text-slate-300' }}"></i>
+                            <span class="nav-text">Staff</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('chat.index') }}" title="Staff Chat"
+                           class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold transition-all
+                               {{ request()->routeIs('chat.*') ? 'bg-brand-500/20 text-white border border-brand-400/40 shadow-sm' : 'text-slate-100 hover:bg-slate-700 hover:text-white' }}">
+                            <i class="fa-solid fa-comments w-5 text-center {{ request()->routeIs('chat.*') ? 'text-brand-300' : 'text-slate-300' }}"></i>
+                            <span class="nav-text">Staff Chat</span>
+                        </a>
+                    </li>
                 </ul>
             </div>
         </nav>
 
         <!-- User footer -->
         <div class="border-t border-slate-800 p-3">
-            <a href="{{ route('profile.edit') }}" class="flex items-center gap-3 p-2 rounded-xl hover:bg-slate-800 transition-colors sidebar-footer-row">
+            <a href="{{ route('profile.edit') }}" class="sidebar-footer-link flex items-center gap-3 p-2 rounded-xl hover:bg-slate-800 transition-colors">
                 <div class="relative flex-shrink-0">
                     <div class="h-9 w-9 rounded-full bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center text-white text-sm font-bold">
                         {{ strtoupper(substr(Auth::user()->name, 0, 2)) }}
                     </div>
                     <span class="status-dot {{ Auth::user()->statusColor() === 'emerald' ? 'available' : (Auth::user()->statusColor() === 'red' ? 'busy' : (Auth::user()->statusColor() === 'amber' ? 'away' : 'offline')) }} absolute -bottom-0.5 -right-0.5 ring-2 ring-slate-900"></span>
                 </div>
-                <div class="flex-1 min-w-0 sidebar-user-info">
+                <div class="sidebar-user-info flex-1 min-w-0">
                     <p class="text-sm font-semibold text-white truncate">{{ Auth::user()->name }}</p>
-                    <p class="text-xs text-slate-400 capitalize">{{ Auth::user()->role }}</p>
+                    <p class="text-xs text-slate-300 capitalize">{{ Auth::user()->role }}</p>
                 </div>
             </a>
         </div>
@@ -161,37 +183,37 @@
                 </div>
                 <span class="text-white font-bold">ClinicMS</span>
             </div>
-            <button onclick="toggleMobileSidebar()" class="text-slate-400 hover:text-white p-2 rounded-lg hover:bg-slate-800">
+            <button onclick="toggleMobileSidebar()" class="text-slate-200 hover:text-white p-2 rounded-lg hover:bg-slate-700">
                 <i class="fa-solid fa-xmark text-lg"></i>
             </button>
         </div>
         <nav class="flex-1 overflow-y-auto py-5 px-3 space-y-6">
             <div>
-                <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider px-3 mb-2">Overview</p>
+                <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest px-3 mb-2">Overview</p>
                 <ul class="space-y-1">
-                    <li><a href="{{ route('dashboard') }}" class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}"><i class="fa-solid fa-gauge-high w-5 text-center"></i> Dashboard</a></li>
+                    <li><a href="{{ route('dashboard') }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold {{ request()->routeIs('dashboard') ? 'bg-brand-500/20 text-white border border-brand-400/40' : 'text-slate-100 hover:bg-slate-700 hover:text-white' }}"><i class="fa-solid fa-gauge-high w-5 text-center text-slate-300"></i> Dashboard</a></li>
                 </ul>
             </div>
             <div>
-                <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider px-3 mb-2">Clinical</p>
+                <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest px-3 mb-2">Clinical</p>
                 <ul class="space-y-1">
-                    <li><a href="{{ route('patients.index') }}" class="nav-link {{ request()->routeIs('patients.*') ? 'active' : '' }}"><i class="fa-solid fa-user-injured w-5 text-center"></i> Patients</a></li>
-                    <li><a href="{{ route('medicines.index') }}" class="nav-link {{ request()->routeIs('medicines.*') ? 'active' : '' }}"><i class="fa-solid fa-pills w-5 text-center"></i> Medicines</a></li>
-                    <li><a href="{{ route('scan.index') }}" class="nav-link {{ request()->routeIs('scan.*') ? 'active' : '' }}"><i class="fa-solid fa-barcode w-5 text-center"></i> Smart Scan</a></li>
+                    <li><a href="{{ route('patients.index') }}"  class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold {{ request()->routeIs('patients.*') ? 'bg-brand-500/20 text-white border border-brand-400/40' : 'text-slate-100 hover:bg-slate-700 hover:text-white' }}"><i class="fa-solid fa-user-injured w-5 text-center text-slate-300"></i> Patients</a></li>
+                    <li><a href="{{ route('medicines.index') }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold {{ request()->routeIs('medicines.*') ? 'bg-brand-500/20 text-white border border-brand-400/40' : 'text-slate-100 hover:bg-slate-700 hover:text-white' }}"><i class="fa-solid fa-pills w-5 text-center text-slate-300"></i> Medicines</a></li>
+                    <li><a href="{{ route('scan.index') }}"      class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold {{ request()->routeIs('scan.*') ? 'bg-brand-500/20 text-white border border-brand-400/40' : 'text-slate-100 hover:bg-slate-700 hover:text-white' }}"><i class="fa-solid fa-barcode w-5 text-center text-slate-300"></i> Smart Scan</a></li>
                 </ul>
             </div>
             <div>
-                <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider px-3 mb-2">Team</p>
+                <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest px-3 mb-2">Team</p>
                 <ul class="space-y-1">
-                    <li><a href="{{ route('staff.index') }}" class="nav-link {{ request()->routeIs('staff.*') ? 'active' : '' }}"><i class="fa-solid fa-user-doctor w-5 text-center"></i> Staff</a></li>
-                    <li><a href="{{ route('chat.index') }}" class="nav-link {{ request()->routeIs('chat.*') ? 'active' : '' }}"><i class="fa-solid fa-comments w-5 text-center"></i> Staff Chat</a></li>
+                    <li><a href="{{ route('staff.index') }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold {{ request()->routeIs('staff.*') ? 'bg-brand-500/20 text-white border border-brand-400/40' : 'text-slate-100 hover:bg-slate-700 hover:text-white' }}"><i class="fa-solid fa-user-doctor w-5 text-center text-slate-300"></i> Staff</a></li>
+                    <li><a href="{{ route('chat.index') }}"  class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold {{ request()->routeIs('chat.*') ? 'bg-brand-500/20 text-white border border-brand-400/40' : 'text-slate-100 hover:bg-slate-700 hover:text-white' }}"><i class="fa-solid fa-comments w-5 text-center text-slate-300"></i> Staff Chat</a></li>
                 </ul>
             </div>
         </nav>
         <div class="border-t border-slate-800 p-4">
             <a href="{{ route('profile.edit') }}" class="flex items-center gap-3 p-2 rounded-xl hover:bg-slate-800">
                 <div class="h-9 w-9 rounded-full bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center text-white text-sm font-bold">{{ strtoupper(substr(Auth::user()->name, 0, 2)) }}</div>
-                <div class="flex-1 min-w-0"><p class="text-sm font-semibold text-white truncate">{{ Auth::user()->name }}</p><p class="text-xs text-slate-400 capitalize">{{ Auth::user()->role }}</p></div>
+                <div class="flex-1 min-w-0"><p class="text-sm font-semibold text-white truncate">{{ Auth::user()->name }}</p><p class="text-xs text-slate-300 capitalize">{{ Auth::user()->role }}</p></div>
             </a>
         </div>
     </aside>
@@ -212,7 +234,7 @@
             </div>
 
             <div class="flex items-center gap-1 sm:gap-2">
-                <!-- Status pill (clickable dropdown) -->
+                <!-- Status pill -->
                 <div class="relative">
                     <button onclick="toggleDropdown('statusMenu')" id="statusBtn"
                             class="hidden sm:flex items-center gap-1.5 text-xs font-medium text-gray-600 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-full px-3 py-1.5 transition-colors">

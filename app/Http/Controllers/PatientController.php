@@ -82,16 +82,11 @@ class PatientController extends Controller
     public function pin(Patient $patient)
     {
         $user = Auth::user();
-        if ($user->pinnedPatients()->where('patient_id', $patient->id)->exists()) {
-            $user->pinnedPatients()->detach($patient);
-            $msg = 'Patient unpinned.';
-        } else {
-            $user->pinnedPatients()->attach($patient);
-            $msg = 'Patient pinned to dashboard!';
-        }
+        $result = $user->pinnedPatients()->toggle($patient->id);
+        $msg = !empty($result['attached']) ? 'Patient pinned to dashboard!' : 'Patient unpinned.';
 
         if (request()->wantsJson()) {
-            return response()->json(['success' => true, 'message' => $msg]);
+            return response()->json(['success' => true, 'message' => $msg, 'pinned' => !empty($result['attached'])]);
         }
         return back()->with('success', $msg);
     }

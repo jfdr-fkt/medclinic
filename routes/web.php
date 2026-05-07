@@ -57,7 +57,6 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/staff',                         [StaffController::class, 'store'])->name('staff.store');
     Route::get('/staff/{user}',                   [StaffController::class, 'show'])->name('staff.show');
     Route::post('/staff/shifts/store',            [StaffController::class, 'storeShift'])->name('staff.shifts.store');
-    Route::post('/staff/{user}/toggle-status',    [StaffController::class, 'toggleStatus'])->name('staff.toggleStatus');
 
     // Chat
     Route::get('/chat',          [ChatController::class, 'index'])->name('chat.index');

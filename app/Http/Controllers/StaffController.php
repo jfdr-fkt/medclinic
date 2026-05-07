@@ -38,6 +38,10 @@ class StaffController extends Controller
 
     public function storeShift(Request $request)
     {
+        if (\Illuminate\Support\Facades\Auth::user()->role !== 'admin') {
+            abort(403, 'Only administrators can manage shifts.');
+        }
+
         $request->validate([
             'user_id'    => 'required|exists:users,id',
             'shift_type' => 'required|in:morning,afternoon,night,on_call',
@@ -52,22 +56,5 @@ class StaffController extends Controller
         );
 
         return back()->with('success', 'Shift assigned!');
-    }
-
-    public function toggleStatus(User $user)
-    {
-        // Mark as online by updating last_seen_at, or clear it to mark offline
-        if ($user->isOnline()) {
-            $user->update(['last_seen_at' => null]);
-            $status = 'offline';
-        } else {
-            $user->update(['last_seen_at' => now()]);
-            $status = 'online';
-        }
-
-        if (request()->wantsJson()) {
-            return response()->json(['status' => $status, 'is_online' => $user->isOnline()]);
-        }
-        return back()->with('success', "Status updated to {$status}");
     }
 }

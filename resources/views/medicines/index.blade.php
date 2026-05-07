@@ -12,12 +12,12 @@
             <p class="text-sm text-gray-500 mt-0.5">Track stock, locations, and expiry dates</p>
         </div>
         <div class="relative">
-            <button onclick="toggleAddMenu()" class="btn-primary">
+            <button type="button" onclick="toggleDropdown('addMedicineMenu')" class="btn-primary">
                 <i class="fa-solid fa-plus"></i> Add Medicine
                 <i class="fa-solid fa-chevron-down text-xs ml-1"></i>
             </button>
-            <div id="addMenu" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-30">
-                <button onclick="openAddModal(); toggleAddMenu();" class="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3">
+            <div id="addMedicineMenu" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-40">
+                <button type="button" onclick="openAddModal();" class="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3">
                     <i class="fa-solid fa-keyboard text-brand-500 w-4"></i>
                     <div>
                         <p class="font-semibold">Manual Entry</p>
@@ -32,7 +32,7 @@
                     </div>
                 </a>
                 <div class="border-t border-gray-100 my-1"></div>
-                <button onclick="openLocationModal(); toggleAddMenu();" class="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3">
+                <button type="button" onclick="openLocationModal();" class="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3">
                     <i class="fa-solid fa-location-dot text-amber-500 w-4"></i>
                     <div>
                         <p class="font-semibold">Add Location</p>
@@ -43,44 +43,59 @@
         </div>
     </div>
 
-    <!-- Stat cards -->
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div class="card p-5">
+    <!-- Colorful Stat cards (5: Total / Critical / Low / Expiring / Expired) -->
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <!-- Total Active -->
+        <div class="rounded-2xl p-5 bg-gradient-to-br from-brand-50 to-brand-100/50 border-2 border-brand-200">
             <div class="flex items-center justify-between mb-3">
-                <div class="w-10 h-10 rounded-xl bg-brand-50 flex items-center justify-center">
-                    <i class="fa-solid fa-pills text-brand-600"></i>
+                <div class="w-10 h-10 rounded-xl bg-brand-500 flex items-center justify-center shadow-md shadow-brand-200">
+                    <i class="fa-solid fa-pills text-white text-sm"></i>
                 </div>
             </div>
-            <p class="text-3xl font-extrabold text-gray-900">{{ $totalMedicines }}</p>
-            <p class="text-sm font-medium text-gray-500 mt-1">Total Medicines</p>
+            <p class="text-3xl font-extrabold text-brand-900">{{ $totalMedicines }}</p>
+            <p class="text-xs font-semibold text-brand-700/70 mt-1">Total Active</p>
         </div>
-        <div class="card p-5">
+        <!-- Critical -->
+        <div class="rounded-2xl p-5 bg-gradient-to-br from-red-50 to-red-100/50 border-2 border-red-200">
             <div class="flex items-center justify-between mb-3">
-                <div class="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center">
-                    <i class="fa-solid fa-triangle-exclamation text-red-500"></i>
+                <div class="w-10 h-10 rounded-xl bg-red-500 flex items-center justify-center shadow-md shadow-red-200">
+                    <i class="fa-solid fa-triangle-exclamation text-white text-sm"></i>
                 </div>
             </div>
-            <p class="text-3xl font-extrabold {{ $criticalStock > 0 ? 'text-red-600' : 'text-gray-900' }}">{{ $criticalStock }}</p>
-            <p class="text-sm font-medium text-gray-500 mt-1">Critical Stock</p>
+            <p class="text-3xl font-extrabold text-red-900">{{ $criticalStock }}</p>
+            <p class="text-xs font-semibold text-red-700/70 mt-1">Critical (≤5)</p>
         </div>
-        <div class="card p-5">
+        <!-- Low -->
+        <div class="rounded-2xl p-5 bg-gradient-to-br from-amber-50 to-amber-100/50 border-2 border-amber-200">
             <div class="flex items-center justify-between mb-3">
-                <div class="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center">
-                    <i class="fa-solid fa-circle-exclamation text-amber-500"></i>
+                <div class="w-10 h-10 rounded-xl bg-amber-500 flex items-center justify-center shadow-md shadow-amber-200">
+                    <i class="fa-solid fa-circle-exclamation text-white text-sm"></i>
                 </div>
             </div>
-            <p class="text-3xl font-extrabold {{ $lowStock > 0 ? 'text-amber-600' : 'text-gray-900' }}">{{ $lowStock }}</p>
-            <p class="text-sm font-medium text-gray-500 mt-1">Low Stock</p>
+            <p class="text-3xl font-extrabold text-amber-900">{{ $lowStock }}</p>
+            <p class="text-xs font-semibold text-amber-700/70 mt-1">Low Stock</p>
         </div>
-        <div class="card p-5">
+        <!-- Expiring Soon -->
+        <div class="rounded-2xl p-5 bg-gradient-to-br from-orange-50 to-orange-100/50 border-2 border-orange-200">
             <div class="flex items-center justify-between mb-3">
-                <div class="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center">
-                    <i class="fa-solid fa-calendar-xmark text-orange-500"></i>
+                <div class="w-10 h-10 rounded-xl bg-orange-500 flex items-center justify-center shadow-md shadow-orange-200">
+                    <i class="fa-solid fa-calendar-xmark text-white text-sm"></i>
                 </div>
             </div>
-            <p class="text-3xl font-extrabold {{ $expiringSoon > 0 ? 'text-orange-600' : 'text-gray-900' }}">{{ $expiringSoon }}</p>
-            <p class="text-sm font-medium text-gray-500 mt-1">Expiring ≤30d</p>
+            <p class="text-3xl font-extrabold text-orange-900">{{ $expiringSoon }}</p>
+            <p class="text-xs font-semibold text-orange-700/70 mt-1">Expiring ≤30d</p>
         </div>
+        <!-- Expired (separate count) -->
+        <button type="button" onclick="document.getElementById('expiredArchive')?.scrollIntoView({behavior:'smooth'})"
+                class="text-left rounded-2xl p-5 bg-gradient-to-br from-gray-50 to-gray-200/50 border-2 border-gray-300 hover:border-gray-500 transition-colors">
+            <div class="flex items-center justify-between mb-3">
+                <div class="w-10 h-10 rounded-xl bg-gray-600 flex items-center justify-center shadow-md shadow-gray-300">
+                    <i class="fa-solid fa-box-archive text-white text-sm"></i>
+                </div>
+            </div>
+            <p class="text-3xl font-extrabold text-gray-700">{{ $expiredCount }}</p>
+            <p class="text-xs font-semibold text-gray-600 mt-1">Expired Archive</p>
+        </button>
     </div>
 
     <!-- Advanced filters -->
@@ -127,9 +142,9 @@
         </div>
     </form>
 
-    <!-- Active medicines table -->
+    <!-- Active inventory table -->
     <div class="card overflow-hidden">
-        <div class="px-5 py-3 border-b border-gray-100 bg-gray-50/60">
+        <div class="px-5 py-3 border-b border-gray-100 bg-gradient-to-r from-emerald-50 to-emerald-100/40">
             <h3 class="font-bold text-gray-800 text-sm flex items-center gap-2">
                 <i class="fa-solid fa-circle-check text-emerald-500"></i> Active Inventory
                 <span class="text-xs text-gray-500 font-normal">({{ $medicines->total() }} items)</span>
@@ -138,25 +153,31 @@
         <div class="overflow-x-auto">
             <table class="min-w-full">
                 <thead>
-                    <tr class="border-b border-gray-100 bg-gray-50/40">
+                    <tr class="bg-gradient-to-r from-gray-50 to-slate-50 border-b-2 border-gray-200 divide-x divide-gray-200">
                         <th class="th">Medicine</th>
-                        <th class="th">Type</th>
-                        <th class="th">Stock</th>
-                        <th class="th">Location</th>
-                        <th class="th">Expiry</th>
-                        <th class="th">Status</th>
-                        <th class="th text-right">Actions</th>
+                        <th class="th text-center">Type</th>
+                        <th class="th text-center">Stock</th>
+                        <th class="th text-center">Location</th>
+                        <th class="th text-center">Expiry</th>
+                        <th class="th text-center">Status</th>
+                        <th class="th text-center">Actions</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-50">
+                <tbody class="divide-y divide-gray-100">
                     @forelse($medicines as $m)
                     @php
                         $qty = $m->latestInventory?->quantity ?? 0;
                         $min = $m->latestInventory?->min_stock_level ?? 10;
                         $exp = $m->latestInventory?->expiration_date;
                         $daysLeft = $exp ? now()->diffInDays($exp, false) : null;
+                        $rowBg = $qty <= 0 ? 'bg-red-50/60 hover:bg-red-100/60'
+                            : ($qty <= 5 ? 'bg-red-50/40 hover:bg-red-100/50'
+                            : ($qty <= $min ? 'bg-amber-50/40 hover:bg-amber-100/50'
+                            : 'hover:bg-brand-50/40'));
                     @endphp
-                    <tr onclick="window.location='{{ route('medicines.show', $m) }}'" class="hover:bg-brand-50/30 transition-colors group cursor-pointer">
+                    <tr data-href="{{ route('medicines.show', $m) }}"
+                        onclick="if(!event.target.closest('.row-action')) window.location=this.dataset.href"
+                        class="transition-colors group cursor-pointer divide-x divide-gray-100 {{ $rowBg }}">
                         <td class="td">
                             <div class="flex items-center gap-3">
                                 <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
@@ -168,21 +189,21 @@
                                 </div>
                             </div>
                         </td>
-                        <td class="td">
+                        <td class="td text-center">
                             @if($m->type === 'prescription')
                                 <span class="badge-rx"><i class="fa-solid fa-prescription-bottle text-[10px]"></i> Rx</span>
                             @else
                                 <span class="badge-otc"><i class="fa-solid fa-capsules text-[10px]"></i> OTC</span>
                             @endif
                         </td>
-                        <td class="td">
-                            <p class="font-bold {{ $qty <= 5 ? 'text-red-600' : ($qty <= $min ? 'text-amber-600' : 'text-gray-900') }}">{{ $qty }}</p>
+                        <td class="td text-center">
+                            <p class="font-extrabold text-base {{ $qty <= 5 ? 'text-red-600' : ($qty <= $min ? 'text-amber-600' : 'text-gray-900') }}">{{ $qty }}</p>
                             <p class="text-xs text-gray-400">min {{ $min }}</p>
                         </td>
-                        <td class="td">
+                        <td class="td text-center">
                             <p class="text-xs text-gray-600">{{ $m->location?->full_location ?? '—' }}</p>
                         </td>
-                        <td class="td">
+                        <td class="td text-center">
                             @if($exp)
                                 <p class="text-xs {{ $daysLeft <= 30 ? 'text-orange-600 font-semibold' : 'text-gray-600' }}">{{ $exp->format('M j, Y') }}</p>
                                 @if($daysLeft <= 30)
@@ -192,7 +213,7 @@
                                 <span class="text-gray-300 text-xs">—</span>
                             @endif
                         </td>
-                        <td class="td">
+                        <td class="td text-center">
                             @if($qty <= 0)
                                 <span class="badge-crit"><i class="fa-solid fa-circle-xmark"></i> Out</span>
                             @elseif($qty <= 5)
@@ -203,16 +224,20 @@
                                 <span class="badge-ok"><i class="fa-solid fa-check"></i> Good</span>
                             @endif
                         </td>
-                        <td class="td text-right" onclick="event.stopPropagation()">
-                            <div class="flex items-center justify-end gap-1">
-                                <button onclick="openDispenseModal({{ $m->id }}, '{{ addslashes($m->name) }}', {{ $qty }})"
-                                        class="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-emerald-50 text-gray-400 hover:text-emerald-600 transition-colors"
+                        <td class="td text-center">
+                            <div class="flex items-center justify-center gap-1 row-action">
+                                <button type="button"
+                                        onclick="event.stopPropagation(); openDispenseModal({{ $m->id }}, '{{ addslashes($m->name) }}', {{ $qty }})"
+                                        class="row-action w-8 h-8 rounded-lg flex items-center justify-center hover:bg-emerald-100 text-emerald-500 hover:text-emerald-700 transition-colors"
                                         title="Dispense">
                                     <i class="fa-solid fa-hand-holding-medical text-sm"></i>
                                 </button>
-                                <form method="POST" action="{{ route('medicines.destroy', $m) }}" class="inline" onsubmit="event.stopPropagation(); return confirm('Delete {{ addslashes($m->name) }}?')">
+                                <form method="POST" action="{{ route('medicines.destroy', $m) }}" class="inline row-action"
+                                      onsubmit="event.stopPropagation(); return confirm('Delete {{ addslashes($m->name) }}?')"
+                                      onclick="event.stopPropagation()">
                                     @csrf @method('DELETE')
-                                    <button type="submit" class="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors">
+                                    <button type="submit" onclick="event.stopPropagation()"
+                                            class="row-action w-8 h-8 rounded-lg flex items-center justify-center hover:bg-red-100 text-gray-400 hover:text-red-500 transition-colors">
                                         <i class="fa-solid fa-trash text-sm"></i>
                                     </button>
                                 </form>
@@ -241,36 +266,36 @@
 
     <!-- ── Expired Archive ── -->
     @if($expiredCount > 0)
-    <div class="card overflow-hidden border-red-100">
-        <button onclick="toggleArchive()" class="w-full px-5 py-3 border-b border-red-100 bg-red-50/40 hover:bg-red-50 flex items-center justify-between transition-colors">
+    <div id="expiredArchive" class="card overflow-hidden border-2 border-gray-200">
+        <button onclick="toggleArchive()" class="w-full px-5 py-3 border-b border-gray-200 bg-gradient-to-r from-gray-100 to-gray-50 hover:from-gray-200 hover:to-gray-100 flex items-center justify-between transition-colors">
             <h3 class="font-bold text-gray-800 text-sm flex items-center gap-2">
-                <i class="fa-solid fa-box-archive text-red-500"></i> Expired Archive
-                <span class="text-xs text-red-600 font-normal bg-red-100 px-2 py-0.5 rounded-full">{{ $expiredCount }} items need disposal</span>
+                <i class="fa-solid fa-box-archive text-gray-600"></i> Expired Archive
+                <span class="text-xs text-gray-700 font-semibold bg-white px-2 py-0.5 rounded-full border border-gray-300">{{ $expiredCount }} items need disposal</span>
             </h3>
-            <i id="archiveCaret" class="fa-solid fa-chevron-down text-gray-400 transition-transform"></i>
+            <i id="archiveCaret" class="fa-solid fa-chevron-down text-gray-500 transition-transform"></i>
         </button>
         <div id="archiveContent" class="hidden">
             <div class="overflow-x-auto">
                 <table class="min-w-full">
                     <thead>
-                        <tr class="border-b border-gray-100 bg-gray-50/40">
+                        <tr class="border-b-2 border-gray-200 bg-gray-50/40 divide-x divide-gray-200">
                             <th class="th">Medicine</th>
-                            <th class="th">Stock</th>
-                            <th class="th">Location</th>
-                            <th class="th">Expired On</th>
-                            <th class="th text-right">Actions</th>
+                            <th class="th text-center">Stock</th>
+                            <th class="th text-center">Location</th>
+                            <th class="th text-center">Expired On</th>
+                            <th class="th text-center">Actions</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-50">
+                    <tbody class="divide-y divide-gray-100">
                         @foreach($expiredMedicines as $m)
                         @php
                             $exp = $m->latestInventory?->expiration_date;
                             $daysExpired = $exp ? abs(now()->diffInDays($exp, false)) : 0;
                         @endphp
-                        <tr class="hover:bg-red-50/30 transition-colors">
+                        <tr class="hover:bg-gray-50 transition-colors divide-x divide-gray-100">
                             <td class="td">
                                 <div class="flex items-center gap-3">
-                                    <div class="w-9 h-9 rounded-lg bg-gray-200 text-gray-500 flex items-center justify-center font-bold text-xs flex-shrink-0">
+                                    <div class="w-9 h-9 rounded-lg bg-gray-300 text-gray-600 flex items-center justify-center font-bold text-xs flex-shrink-0">
                                         {{ strtoupper(substr($m->name, 0, 1)) }}
                                     </div>
                                     <div>
@@ -279,13 +304,13 @@
                                     </div>
                                 </div>
                             </td>
-                            <td class="td text-gray-500">{{ $m->latestInventory?->quantity ?? 0 }}u</td>
-                            <td class="td text-xs text-gray-500">{{ $m->location?->full_location ?? '—' }}</td>
-                            <td class="td">
+                            <td class="td text-center text-gray-500">{{ $m->latestInventory?->quantity ?? 0 }}u</td>
+                            <td class="td text-center text-xs text-gray-500">{{ $m->location?->full_location ?? '—' }}</td>
+                            <td class="td text-center">
                                 <p class="text-xs text-red-600 font-semibold">{{ $exp?->format('M j, Y') }}</p>
                                 <p class="text-xs text-gray-400">{{ $daysExpired }}d ago</p>
                             </td>
-                            <td class="td text-right">
+                            <td class="td text-center">
                                 <span class="badge-expired"><i class="fa-solid fa-ban"></i> Expired</span>
                                 <form method="POST" action="{{ route('medicines.destroy', $m) }}" class="inline ml-2" onsubmit="return confirm('Permanently dispose {{ addslashes($m->name) }}?')">
                                     @csrf @method('DELETE')
@@ -318,7 +343,7 @@
                         <p class="text-xs text-white/80">Manual inventory entry</p>
                     </div>
                 </div>
-                <button onclick="closeAddModal()" class="w-8 h-8 rounded-xl flex items-center justify-center text-white/80 hover:text-white hover:bg-white/20">
+                <button type="button" onclick="closeAddModal()" class="w-8 h-8 rounded-xl flex items-center justify-center text-white/80 hover:text-white hover:bg-white/20">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
@@ -409,7 +434,7 @@
         <div class="px-6 py-5 border-b border-gray-100">
             <div class="flex items-center justify-between">
                 <h3 class="text-lg font-bold text-gray-900">Dispense Medicine</h3>
-                <button onclick="closeDispenseModal()" class="w-8 h-8 rounded-xl flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-100">
+                <button type="button" onclick="closeDispenseModal()" class="w-8 h-8 rounded-xl flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-100">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
@@ -444,27 +469,12 @@
         <form method="POST" action="{{ route('medicines.locations.store') }}" class="px-6 py-5 space-y-3">
             @csrf
             <div class="grid grid-cols-2 gap-3">
-                <div>
-                    <label class="label">Cabinet <span class="text-red-500">*</span></label>
-                    <input type="text" name="cabinet" required class="input" placeholder="A">
-                </div>
-                <div>
-                    <label class="label">Shelf <span class="text-red-500">*</span></label>
-                    <input type="text" name="shelf" required class="input" placeholder="2">
-                </div>
-                <div>
-                    <label class="label">Level <span class="text-red-500">*</span></label>
-                    <input type="text" name="level" required class="input" placeholder="Top">
-                </div>
-                <div>
-                    <label class="label">Section</label>
-                    <input type="text" name="section" class="input" placeholder="Left">
-                </div>
+                <div><label class="label">Cabinet <span class="text-red-500">*</span></label><input type="text" name="cabinet" required class="input" placeholder="A"></div>
+                <div><label class="label">Shelf <span class="text-red-500">*</span></label><input type="text" name="shelf" required class="input" placeholder="2"></div>
+                <div><label class="label">Level <span class="text-red-500">*</span></label><input type="text" name="level" required class="input" placeholder="Top"></div>
+                <div><label class="label">Section</label><input type="text" name="section" class="input" placeholder="Left"></div>
             </div>
-            <div>
-                <label class="label">Notes</label>
-                <textarea name="notes" rows="2" class="input resize-none" placeholder="Optional notes…"></textarea>
-            </div>
+            <div><label class="label">Notes</label><textarea name="notes" rows="2" class="input resize-none"></textarea></div>
             <div class="flex justify-between gap-3 pt-2 border-t border-gray-100">
                 <button type="button" onclick="closeLocationModal()" class="btn-secondary"><i class="fa-solid fa-xmark"></i> Cancel</button>
                 <button type="submit" class="btn-primary"><i class="fa-solid fa-plus"></i> Add Location</button>
@@ -475,16 +485,9 @@
 
 @push('scripts')
 <script>
-function toggleAddMenu() { document.getElementById('addMenu').classList.toggle('hidden'); }
-document.addEventListener('click', e => {
-    if (!e.target.closest('[onclick*="toggleAddMenu"]') && !e.target.closest('#addMenu')) {
-        document.getElementById('addMenu').classList.add('hidden');
-    }
-});
-
-function openAddModal()      { document.getElementById('addMedicineModal').classList.remove('hidden'); document.body.style.overflow='hidden'; }
+function openAddModal()      { document.getElementById('addMedicineMenu').classList.add('hidden'); document.getElementById('addMedicineModal').classList.remove('hidden'); document.body.style.overflow='hidden'; }
 function closeAddModal()     { document.getElementById('addMedicineModal').classList.add('hidden'); document.body.style.overflow=''; }
-function openLocationModal() { document.getElementById('locationModal').classList.remove('hidden'); document.body.style.overflow='hidden'; }
+function openLocationModal() { document.getElementById('addMedicineMenu').classList.add('hidden'); document.getElementById('locationModal').classList.remove('hidden'); document.body.style.overflow='hidden'; }
 function closeLocationModal(){ document.getElementById('locationModal').classList.add('hidden'); document.body.style.overflow=''; }
 function closeDispenseModal(){ document.getElementById('dispenseModal').classList.add('hidden'); document.body.style.overflow=''; }
 

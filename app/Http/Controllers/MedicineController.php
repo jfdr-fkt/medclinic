@@ -64,7 +64,7 @@ class MedicineController extends Controller
             );
         }
 
-        // Active medicines (non-expired)
+        // Active medicines (non-expired only)
         $medicines = (clone $query)
             ->whereDoesntHave('latestInventory', fn($q) => $q->where('expiration_date', '<', now()))
             ->orderBy('name')->paginate(15)->withQueryString();
@@ -76,12 +76,17 @@ class MedicineController extends Controller
 
         $locations = MedicineLocation::all();
 
-        $totalMedicines = Medicine::count();
-        $criticalStock  = Medicine::whereHas('inventories', fn($q) => $q->where('quantity', '<=', 5))->count();
-        $lowStock       = Medicine::whereHas('inventories', fn($q) =>
+        // Stats — only count non-expired medicines (expired is a separate stat)
+        $activeBase = Medicine::whereDoesntHave('latestInventory', fn($q) => $q->where('expiration_date', '<', now()));
+
+        $totalMedicines = (clone $activeBase)->count();
+        $criticalStock  = (clone $activeBase)->whereHas('inventories', fn($q) =>
+            $q->where('quantity', '<=', 5)->where('quantity', '>', 0)
+        )->count();
+        $lowStock       = (clone $activeBase)->whereHas('inventories', fn($q) =>
             $q->whereColumn('quantity', '<=', 'min_stock_level')->where('quantity', '>', 5)
         )->count();
-        $expiringSoon   = Medicine::whereHas('inventories', fn($q) =>
+        $expiringSoon   = (clone $activeBase)->whereHas('inventories', fn($q) =>
             $q->where('expiration_date', '<=', now()->addDays(30))
               ->where('expiration_date', '>=', now())
         )->count();

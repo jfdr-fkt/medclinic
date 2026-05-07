@@ -53,25 +53,26 @@
         </div>
     </form>
 
-    <!-- Table -->
+    <!-- Table with vertical separators + centered columns -->
     <div class="card overflow-hidden">
         <div class="overflow-x-auto">
             <table class="min-w-full">
                 <thead>
-                    <tr class="border-b border-gray-100 bg-gray-50/70">
+                    <tr class="bg-gradient-to-r from-gray-50 to-slate-50 border-b-2 border-gray-200 divide-x divide-gray-200">
                         <th class="th">Patient</th>
-                        <th class="th">ID</th>
-                        <th class="th">Age</th>
-                        <th class="th">Assigned To</th>
-                        <th class="th">Last Visit</th>
-                        <th class="th text-right">Actions</th>
+                        <th class="th text-center">ID</th>
+                        <th class="th text-center">Age</th>
+                        <th class="th text-center">Assigned To</th>
+                        <th class="th text-center">Last Visit</th>
+                        <th class="th text-center">Actions</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-50">
+                <tbody class="divide-y divide-gray-100">
                     @forelse($patients as $patient)
                     @php $isPinned = in_array($patient->id, $pinnedIds); @endphp
-                    <tr onclick="window.location='{{ route('patients.show', $patient) }}'"
-                        class="hover:bg-brand-50/30 transition-colors group cursor-pointer">
+                    <tr data-href="{{ route('patients.show', $patient) }}"
+                        onclick="if(!event.target.closest('.row-action')) window.location=this.dataset.href"
+                        class="hover:bg-brand-50/40 transition-colors group cursor-pointer divide-x divide-gray-100">
                         <td class="td">
                             <div class="flex items-center gap-3">
                                 <div class="w-9 h-9 rounded-full bg-gradient-to-br from-brand-400 to-brand-700 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
@@ -81,29 +82,29 @@
                                     <p class="font-semibold text-gray-900 group-hover:text-brand-700 transition-colors flex items-center gap-1.5">
                                         {{ $patient->name }}
                                         @if($isPinned)
-                                        <i class="fa-solid fa-thumbtack text-amber-400 text-xs"></i>
+                                        <i class="fa-solid fa-thumbtack text-amber-500 text-xs"></i>
                                         @endif
                                     </p>
                                     <p class="text-xs text-gray-400">{{ $patient->phone ?? 'No phone' }}</p>
                                 </div>
                             </div>
                         </td>
-                        <td class="td">
-                            <span class="font-mono text-xs bg-slate-100 text-slate-700 px-2 py-1 rounded-lg">{{ $patient->patient_id }}</span>
+                        <td class="td text-center">
+                            <span class="font-mono text-xs bg-slate-100 text-slate-700 px-2 py-1 rounded-lg inline-block">{{ $patient->patient_id }}</span>
                         </td>
-                        <td class="td text-gray-600">
+                        <td class="td text-center text-gray-600">
                             @if($patient->date_of_birth)
-                                <p class="font-medium">{{ $patient->date_of_birth->age }} yrs</p>
+                                <p class="font-semibold">{{ $patient->date_of_birth->age }} yrs</p>
                                 <p class="text-xs text-gray-400">{{ $patient->date_of_birth->format('M j, Y') }}</p>
                             @else
                                 <span class="text-gray-300">—</span>
                             @endif
                         </td>
-                        <td class="td">
+                        <td class="td text-center">
                             <p class="text-sm font-medium text-gray-800">{{ $patient->doctor?->name ?? 'Unassigned' }}</p>
                             <p class="text-xs text-gray-400">Nurse: {{ $patient->nurse?->name ?? '—' }}</p>
                         </td>
-                        <td class="td">
+                        <td class="td text-center">
                             @if($patient->last_visit)
                                 <p class="text-sm text-gray-700">{{ $patient->last_visit->format('M j, Y') }}</p>
                                 <p class="text-xs text-gray-400">{{ $patient->last_visit->diffForHumans() }}</p>
@@ -111,19 +112,21 @@
                                 <span class="text-gray-300">—</span>
                             @endif
                         </td>
-                        <td class="td text-right" onclick="event.stopPropagation()">
-                            <div class="flex items-center justify-end gap-1">
-                                <button onclick="togglePin({{ $patient->id }}, this); event.stopPropagation();"
-                                        class="w-8 h-8 rounded-lg flex items-center justify-center transition-colors
-                                            {{ $isPinned ? 'bg-amber-50 text-amber-500' : 'hover:bg-gray-100 text-gray-400 hover:text-amber-500' }}"
-                                        title="{{ $isPinned ? 'Unpin' : 'Pin' }}">
+                        <td class="td text-center">
+                            <div class="flex items-center justify-center gap-1 row-action">
+                                <button type="button"
+                                        onclick="event.stopPropagation(); event.preventDefault(); togglePin({{ $patient->id }}, this);"
+                                        class="row-action w-8 h-8 rounded-lg flex items-center justify-center transition-colors
+                                            {{ $isPinned ? 'bg-amber-100 text-amber-600 hover:bg-amber-200' : 'hover:bg-amber-50 text-gray-400 hover:text-amber-500' }}"
+                                        title="{{ $isPinned ? 'Unpin' : 'Pin to dashboard' }}">
                                     <i class="fa-solid fa-thumbtack text-sm"></i>
                                 </button>
-                                <form method="POST" action="{{ route('patients.destroy', $patient) }}" class="inline"
-                                      onsubmit="event.stopPropagation(); return confirm('Delete {{ $patient->name }}\'s record?')">
+                                <form method="POST" action="{{ route('patients.destroy', $patient) }}" class="inline row-action"
+                                      onsubmit="event.stopPropagation(); return confirm('Delete {{ addslashes($patient->name) }}\'s record?')"
+                                      onclick="event.stopPropagation()">
                                     @csrf @method('DELETE')
                                     <button type="submit" onclick="event.stopPropagation()"
-                                            class="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors">
+                                            class="row-action w-8 h-8 rounded-lg flex items-center justify-center hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors">
                                         <i class="fa-solid fa-trash text-sm"></i>
                                     </button>
                                 </form>
@@ -152,10 +155,9 @@
     </div>
 </div>
 
-<!-- ── Add Patient Modal (redesigned with colored sections + spaced buttons) ── -->
+<!-- ── Add Patient Modal ── -->
 <div id="addPatientModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <!-- Header with gradient -->
         <div class="relative bg-gradient-to-r from-brand-600 to-brand-700 px-6 py-5 text-white">
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-3">
@@ -176,7 +178,6 @@
         <form method="POST" action="{{ route('patients.store') }}" class="px-6 py-5 space-y-5">
             @csrf
 
-            <!-- SECTION: Identity -->
             <div class="border-l-4 border-blue-400 bg-blue-50/30 rounded-r-xl p-4 space-y-3">
                 <p class="text-xs font-bold text-blue-700 uppercase tracking-wider flex items-center gap-2">
                     <i class="fa-solid fa-id-card"></i> Identity
@@ -193,7 +194,6 @@
                 </div>
             </div>
 
-            <!-- SECTION: Personal -->
             <div class="border-l-4 border-purple-400 bg-purple-50/30 rounded-r-xl p-4 space-y-3">
                 <p class="text-xs font-bold text-purple-700 uppercase tracking-wider flex items-center gap-2">
                     <i class="fa-solid fa-user"></i> Personal Details
@@ -214,7 +214,6 @@
                 </div>
             </div>
 
-            <!-- SECTION: Assignment -->
             <div class="border-l-4 border-emerald-400 bg-emerald-50/30 rounded-r-xl p-4 space-y-3">
                 <p class="text-xs font-bold text-emerald-700 uppercase tracking-wider flex items-center gap-2">
                     <i class="fa-solid fa-stethoscope"></i> Care Team
@@ -241,7 +240,6 @@
                 </div>
             </div>
 
-            <!-- SECTION: Medical -->
             <div class="border-l-4 border-amber-400 bg-amber-50/30 rounded-r-xl p-4 space-y-3">
                 <p class="text-xs font-bold text-amber-700 uppercase tracking-wider flex items-center gap-2">
                     <i class="fa-solid fa-notes-medical"></i> Medical Notes
@@ -249,7 +247,6 @@
                 <textarea name="medical_history" rows="3" class="input resize-none" placeholder="Allergies, conditions, medications, family history…">{{ old('medical_history') }}</textarea>
             </div>
 
-            <!-- Spaced buttons -->
             <div class="flex justify-between items-center gap-3 pt-3 border-t border-gray-100">
                 <button type="button" onclick="closeModal()" class="btn-secondary">
                     <i class="fa-solid fa-xmark"></i> Cancel
@@ -269,13 +266,27 @@ function closeModal() { document.getElementById('addPatientModal').classList.add
 document.getElementById('addPatientModal').addEventListener('click', e => { if(e.target===e.currentTarget) closeModal(); });
 document.addEventListener('keydown', e => { if(e.key==='Escape') closeModal(); });
 
-function togglePin(id, btn) {
-    fetch(`/patients/${id}/pin`, {
-        method:'POST',
-        headers:{ 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept':'application/json' }
-    })
-    .then(r => r.json())
-    .then(() => location.reload());
+async function togglePin(id, btn) {
+    const originalHTML = btn.innerHTML;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-sm"></i>';
+    btn.disabled = true;
+    try {
+        const r = await fetch(`/patients/${id}/pin`, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            }
+        });
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        await r.json();
+        location.reload();
+    } catch (err) {
+        btn.innerHTML = originalHTML;
+        btn.disabled = false;
+        alert('Could not toggle pin: ' + err.message);
+    }
 }
 
 @if($errors->any()) openModal(); @endif
