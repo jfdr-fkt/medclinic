@@ -53,7 +53,7 @@
             <p class="text-xs font-semibold text-emerald-700/70 mt-1">Online Now</p>
         </div>
         @foreach(['admin','doctor','nurse','assistant'] as $role)
-            @php $cfg = $roleConfig[$role]; $count = $grouped[$role]?->count() ?? 0; @endphp
+            @php $cfg = $roleConfig[$role]; $count = $grouped->get($role)?->count() ?? 0; @endphp
             <div class="rounded-2xl p-5 bg-gradient-to-br {{ $cfg['softBg'] }} border-2 {{ $cfg['border'] }}">
                 <div class="flex items-center justify-between mb-3">
                     <div class="w-10 h-10 rounded-xl {{ $cfg['iconBg'] }} flex items-center justify-center shadow-md {{ $cfg['shadow'] }}">
@@ -68,7 +68,7 @@
 
     <!-- Staff grouped by role with section headers -->
     @foreach(['admin','doctor','nurse','assistant'] as $role)
-        @if(isset($grouped[$role]) && $grouped[$role]->count() > 0)
+        @if($grouped->get($role)?->count() > 0)
         @php $cfg = $roleConfig[$role]; @endphp
 
         <div class="space-y-3">
@@ -79,13 +79,13 @@
                 </div>
                 <div class="flex-1">
                     <h2 class="font-bold {{ $cfg['text'] }} text-base">{{ $cfg['label'] }}</h2>
-                    <p class="text-xs {{ $cfg['text'] }}/70">{{ $grouped[$role]->count() }} {{ Str::lower($cfg['label']) }} on the team</p>
+                    <p class="text-xs {{ $cfg['text'] }}/70">{{ $grouped->get($role)->count() }} {{ Str::lower($cfg['label']) }} on the team</p>
                 </div>
             </div>
 
             <!-- Cards in this group -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                @foreach($grouped[$role] as $member)
+                @foreach($grouped->get($role) as $member)
                 @php
                     $isOnline = $member->isOnline();
                     $todayShift = $shifts->where('user_id', $member->id)->where('shift_date', today()->toDateString())->first();
