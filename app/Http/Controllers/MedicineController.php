@@ -36,43 +36,38 @@ class MedicineController extends Controller
         if ($request->filled('location_id')) {
             $query->where('location_id', $request->location_id);
         }
-        if ($request->filled('status')) {
-            switch ($request->status) {
-                case 'good':
-                    $query->whereHas('inventories', fn($q) => $q->whereColumn('quantity', '>', 'min_stock_level'));
-                    break;
-                case 'low':
-                    $query->whereHas('inventories', fn($q) =>
-                        $q->whereColumn('quantity', '<=', 'min_stock_level')->where('quantity', '>', 5)
-                    );
-                    break;
-                case 'critical':
-                    $query->whereHas('inventories', fn($q) => $q->where('quantity', '<=', 5)->where('quantity', '>', 0));
-                    break;
-                case 'out':
-                    $query->whereHas('inventories', fn($q) => $q->where('quantity', '<=', 0));
-                    break;
-            }
-        }
-        if ($request->boolean('low_stock')) {
-            $query->whereHas('inventories', fn($q) => $q->whereColumn('quantity', '<=', 'min_stock_level'));
-        }
-        if ($request->boolean('expiring')) {
-            $query->whereHas('inventories', fn($q) =>
-                $q->where('expiration_date', '<=', now()->addDays(30))
-                  ->where('expiration_date', '>=', now())
-            );
+        // Filter card view (drives which subset to show)
+        $view = $request->get('view', 'all');
+        switch ($view) {
+            case 'critical':
+                $query->whereHas('inventories', fn($q) => $q->where('quantity', '<=', 5)->where('quantity', '>', 0));
+                break;
+            case 'low':
+                $query->whereHas('inventories', fn($q) =>
+                    $q->whereColumn('quantity', '<=', 'min_stock_level')->where('quantity', '>', 5)
+                );
+                break;
+            case 'expiring':
+                $query->whereHas('inventories', fn($q) =>
+                    $q->where('expiration_date', '<=', now()->addDays(30))
+                      ->where('expiration_date', '>=', now())
+                );
+                break;
         }
 
-        // Active medicines (non-expired only)
-        $medicines = (clone $query)
-            ->whereDoesntHave('latestInventory', fn($q) => $q->where('expiration_date', '<', now()))
-            ->orderBy('name')->paginate(15)->withQueryString();
-
-        // Expired archive (separate)
-        $expiredMedicines = Medicine::with(['location', 'latestInventory'])
-            ->whereHas('latestInventory', fn($q) => $q->where('expiration_date', '<', now()))
-            ->orderBy('name')->get();
+        // If user clicked "Expired Archive" card, show only expired in the main list
+        if ($view === 'expired') {
+            $medicines = (clone $query)
+                ->whereHas('latestInventory', fn($q) => $q->where('expiration_date', '<', now()))
+                ->orderBy('name')->paginate(15)->withQueryString();
+            $expiredMedicines = collect();
+        } else {
+            // Active medicines (non-expired only)
+            $medicines = (clone $query)
+                ->whereDoesntHave('latestInventory', fn($q) => $q->where('expiration_date', '<', now()))
+                ->orderBy('name')->paginate(15)->withQueryString();
+            $expiredMedicines = collect(); // archive collapsed; users access it via the Expired card
+        }
 
         $locations = MedicineLocation::all();
 
@@ -90,7 +85,7 @@ class MedicineController extends Controller
             $q->where('expiration_date', '<=', now()->addDays(30))
               ->where('expiration_date', '>=', now())
         )->count();
-        $expiredCount = $expiredMedicines->count();
+        $expiredCount = Medicine::whereHas('latestInventory', fn($q) => $q->where('expiration_date', '<', now()))->count();
 
         return view('medicines.index', compact(
             'medicines', 'expiredMedicines', 'locations',

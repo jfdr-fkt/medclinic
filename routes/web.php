@@ -18,7 +18,7 @@ Route::get('/register', [AuthController::class, 'showRegister'])->name('register
 Route::post('/register',[AuthController::class, 'register'])->name('register.post');
 Route::post('/logout',  [AuthController::class, 'logout'])->name('logout');
 
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'no.back'])->group(function () {
 
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -59,10 +59,12 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/staff/shifts/store',            [StaffController::class, 'storeShift'])->name('staff.shifts.store');
 
     // Chat
-    Route::get('/chat',          [ChatController::class, 'index'])->name('chat.index');
-    Route::post('/chat/send',    [ChatController::class, 'send'])->name('chat.send');
-    Route::get('/chat/messages', [ChatController::class, 'messages'])->name('chat.messages');
-    Route::get('/chat/users',    [ChatController::class, 'users'])->name('chat.users');
+    Route::get('/chat',                           [ChatController::class, 'index'])->name('chat.index');
+    Route::post('/chat/send',                     [ChatController::class, 'send'])->name('chat.send');
+    Route::get('/chat/messages',                  [ChatController::class, 'messages'])->name('chat.messages');
+    Route::get('/chat/sidebar',                   [ChatController::class, 'sidebar'])->name('chat.sidebar');
+    Route::post('/chat/groups',                   [ChatController::class, 'storeGroup'])->name('chat.groups.store');
+    Route::post('/chat/groups/{group}/add',       [ChatController::class, 'addToGroup'])->name('chat.groups.add');
 
     // AJAX API endpoints
     Route::prefix('api')->group(function () {

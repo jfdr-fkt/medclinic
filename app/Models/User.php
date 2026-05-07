@@ -20,6 +20,7 @@ class User extends Authenticatable
 
     public function shifts()         { return $this->hasMany(Shift::class); }
     public function pinnedPatients() { return $this->belongsToMany(Patient::class, 'pinned_patients'); }
+    public function chatGroups()     { return $this->belongsToMany(ChatGroup::class, 'chat_group_members', 'user_id', 'group_id')->withPivot('last_read_at')->withTimestamps(); }
 
     public function isOnline()
     {

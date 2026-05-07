@@ -43,110 +43,124 @@
         </div>
     </div>
 
-    <!-- Colorful Stat cards (5: Total / Critical / Low / Expiring / Expired) -->
+    <!-- Clickable filter cards -->
+    @php
+        $activeFilter = request('view') ?: 'all';
+        $cardLink = function($view) {
+            return request()->fullUrlWithQuery(['view' => $view, 'expiring' => null, 'low_stock' => null, 'status' => null]);
+        };
+    @endphp
     <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <!-- Total Active -->
-        <div class="rounded-2xl p-5 bg-gradient-to-br from-brand-50 to-brand-100/50 border-2 border-brand-200">
+        <a href="{{ $cardLink('all') }}"
+           class="rounded-2xl p-5 bg-gradient-to-br from-brand-50 to-brand-100/50 border-2 {{ $activeFilter==='all' ? 'border-brand-600 ring-2 ring-brand-200' : 'border-brand-200 hover:border-brand-400' }} transition-all">
             <div class="flex items-center justify-between mb-3">
                 <div class="w-10 h-10 rounded-xl bg-brand-500 flex items-center justify-center shadow-md shadow-brand-200">
                     <i class="fa-solid fa-pills text-white text-sm"></i>
                 </div>
+                @if($activeFilter==='all')<i class="fa-solid fa-circle-check text-brand-600"></i>@endif
             </div>
             <p class="text-3xl font-extrabold text-brand-900">{{ $totalMedicines }}</p>
             <p class="text-xs font-semibold text-brand-700/70 mt-1">Total Active</p>
-        </div>
-        <!-- Critical -->
-        <div class="rounded-2xl p-5 bg-gradient-to-br from-red-50 to-red-100/50 border-2 border-red-200">
+        </a>
+        <a href="{{ $cardLink('critical') }}"
+           class="rounded-2xl p-5 bg-gradient-to-br from-red-50 to-red-100/50 border-2 {{ $activeFilter==='critical' ? 'border-red-600 ring-2 ring-red-200' : 'border-red-200 hover:border-red-400' }} transition-all">
             <div class="flex items-center justify-between mb-3">
                 <div class="w-10 h-10 rounded-xl bg-red-500 flex items-center justify-center shadow-md shadow-red-200">
                     <i class="fa-solid fa-triangle-exclamation text-white text-sm"></i>
                 </div>
+                @if($activeFilter==='critical')<i class="fa-solid fa-circle-check text-red-600"></i>@endif
             </div>
             <p class="text-3xl font-extrabold text-red-900">{{ $criticalStock }}</p>
             <p class="text-xs font-semibold text-red-700/70 mt-1">Critical (≤5)</p>
-        </div>
-        <!-- Low -->
-        <div class="rounded-2xl p-5 bg-gradient-to-br from-amber-50 to-amber-100/50 border-2 border-amber-200">
+        </a>
+        <a href="{{ $cardLink('low') }}"
+           class="rounded-2xl p-5 bg-gradient-to-br from-amber-50 to-amber-100/50 border-2 {{ $activeFilter==='low' ? 'border-amber-600 ring-2 ring-amber-200' : 'border-amber-200 hover:border-amber-400' }} transition-all">
             <div class="flex items-center justify-between mb-3">
                 <div class="w-10 h-10 rounded-xl bg-amber-500 flex items-center justify-center shadow-md shadow-amber-200">
                     <i class="fa-solid fa-circle-exclamation text-white text-sm"></i>
                 </div>
+                @if($activeFilter==='low')<i class="fa-solid fa-circle-check text-amber-600"></i>@endif
             </div>
             <p class="text-3xl font-extrabold text-amber-900">{{ $lowStock }}</p>
             <p class="text-xs font-semibold text-amber-700/70 mt-1">Low Stock</p>
-        </div>
-        <!-- Expiring Soon -->
-        <div class="rounded-2xl p-5 bg-gradient-to-br from-orange-50 to-orange-100/50 border-2 border-orange-200">
+        </a>
+        <a href="{{ $cardLink('expiring') }}"
+           class="rounded-2xl p-5 bg-gradient-to-br from-orange-50 to-orange-100/50 border-2 {{ $activeFilter==='expiring' ? 'border-orange-600 ring-2 ring-orange-200' : 'border-orange-200 hover:border-orange-400' }} transition-all">
             <div class="flex items-center justify-between mb-3">
                 <div class="w-10 h-10 rounded-xl bg-orange-500 flex items-center justify-center shadow-md shadow-orange-200">
                     <i class="fa-solid fa-calendar-xmark text-white text-sm"></i>
                 </div>
+                @if($activeFilter==='expiring')<i class="fa-solid fa-circle-check text-orange-600"></i>@endif
             </div>
             <p class="text-3xl font-extrabold text-orange-900">{{ $expiringSoon }}</p>
             <p class="text-xs font-semibold text-orange-700/70 mt-1">Expiring ≤30d</p>
-        </div>
-        <!-- Expired (separate count) -->
-        <button type="button" onclick="document.getElementById('expiredArchive')?.scrollIntoView({behavior:'smooth'})"
-                class="text-left rounded-2xl p-5 bg-gradient-to-br from-gray-50 to-gray-200/50 border-2 border-gray-300 hover:border-gray-500 transition-colors">
+        </a>
+        <a href="{{ $cardLink('expired') }}"
+           class="rounded-2xl p-5 bg-gradient-to-br from-gray-50 to-gray-200/50 border-2 {{ $activeFilter==='expired' ? 'border-gray-700 ring-2 ring-gray-300' : 'border-gray-300 hover:border-gray-500' }} transition-all">
             <div class="flex items-center justify-between mb-3">
                 <div class="w-10 h-10 rounded-xl bg-gray-600 flex items-center justify-center shadow-md shadow-gray-300">
                     <i class="fa-solid fa-box-archive text-white text-sm"></i>
                 </div>
+                @if($activeFilter==='expired')<i class="fa-solid fa-circle-check text-gray-700"></i>@endif
             </div>
             <p class="text-3xl font-extrabold text-gray-700">{{ $expiredCount }}</p>
             <p class="text-xs font-semibold text-gray-600 mt-1">Expired Archive</p>
-        </button>
+        </a>
     </div>
 
-    <!-- Advanced filters -->
+    <!-- Big search bar -->
     <form method="GET" action="{{ route('medicines.index') }}" class="card p-4">
-        <div class="grid grid-cols-1 md:grid-cols-5 gap-3">
+        @if(request('view'))<input type="hidden" name="view" value="{{ request('view') }}">@endif
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div class="md:col-span-2 relative">
-                <i class="fa-solid fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm pointer-events-none"></i>
-                <input type="text" name="search" value="{{ request('search') }}" placeholder="Search name, generic, barcode…" class="input pl-10">
+                <i class="fa-solid fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-base pointer-events-none"></i>
+                <input type="text" name="search" value="{{ request('search') }}"
+                       placeholder="Search by name, generic name, or barcode…"
+                       class="block w-full pl-12 pr-4 py-3.5 border-2 border-gray-200 rounded-xl text-base text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all bg-white">
             </div>
             <select name="type" class="input">
                 <option value="">All Types</option>
                 <option value="prescription" {{ request('type')==='prescription'?'selected':'' }}>Prescription (Rx)</option>
                 <option value="normal"       {{ request('type')==='normal'?'selected':'' }}>Over-the-Counter</option>
             </select>
-            <select name="status" class="input">
-                <option value="">All Statuses</option>
-                <option value="good"     {{ request('status')==='good'?'selected':'' }}>Good Stock</option>
-                <option value="low"      {{ request('status')==='low'?'selected':'' }}>Low Stock</option>
-                <option value="critical" {{ request('status')==='critical'?'selected':'' }}>Critical (≤5)</option>
-                <option value="out"      {{ request('status')==='out'?'selected':'' }}>Out of Stock</option>
-            </select>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
             <select name="location_id" class="input">
                 <option value="">All Locations</option>
                 @foreach($locations as $loc)
                 <option value="{{ $loc->id }}" {{ request('location_id')==$loc->id?'selected':'' }}>{{ $loc->full_location }}</option>
                 @endforeach
             </select>
-        </div>
-        <div class="flex items-center justify-between mt-3 flex-wrap gap-3">
-            <div class="flex items-center gap-4">
-                <label class="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
-                    <input type="checkbox" name="low_stock" value="1" {{ request('low_stock')?'checked':'' }} class="w-4 h-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500">
-                    Low stock only
-                </label>
-                <label class="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
-                    <input type="checkbox" name="expiring" value="1" {{ request('expiring')?'checked':'' }} class="w-4 h-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500">
-                    Expiring soon
-                </label>
-            </div>
-            <div class="flex gap-2">
-                <button type="submit" class="btn-primary py-1.5 text-xs">Filter</button>
-                <a href="{{ route('medicines.index') }}" class="btn-secondary py-1.5 text-xs">Clear</a>
+            <div class="flex gap-2 justify-end">
+                <button type="submit" class="btn-primary"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
+                <a href="{{ route('medicines.index') }}" class="btn-secondary"><i class="fa-solid fa-rotate-left"></i> Reset</a>
             </div>
         </div>
+        @if(request('view') && request('view') !== 'all')
+        <div class="mt-3 flex items-center gap-2 text-xs">
+            <span class="text-gray-500">Active filter:</span>
+            <span class="inline-flex items-center gap-1 bg-brand-100 text-brand-700 px-2.5 py-1 rounded-full font-semibold">
+                {{ ucfirst(request('view')) }}
+                <a href="{{ $cardLink('all') }}" class="hover:text-brand-900"><i class="fa-solid fa-xmark"></i></a>
+            </span>
+        </div>
+        @endif
     </form>
 
-    <!-- Active inventory table -->
+    <!-- Inventory table (label changes with filter) -->
+    @php
+        $tableHeader = match($activeFilter) {
+            'critical' => ['icon'=>'fa-triangle-exclamation','color'=>'red',    'title'=>'Critical Stock'],
+            'low'      => ['icon'=>'fa-circle-exclamation', 'color'=>'amber',   'title'=>'Low Stock'],
+            'expiring' => ['icon'=>'fa-calendar-xmark',     'color'=>'orange',  'title'=>'Expiring Soon'],
+            'expired'  => ['icon'=>'fa-box-archive',        'color'=>'gray',    'title'=>'Expired Archive'],
+            default    => ['icon'=>'fa-circle-check',       'color'=>'emerald', 'title'=>'Active Inventory'],
+        };
+    @endphp
     <div class="card overflow-hidden">
-        <div class="px-5 py-3 border-b border-gray-100 bg-gradient-to-r from-emerald-50 to-emerald-100/40">
+        <div class="px-5 py-3 border-b border-gray-100 bg-gradient-to-r from-{{ $tableHeader['color'] }}-50 to-{{ $tableHeader['color'] }}-100/40">
             <h3 class="font-bold text-gray-800 text-sm flex items-center gap-2">
-                <i class="fa-solid fa-circle-check text-emerald-500"></i> Active Inventory
+                <i class="fa-solid {{ $tableHeader['icon'] }} text-{{ $tableHeader['color'] }}-500"></i> {{ $tableHeader['title'] }}
                 <span class="text-xs text-gray-500 font-normal">({{ $medicines->total() }} items)</span>
             </h3>
         </div>
@@ -264,69 +278,6 @@
         @endif
     </div>
 
-    <!-- ── Expired Archive ── -->
-    @if($expiredCount > 0)
-    <div id="expiredArchive" class="card overflow-hidden border-2 border-gray-200">
-        <button onclick="toggleArchive()" class="w-full px-5 py-3 border-b border-gray-200 bg-gradient-to-r from-gray-100 to-gray-50 hover:from-gray-200 hover:to-gray-100 flex items-center justify-between transition-colors">
-            <h3 class="font-bold text-gray-800 text-sm flex items-center gap-2">
-                <i class="fa-solid fa-box-archive text-gray-600"></i> Expired Archive
-                <span class="text-xs text-gray-700 font-semibold bg-white px-2 py-0.5 rounded-full border border-gray-300">{{ $expiredCount }} items need disposal</span>
-            </h3>
-            <i id="archiveCaret" class="fa-solid fa-chevron-down text-gray-500 transition-transform"></i>
-        </button>
-        <div id="archiveContent" class="hidden">
-            <div class="overflow-x-auto">
-                <table class="min-w-full">
-                    <thead>
-                        <tr class="border-b-2 border-gray-200 bg-gray-50/40 divide-x divide-gray-200">
-                            <th class="th">Medicine</th>
-                            <th class="th text-center">Stock</th>
-                            <th class="th text-center">Location</th>
-                            <th class="th text-center">Expired On</th>
-                            <th class="th text-center">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-100">
-                        @foreach($expiredMedicines as $m)
-                        @php
-                            $exp = $m->latestInventory?->expiration_date;
-                            $daysExpired = $exp ? abs(now()->diffInDays($exp, false)) : 0;
-                        @endphp
-                        <tr class="hover:bg-gray-50 transition-colors divide-x divide-gray-100">
-                            <td class="td">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-9 h-9 rounded-lg bg-gray-300 text-gray-600 flex items-center justify-center font-bold text-xs flex-shrink-0">
-                                        {{ strtoupper(substr($m->name, 0, 1)) }}
-                                    </div>
-                                    <div>
-                                        <p class="font-semibold text-gray-700">{{ $m->name }}</p>
-                                        <p class="text-xs text-gray-400">{{ $m->generic_name ?? '—' }}</p>
-                                    </div>
-                                </div>
-                            </td>
-                            <td class="td text-center text-gray-500">{{ $m->latestInventory?->quantity ?? 0 }}u</td>
-                            <td class="td text-center text-xs text-gray-500">{{ $m->location?->full_location ?? '—' }}</td>
-                            <td class="td text-center">
-                                <p class="text-xs text-red-600 font-semibold">{{ $exp?->format('M j, Y') }}</p>
-                                <p class="text-xs text-gray-400">{{ $daysExpired }}d ago</p>
-                            </td>
-                            <td class="td text-center">
-                                <span class="badge-expired"><i class="fa-solid fa-ban"></i> Expired</span>
-                                <form method="POST" action="{{ route('medicines.destroy', $m) }}" class="inline ml-2" onsubmit="return confirm('Permanently dispose {{ addslashes($m->name) }}?')">
-                                    @csrf @method('DELETE')
-                                    <button type="submit" class="text-red-500 hover:text-red-700 text-xs font-semibold">
-                                        <i class="fa-solid fa-trash-can"></i> Dispose
-                                    </button>
-                                </form>
-                            </td>
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-    @endif
 </div>
 
 <!-- ── Add Medicine Modal ── -->

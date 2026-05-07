@@ -12,9 +12,14 @@ class DashboardController extends Controller
     {
         $todayPatients = Patient::whereDate('last_visit', today())->count();
 
+        // Exclude expired medicines (those whose latestInventory.expiration_date is past)
+        $notExpired = fn($q) => $q->whereDoesntHave('latestInventory', fn($s) => $s->where('expiration_date', '<', now()));
+
         $lowStockMedicines = Medicine::with(['latestInventory', 'location'])
-            ->whereHas('inventories', fn($q) => $q->whereColumn('quantity', '<=', 'min_stock_level'))
-            ->orWhereDoesntHave('inventories')
+            ->where(function ($q) use ($notExpired) {
+                $q->whereHas('inventories', fn($s) => $s->whereColumn('quantity', '<=', 'min_stock_level'));
+                $notExpired($q);
+            })
             ->take(5)->get();
 
         $expiringSoon = Medicine::with(['latestInventory', 'location'])

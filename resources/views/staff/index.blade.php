@@ -5,14 +5,12 @@
 @section('content')
 @php
     $isAdmin = Auth::user()->role === 'admin';
-    $grouped = $staff->groupBy('role');
-    $roleConfig = [
-        'admin'     => ['label'=>'Administrators','plural'=>'Admin','icon'=>'fa-user-shield','grad'=>'from-brand-400 to-brand-600',  'bg'=>'bg-brand-50',  'border'=>'border-brand-200',  'text'=>'text-brand-700',  'iconBg'=>'bg-brand-500',   'shadow'=>'shadow-brand-200', 'softBg'=>'from-brand-50 to-brand-100/50'],
-        'doctor'    => ['label'=>'Doctors',       'plural'=>'Doctor','icon'=>'fa-user-doctor','grad'=>'from-purple-400 to-purple-600','bg'=>'bg-purple-50','border'=>'border-purple-200','text'=>'text-purple-700','iconBg'=>'bg-purple-500',  'shadow'=>'shadow-purple-200','softBg'=>'from-purple-50 to-purple-100/50'],
-        'nurse'     => ['label'=>'Nurses',        'plural'=>'Nurse','icon'=>'fa-user-nurse', 'grad'=>'from-pink-400 to-pink-600',   'bg'=>'bg-pink-50',  'border'=>'border-pink-200',  'text'=>'text-pink-700',  'iconBg'=>'bg-pink-500',    'shadow'=>'shadow-pink-200',  'softBg'=>'from-pink-50 to-pink-100/50'],
-        'assistant' => ['label'=>'Assistants',    'plural'=>'Assistant','icon'=>'fa-user',   'grad'=>'from-amber-400 to-amber-600',  'bg'=>'bg-amber-50', 'border'=>'border-amber-200', 'text'=>'text-amber-700', 'iconBg'=>'bg-amber-500',   'shadow'=>'shadow-amber-200', 'softBg'=>'from-amber-50 to-amber-100/50'],
+    $roleColors = [
+        'admin'     => ['bg'=>'bg-brand-100',  'text'=>'text-brand-700',  'grad'=>'from-brand-400 to-brand-600',  'icon'=>'fa-user-shield'],
+        'doctor'    => ['bg'=>'bg-purple-100', 'text'=>'text-purple-700', 'grad'=>'from-purple-400 to-purple-600','icon'=>'fa-user-doctor'],
+        'nurse'     => ['bg'=>'bg-pink-100',   'text'=>'text-pink-700',   'grad'=>'from-pink-400 to-pink-600',    'icon'=>'fa-user-nurse'],
+        'assistant' => ['bg'=>'bg-amber-100',  'text'=>'text-amber-700',  'grad'=>'from-amber-400 to-amber-600',  'icon'=>'fa-user'],
     ];
-    $onlineCount = $staff->filter(fn($s) => $s->isOnline())->count();
 @endphp
 
 <div class="space-y-5">
@@ -21,9 +19,7 @@
     <div class="flex items-center justify-between flex-wrap gap-3">
         <div>
             <h1 class="text-2xl font-bold text-gray-900">Staff Directory</h1>
-            <p class="text-sm text-gray-500 mt-0.5">
-                {{ $isAdmin ? 'Manage staff and assign shifts' : 'View clinic staff and shift schedules' }}
-            </p>
+            <p class="text-sm text-gray-500 mt-0.5">{{ $staff->total() }} members &bull; {{ $isAdmin ? 'Manage staff and assign shifts' : 'View clinic staff and shifts' }}</p>
         </div>
         @if($isAdmin)
         <button onclick="openAddStaffModal()" class="btn-primary">
@@ -32,153 +28,141 @@
         @endif
     </div>
 
-    <!-- Colored stat cards -->
-    <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <div class="rounded-2xl p-5 bg-gradient-to-br from-slate-50 to-slate-100/50 border-2 border-slate-200">
-            <div class="flex items-center justify-between mb-3">
-                <div class="w-10 h-10 rounded-xl bg-slate-700 flex items-center justify-center shadow-md shadow-slate-200">
-                    <i class="fa-solid fa-users text-white text-sm"></i>
-                </div>
+    <!-- Filters -->
+    <form method="GET" action="{{ route('staff.index') }}" class="card p-4">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+            <div class="md:col-span-2 relative">
+                <i class="fa-solid fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm pointer-events-none"></i>
+                <input type="text" name="search" value="{{ request('search') }}" placeholder="Search by name, email, specialization…" class="input pl-10">
             </div>
-            <p class="text-3xl font-extrabold text-slate-900">{{ $staff->count() }}</p>
-            <p class="text-xs font-semibold text-slate-700/70 mt-1">Total Staff</p>
+            <select name="role" class="input">
+                <option value="">All Roles</option>
+                <option value="admin"     {{ request('role')==='admin'?'selected':'' }}>Administrator</option>
+                <option value="doctor"    {{ request('role')==='doctor'?'selected':'' }}>Doctor</option>
+                <option value="nurse"     {{ request('role')==='nurse'?'selected':'' }}>Nurse</option>
+                <option value="assistant" {{ request('role')==='assistant'?'selected':'' }}>Assistant</option>
+            </select>
+            <select name="status" class="input">
+                <option value="">All Statuses</option>
+                <option value="online"  {{ request('status')==='online'?'selected':'' }}>Online</option>
+                <option value="offline" {{ request('status')==='offline'?'selected':'' }}>Offline</option>
+            </select>
         </div>
-        <div class="rounded-2xl p-5 bg-gradient-to-br from-emerald-50 to-emerald-100/50 border-2 border-emerald-200">
-            <div class="flex items-center justify-between mb-3">
-                <div class="w-10 h-10 rounded-xl bg-emerald-500 flex items-center justify-center shadow-md shadow-emerald-200">
-                    <i class="fa-solid fa-circle-check text-white text-sm"></i>
-                </div>
+        <div class="flex items-center justify-between mt-3">
+            <div class="flex items-center gap-1 text-sm text-gray-500">
+                <span>Sort:</span>
+                @foreach(['name'=>'Name','role'=>'Role','last_seen_at'=>'Last Seen'] as $f=>$label)
+                <a href="{{ request()->fullUrlWithQuery(['sort'=>$f,'direction'=>($sortField===$f&&$sortDir==='asc')?'desc':'asc']) }}"
+                   class="px-2.5 py-1 rounded-lg font-medium transition-colors {{ $sortField===$f ? 'bg-brand-600 text-white' : 'text-gray-500 hover:bg-gray-100' }}">
+                    {{ $label }}@if($sortField===$f) <i class="fa-solid fa-arrow-{{ $sortDir==='asc'?'up':'down' }} text-xs"></i>@endif
+                </a>
+                @endforeach
             </div>
-            <p class="text-3xl font-extrabold text-emerald-900">{{ $onlineCount }}</p>
-            <p class="text-xs font-semibold text-emerald-700/70 mt-1">Online Now</p>
+            <div class="flex gap-2">
+                <button type="submit" class="btn-primary py-1.5 text-xs">Apply</button>
+                <a href="{{ route('staff.index') }}" class="btn-secondary py-1.5 text-xs">Clear</a>
+            </div>
         </div>
-        @foreach(['admin','doctor','nurse','assistant'] as $role)
-            @php $cfg = $roleConfig[$role]; $count = $grouped->get($role)?->count() ?? 0; @endphp
-            <div class="rounded-2xl p-5 bg-gradient-to-br {{ $cfg['softBg'] }} border-2 {{ $cfg['border'] }}">
-                <div class="flex items-center justify-between mb-3">
-                    <div class="w-10 h-10 rounded-xl {{ $cfg['iconBg'] }} flex items-center justify-center shadow-md {{ $cfg['shadow'] }}">
-                        <i class="fa-solid {{ $cfg['icon'] }} text-white text-sm"></i>
-                    </div>
-                </div>
-                <p class="text-3xl font-extrabold {{ $cfg['text'] }}">{{ $count }}</p>
-                <p class="text-xs font-semibold {{ $cfg['text'] }}/70 mt-1">{{ $cfg['label'] }}</p>
-            </div>
-        @endforeach
-    </div>
+    </form>
 
-    <!-- Staff grouped by role with section headers -->
-    @foreach(['admin','doctor','nurse','assistant'] as $role)
-        @if($grouped->get($role)?->count() > 0)
-        @php $cfg = $roleConfig[$role]; @endphp
-
-        <div class="space-y-3">
-            <!-- Section header bar -->
-            <div class="flex items-center gap-3 {{ $cfg['bg'] }} border-2 {{ $cfg['border'] }} rounded-xl px-4 py-3">
-                <div class="w-9 h-9 {{ $cfg['iconBg'] }} rounded-lg flex items-center justify-center shadow-sm {{ $cfg['shadow'] }}">
-                    <i class="fa-solid {{ $cfg['icon'] }} text-white text-sm"></i>
-                </div>
-                <div class="flex-1">
-                    <h2 class="font-bold {{ $cfg['text'] }} text-base">{{ $cfg['label'] }}</h2>
-                    <p class="text-xs {{ $cfg['text'] }}/70">{{ $grouped->get($role)->count() }} {{ Str::lower($cfg['label']) }} on the team</p>
-                </div>
-            </div>
-
-            <!-- Cards in this group -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                @foreach($grouped->get($role) as $member)
-                @php
-                    $isOnline = $member->isOnline();
-                    $todayShift = $shifts->where('user_id', $member->id)->where('shift_date', today()->toDateString())->first();
-                    $upcoming = $shifts->where('user_id', $member->id)
-                        ->where('shift_date', '>', today()->toDateString())
-                        ->sortBy('shift_date')->first();
-                @endphp
-                <div class="card overflow-hidden hover:shadow-lg hover:border-{{ $role === 'admin' ? 'brand' : ($role === 'doctor' ? 'purple' : ($role === 'nurse' ? 'pink' : 'amber')) }}-300 transition-all border-2 {{ $cfg['border'] }}">
-                    <!-- Top accent strip -->
-                    <div class="h-1.5 bg-gradient-to-r {{ $cfg['grad'] }}"></div>
-
-                    <div class="p-5">
-                        <!-- Identity -->
-                        <div class="flex items-start justify-between mb-4">
+    <!-- Staff table -->
+    <div class="card overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="min-w-full">
+                <thead>
+                    <tr class="bg-gradient-to-r from-gray-50 to-slate-50 border-b-2 border-gray-200 divide-x divide-gray-200">
+                        <th class="th">Staff Member</th>
+                        <th class="th text-center">Role</th>
+                        <th class="th text-center">Contact</th>
+                        <th class="th text-center">Today's Shift</th>
+                        <th class="th text-center">Status</th>
+                        <th class="th text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    @forelse($staff as $member)
+                    @php
+                        $isOnline = $member->isOnline();
+                        $todayShift = $shifts->where('user_id', $member->id)->where('shift_date', today()->toDateString())->first();
+                        $cfg = $roleColors[$member->role] ?? $roleColors['assistant'];
+                    @endphp
+                    <tr class="hover:bg-brand-50/30 transition-colors divide-x divide-gray-100">
+                        <td class="td">
                             <div class="flex items-center gap-3">
-                                <div class="h-14 w-14 rounded-2xl bg-gradient-to-br {{ $cfg['grad'] }} flex items-center justify-center text-white text-lg font-bold flex-shrink-0">
+                                <div class="w-10 h-10 rounded-full bg-gradient-to-br {{ $cfg['grad'] }} flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
                                     {{ strtoupper(substr($member->name, 0, 2)) }}
                                 </div>
                                 <div>
-                                    <h3 class="font-bold text-gray-900 leading-snug">{{ $member->name }}</h3>
-                                    <p class="text-xs text-gray-400 capitalize">{{ $member->role }}</p>
-                                    @if($member->specialization)
-                                    <p class="text-xs {{ $cfg['text'] }} font-medium">{{ $member->specialization }}</p>
-                                    @endif
+                                    <p class="font-semibold text-gray-900">{{ $member->name }}</p>
+                                    <p class="text-xs text-gray-400">{{ $member->specialization ?? '—' }}</p>
                                 </div>
                             </div>
-                            <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium flex-shrink-0
-                                {{ $isOnline ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-500' }}">
+                        </td>
+                        <td class="td text-center">
+                            <span class="inline-flex items-center gap-1.5 {{ $cfg['bg'] }} {{ $cfg['text'] }} px-2.5 py-1 rounded-full text-xs font-semibold capitalize">
+                                <i class="fa-solid {{ $cfg['icon'] }} text-[10px]"></i> {{ $member->role }}
+                            </span>
+                        </td>
+                        <td class="td text-center">
+                            <p class="text-xs text-gray-700">{{ $member->email }}</p>
+                            <p class="text-xs text-gray-400">{{ $member->phone ?? 'No phone' }}</p>
+                        </td>
+                        <td class="td text-center">
+                            @if($todayShift)
+                            <p class="text-xs font-semibold text-gray-800 capitalize">{{ $todayShift->shift_type }}</p>
+                            <p class="text-xs text-gray-500">
+                                {{ \Carbon\Carbon::parse($todayShift->start_time)->format('g:i A') }} —
+                                {{ \Carbon\Carbon::parse($todayShift->end_time)->format('g:i A') }}
+                            </p>
+                            @else
+                            <span class="text-xs text-gray-300">No shift today</span>
+                            @endif
+                        </td>
+                        <td class="td text-center">
+                            <span class="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium {{ $isOnline ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-500' }}">
                                 <span class="w-1.5 h-1.5 rounded-full {{ $isOnline ? 'bg-emerald-400 animate-pulse' : 'bg-gray-300' }}"></span>
                                 {{ $isOnline ? 'Online' : 'Offline' }}
                             </span>
-                        </div>
-
-                        <!-- Contact -->
-                        <div class="space-y-1.5 mb-4">
-                            <div class="flex items-center gap-2 text-xs text-gray-600">
-                                <i class="fa-solid fa-envelope w-4 text-gray-400"></i>
-                                <span class="truncate">{{ $member->email }}</span>
-                            </div>
-                            <div class="flex items-center gap-2 text-xs text-gray-600">
-                                <i class="fa-solid fa-phone w-4 text-gray-400"></i>
-                                <span>{{ $member->phone ?? 'No phone' }}</span>
-                            </div>
-                        </div>
-
-                        <!-- Today's shift -->
-                        @if($todayShift)
-                        <div class="{{ $cfg['bg'] }} border {{ $cfg['border'] }} rounded-xl p-3 mb-3">
-                            <p class="text-[10px] font-bold {{ $cfg['text'] }} uppercase tracking-wider mb-1">Today &bull; {{ ucfirst($todayShift->shift_type) }}</p>
-                            <p class="text-sm font-bold text-gray-800">
-                                {{ \Carbon\Carbon::parse($todayShift->start_time)->format('g:i A') }}
-                                — {{ \Carbon\Carbon::parse($todayShift->end_time)->format('g:i A') }}
-                            </p>
-                        </div>
-                        @else
-                        <div class="bg-gray-50 border border-gray-100 rounded-xl p-3 mb-3 text-center">
-                            <p class="text-xs text-gray-400">No shift today</p>
-                        </div>
-                        @endif
-
-                        <!-- Upcoming shift preview -->
-                        @if($upcoming)
-                        <div class="text-xs text-gray-500 mb-3 flex items-center gap-2">
-                            <i class="fa-solid fa-calendar-day text-gray-400"></i>
-                            Next: <span class="font-medium">{{ \Carbon\Carbon::parse($upcoming->shift_date)->format('M j') }}, {{ ucfirst($upcoming->shift_type) }}</span>
-                        </div>
-                        @endif
-
-                        <!-- Actions -->
-                        <div class="flex gap-2">
-                            @if($isAdmin)
-                            <button onclick="openShiftModal({{ $member->id }}, '{{ addslashes($member->name) }}')"
-                                    class="flex-1 btn-primary py-2 text-xs justify-center">
-                                <i class="fa-solid fa-calendar-plus"></i> {{ $todayShift ? 'Revise Shift' : 'Assign Shift' }}
-                            </button>
-                            @else
-                            <span class="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 bg-gray-50 border border-gray-100 rounded-xl text-xs text-gray-400 cursor-not-allowed" title="Only admins can manage shifts">
-                                <i class="fa-solid fa-lock"></i> Admin only
-                            </span>
+                            @if(!$isOnline && $member->last_seen_at)
+                            <p class="text-[10px] text-gray-400 mt-0.5">{{ $member->last_seen_at->diffForHumans() }}</p>
                             @endif
-                            <a href="{{ route('chat.index', ['with' => $member->id]) }}"
-                               class="w-9 h-9 flex items-center justify-center rounded-xl bg-gray-100 text-gray-600 hover:bg-brand-100 hover:text-brand-600 text-sm transition-colors flex-shrink-0"
-                               title="Message {{ $member->name }}">
-                                <i class="fa-solid fa-comment"></i>
-                            </a>
-                        </div>
-                    </div>
-                </div>
-                @endforeach
-            </div>
+                        </td>
+                        <td class="td text-center">
+                            <div class="flex items-center justify-center gap-1">
+                                @if($isAdmin)
+                                <button onclick="openShiftModal({{ $member->id }}, '{{ addslashes($member->name) }}')"
+                                        class="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-brand-100 text-gray-400 hover:text-brand-600 transition-colors"
+                                        title="{{ $todayShift ? 'Revise Shift' : 'Assign Shift' }}">
+                                    <i class="fa-solid fa-calendar-plus text-sm"></i>
+                                </button>
+                                @endif
+                                <a href="{{ route('chat.index', ['with' => $member->id]) }}"
+                                   class="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-purple-100 text-gray-400 hover:text-purple-600 transition-colors"
+                                   title="Message">
+                                    <i class="fa-solid fa-comment text-sm"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="6" class="py-16 text-center">
+                            <div class="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                                <i class="fa-solid fa-users text-gray-400 text-2xl"></i>
+                            </div>
+                            <p class="text-gray-500 font-medium">No staff match your filters</p>
+                        </td>
+                    </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+        @if($staff->hasPages())
+        <div class="px-6 py-3 border-t border-gray-100 bg-gray-50/50">
+            {{ $staff->links() }}
         </div>
         @endif
-    @endforeach
+    </div>
 </div>
 
 @if($isAdmin)
@@ -288,9 +272,6 @@ function closeAddStaffModal() { document.getElementById('addStaffModal').classLi
 
 document.addEventListener('keydown', e => {
     if (e.key === 'Escape') { closeShiftModal(); closeAddStaffModal(); }
-});
-['shiftModal','addStaffModal'].forEach(id => {
-    document.getElementById(id)?.addEventListener('click', e => { if (e.target === e.currentTarget) { closeShiftModal(); closeAddStaffModal(); } });
 });
 
 document.getElementById('shiftTypeSelect').addEventListener('change', function () {

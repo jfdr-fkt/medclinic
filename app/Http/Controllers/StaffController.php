@@ -8,11 +8,40 @@ use Illuminate\Support\Facades\Hash;
 
 class StaffController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $staff = User::orderBy('name')->get();
+        $query = User::query();
+
+        if ($request->filled('search')) {
+            $query->where(function ($q) use ($request) {
+                $q->where('name', 'LIKE', "%{$request->search}%")
+                  ->orWhere('email', 'LIKE', "%{$request->search}%")
+                  ->orWhere('specialization', 'LIKE', "%{$request->search}%");
+            });
+        }
+        if ($request->filled('role')) {
+            $query->where('role', $request->role);
+        }
+        if ($request->filled('status') && $request->status === 'online') {
+            $query->where('last_seen_at', '>=', now()->subMinutes(5))
+                  ->where('status', '!=', 'offline');
+        }
+        if ($request->filled('status') && $request->status === 'offline') {
+            $query->where(function ($q) {
+                $q->where('last_seen_at', '<', now()->subMinutes(5))
+                  ->orWhereNull('last_seen_at')
+                  ->orWhere('status', 'offline');
+            });
+        }
+
+        $sortField = in_array($request->get('sort'), ['name', 'role', 'last_seen_at']) ? $request->get('sort') : 'name';
+        $sortDir   = $request->get('direction') === 'desc' ? 'desc' : 'asc';
+        $query->orderBy($sortField, $sortDir);
+
+        $staff  = $query->paginate(15)->withQueryString();
         $shifts = Shift::with('user')->get();
-        return view('staff.index', compact('staff', 'shifts'));
+
+        return view('staff.index', compact('staff', 'shifts', 'sortField', 'sortDir'));
     }
 
     public function store(Request $request)
