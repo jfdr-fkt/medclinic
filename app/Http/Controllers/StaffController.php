@@ -46,6 +46,7 @@ class StaffController extends Controller
 
     public function store(Request $request)
     {
+        if (!\Illuminate\Support\Facades\Auth::user()->can_('staff.create')) abort(403, 'Only admins can add staff.');
         $validated = $request->validate([
             'name'           => 'required|string|max:255',
             'email'          => 'required|email|unique:users',
@@ -61,8 +62,20 @@ class StaffController extends Controller
 
     public function show(User $user)
     {
-        $shifts = $user->shifts()->orderBy('shift_date', 'desc')->take(10)->get();
-        return view('staff.show', compact('user', 'shifts'));
+        $monthStart = now()->startOfMonth();
+        $monthEnd   = now()->endOfMonth();
+
+        $shifts = $user->shifts()
+            ->whereBetween('shift_date', [$monthStart, $monthEnd])
+            ->orderBy('shift_date')
+            ->get();
+
+        $upcoming = $user->shifts()
+            ->where('shift_date', '>', $monthEnd)
+            ->orderBy('shift_date')
+            ->take(5)->get();
+
+        return view('staff.show', compact('user', 'shifts', 'upcoming', 'monthStart', 'monthEnd'));
     }
 
     public function storeShift(Request $request)

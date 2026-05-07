@@ -5,6 +5,7 @@ use App\Models\Patient;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class PatientController extends Controller
 {
@@ -37,9 +38,9 @@ class PatientController extends Controller
 
     public function store(Request $request)
     {
+        if (!Auth::user()->can_('patients.create')) abort(403, 'Not authorized to add patients.');
         $validated = $request->validate([
             'name'                => 'required|string|max:255',
-            'patient_id'          => 'required|string|unique:patients',
             'date_of_birth'       => 'nullable|date',
             'phone'               => 'nullable|string',
             'address'             => 'nullable|string',
@@ -47,9 +48,16 @@ class PatientController extends Controller
             'assigned_nurse_id'   => 'nullable|exists:users,id',
             'assigned_doctor_id'  => 'nullable|exists:users,id',
         ]);
+
+        // Auto-generate a unique random patient ID
+        do {
+            $candidate = 'P-' . now()->year . '-' . str_pad((string) random_int(1, 9999), 4, '0', STR_PAD_LEFT);
+        } while (Patient::where('patient_id', $candidate)->exists());
+        $validated['patient_id'] = $candidate;
         $validated['last_visit'] = now();
-        Patient::create($validated);
-        return redirect()->route('patients.index')->with('success', 'Patient added successfully!');
+
+        $patient = Patient::create($validated);
+        return redirect()->route('patients.index')->with('success', "Patient added — ID assigned: {$patient->patient_id}");
     }
 
     public function show(Patient $patient)
@@ -75,18 +83,38 @@ class PatientController extends Controller
 
     public function destroy(Patient $patient)
     {
+        if (!Auth::user()->can_('patients.delete')) abort(403, 'Only admins and doctors can delete patient records.');
         $patient->delete();
         return redirect()->route('patients.index')->with('success', 'Patient record deleted.');
     }
 
-    public function pin(Patient $patient)
+    public function pin(Request $request, Patient $patient)
     {
         $user = Auth::user();
-        $result = $user->pinnedPatients()->toggle($patient->id);
-        $msg = !empty($result['attached']) ? 'Patient pinned to dashboard!' : 'Patient unpinned.';
+        $target = $request->input('target', 'self');
 
-        if (request()->wantsJson()) {
-            return response()->json(['success' => true, 'message' => $msg, 'pinned' => !empty($result['attached'])]);
+        if ($target === 'all') {
+            // Only doctor or admin
+            if (!in_array($user->role, ['admin', 'doctor'])) {
+                return response()->json(['success' => false, 'error' => 'Not authorized'], 403);
+            }
+            $userIds = User::pluck('id')->all();
+            DB::table('pinned_patients')->where('patient_id', $patient->id)->delete();
+            $rows = array_map(fn($uid) => ['user_id' => $uid, 'patient_id' => $patient->id], $userIds);
+            DB::table('pinned_patients')->insert($rows);
+            $msg = "Pinned for everyone ({$patient->name}).";
+        } elseif ($target === 'self') {
+            $result = $user->pinnedPatients()->toggle($patient->id);
+            $msg = !empty($result['attached']) ? 'Patient pinned to your dashboard!' : 'Patient unpinned.';
+        } else {
+            // target is a user ID
+            $targetUser = User::findOrFail($target);
+            $result = $targetUser->pinnedPatients()->syncWithoutDetaching([$patient->id]);
+            $msg = "Pinned for {$targetUser->name}.";
+        }
+
+        if ($request->wantsJson()) {
+            return response()->json(['success' => true, 'message' => $msg]);
         }
         return back()->with('success', $msg);
     }

@@ -158,23 +158,29 @@ class ChatController extends Controller
     }
 
     /**
-     * Sidebar polling endpoint: unread counts + most recent message previews.
+     * Sidebar polling endpoint: unread counts + per-conversation seen-up-to message ID.
      */
     public function sidebar()
     {
-        $dmUnread    = Message::where('receiver_id', Auth::id())
+        $dmUnread = Message::where('receiver_id', Auth::id())
             ->where('is_read', false)
             ->whereNull('group_id')
             ->selectRaw('sender_id, count(*) as cnt')
             ->groupBy('sender_id')
             ->pluck('cnt', 'sender_id');
 
+        // Highest message ID I sent that has been READ, keyed by recipient.
+        $seenUntil = Message::where('sender_id', Auth::id())
+            ->where('is_read', true)
+            ->whereNull('group_id')
+            ->selectRaw('receiver_id, MAX(id) as max_id')
+            ->groupBy('receiver_id')
+            ->pluck('max_id', 'receiver_id');
+
         return response()->json([
             'dm_unread'    => $dmUnread,
             'group_unread' => $this->groupUnreadCounts(),
-            'read_receipt' => Message::where('sender_id', Auth::id())
-                ->where('is_read', true)
-                ->latest('updated_at')->first()?->id,
+            'seen_until'   => $seenUntil,
         ]);
     }
 

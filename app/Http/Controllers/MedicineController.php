@@ -101,6 +101,7 @@ class MedicineController extends Controller
 
     public function store(Request $request)
     {
+        if (!Auth::user()->can_('medicines.create')) abort(403, 'Only admins can add medicines.');
         $validated = $request->validate([
             'name'           => 'required|string|max:255',
             'generic_name'   => 'nullable|string',
@@ -167,6 +168,7 @@ class MedicineController extends Controller
 
     public function destroy(Medicine $medicine)
     {
+        if (!Auth::user()->can_('medicines.delete')) abort(403, 'Only admins can delete medicine records.');
         $medicine->delete();
         return redirect()->route('medicines.index')->with('success', 'Medicine removed.');
     }
@@ -199,6 +201,7 @@ class MedicineController extends Controller
 
     public function storeLocation(Request $request)
     {
+        if (!Auth::user()->can_('medicines.locations')) abort(403, 'Only admins can manage locations.');
         $validated = $request->validate([
             'cabinet' => 'required|string',
             'shelf'   => 'required|string',

@@ -5,16 +5,22 @@
 @section('content')
 <div class="space-y-5">
 
+    @php
+        $me           = Auth::user();
+        $canAddMed    = $me->can_('medicines.create');
+        $canDeleteMed = $me->can_('medicines.delete');
+        $canLocations = $me->can_('medicines.locations');
+    @endphp
     <!-- Header with combined action -->
     <div class="flex items-center justify-between flex-wrap gap-3">
         <div>
             <h1 class="text-2xl font-bold text-gray-900">Medicines & Inventory</h1>
             <p class="text-sm text-gray-500 mt-0.5">Track stock, locations, and expiry dates</p>
         </div>
+        @if($canAddMed)
         <div class="relative">
             <button type="button" onclick="toggleDropdown('addMedicineMenu')" class="btn-primary">
                 <i class="fa-solid fa-plus"></i> Add Medicine
-                <i class="fa-solid fa-chevron-down text-xs ml-1"></i>
             </button>
             <div id="addMedicineMenu" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-40">
                 <button type="button" onclick="openAddModal();" class="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3">
@@ -41,6 +47,7 @@
                 </button>
             </div>
         </div>
+        @endif
     </div>
 
     <!-- Clickable filter cards -->
@@ -108,37 +115,62 @@
         </a>
     </div>
 
-    <!-- Big search bar -->
-    <form method="GET" action="{{ route('medicines.index') }}" class="card p-4">
+    <!-- Search + filter (consistent layout with patients page) -->
+    <form method="GET" action="{{ route('medicines.index') }}" class="card p-3">
         @if(request('view'))<input type="hidden" name="view" value="{{ request('view') }}">@endif
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <div class="md:col-span-2 relative">
+        <div class="flex items-center gap-2">
+            <!-- Filter icon -->
+            <div class="relative">
+                @php $hasFilters = request('type') || request('location_id'); @endphp
+                <button type="button" onclick="toggleDropdown('medicineFilterMenu')"
+                        class="h-12 px-4 bg-white border-2 border-gray-200 rounded-xl hover:border-brand-400 transition-colors flex items-center gap-2 text-sm text-gray-600 font-medium {{ $hasFilters ? 'border-brand-500 text-brand-700' : '' }}">
+                    <i class="fa-solid fa-filter text-sm"></i>
+                    <span class="hidden sm:inline">Filter</span>
+                    @if($hasFilters)
+                    <span class="bg-brand-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">{{ (int)!!request('type') + (int)!!request('location_id') }}</span>
+                    @endif
+                </button>
+                <div id="medicineFilterMenu" class="hidden absolute left-0 top-full mt-2 w-72 bg-white border border-gray-100 rounded-xl shadow-xl p-4 space-y-3 z-30">
+                    <div>
+                        <label class="label">Type</label>
+                        <select name="type" class="input">
+                            <option value="">All Types</option>
+                            <option value="prescription" {{ request('type')==='prescription'?'selected':'' }}>Prescription (Rx)</option>
+                            <option value="normal"       {{ request('type')==='normal'?'selected':'' }}>Over-the-Counter</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="label">Location</label>
+                        <select name="location_id" class="input">
+                            <option value="">All Locations</option>
+                            @foreach($locations as $loc)
+                            <option value="{{ $loc->id }}" {{ request('location_id')==$loc->id?'selected':'' }}>{{ $loc->full_location }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="flex gap-2 pt-2 border-t border-gray-100">
+                        <button type="submit" class="btn-primary flex-1 justify-center text-xs py-2">Apply</button>
+                        <a href="{{ route('medicines.index') }}" class="btn-secondary flex-1 justify-center text-xs py-2">Reset</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Big consistent search bar -->
+            <div class="relative flex-1">
                 <i class="fa-solid fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-base pointer-events-none"></i>
                 <input type="text" name="search" value="{{ request('search') }}"
                        placeholder="Search by name, generic name, or barcode…"
-                       class="block w-full pl-12 pr-4 py-3.5 border-2 border-gray-200 rounded-xl text-base text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all bg-white">
+                       class="block w-full h-12 pl-12 pr-4 border-2 border-gray-200 rounded-xl text-base text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all bg-white">
             </div>
-            <select name="type" class="input">
-                <option value="">All Types</option>
-                <option value="prescription" {{ request('type')==='prescription'?'selected':'' }}>Prescription (Rx)</option>
-                <option value="normal"       {{ request('type')==='normal'?'selected':'' }}>Over-the-Counter</option>
-            </select>
+
+            <button type="submit" class="hidden md:inline-flex btn-primary h-12">
+                <i class="fa-solid fa-magnifying-glass"></i> Search
+            </button>
         </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
-            <select name="location_id" class="input">
-                <option value="">All Locations</option>
-                @foreach($locations as $loc)
-                <option value="{{ $loc->id }}" {{ request('location_id')==$loc->id?'selected':'' }}>{{ $loc->full_location }}</option>
-                @endforeach
-            </select>
-            <div class="flex gap-2 justify-end">
-                <button type="submit" class="btn-primary"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
-                <a href="{{ route('medicines.index') }}" class="btn-secondary"><i class="fa-solid fa-rotate-left"></i> Reset</a>
-            </div>
-        </div>
+
         @if(request('view') && request('view') !== 'all')
         <div class="mt-3 flex items-center gap-2 text-xs">
-            <span class="text-gray-500">Active filter:</span>
+            <span class="text-gray-500">Card filter:</span>
             <span class="inline-flex items-center gap-1 bg-brand-100 text-brand-700 px-2.5 py-1 rounded-full font-semibold">
                 {{ ucfirst(request('view')) }}
                 <a href="{{ $cardLink('all') }}" class="hover:text-brand-900"><i class="fa-solid fa-xmark"></i></a>
@@ -238,23 +270,29 @@
                                 <span class="badge-ok"><i class="fa-solid fa-check"></i> Good</span>
                             @endif
                         </td>
-                        <td class="td text-center">
-                            <div class="flex items-center justify-center gap-1 row-action">
+                        <td class="td">
+                            <div class="flex items-center justify-center gap-3 row-action">
+                                <!-- Dispense (larger, colored, primary action) -->
                                 <button type="button"
                                         onclick="event.stopPropagation(); openDispenseModal({{ $m->id }}, '{{ addslashes($m->name) }}', {{ $qty }})"
-                                        class="row-action w-8 h-8 rounded-lg flex items-center justify-center hover:bg-emerald-100 text-emerald-500 hover:text-emerald-700 transition-colors"
+                                        class="row-action inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold bg-emerald-500 text-white hover:bg-emerald-600 transition-colors shadow-sm"
                                         title="Dispense">
-                                    <i class="fa-solid fa-hand-holding-medical text-sm"></i>
+                                    <i class="fa-solid fa-hand-holding-medical"></i>
+                                    <span class="hidden lg:inline">Dispense</span>
                                 </button>
+                                @if($canDeleteMed)
+                                <!-- Delete (smaller, separated, colored) -->
                                 <form method="POST" action="{{ route('medicines.destroy', $m) }}" class="inline row-action"
                                       onsubmit="event.stopPropagation(); return confirm('Delete {{ addslashes($m->name) }}?')"
                                       onclick="event.stopPropagation()">
                                     @csrf @method('DELETE')
                                     <button type="submit" onclick="event.stopPropagation()"
-                                            class="row-action w-8 h-8 rounded-lg flex items-center justify-center hover:bg-red-100 text-gray-400 hover:text-red-500 transition-colors">
-                                        <i class="fa-solid fa-trash text-sm"></i>
+                                            class="row-action inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold bg-red-100 text-red-700 hover:bg-red-200 transition-colors">
+                                        <i class="fa-solid fa-trash"></i>
+                                        <span class="hidden lg:inline">Delete</span>
                                     </button>
                                 </form>
+                                @endif
                             </div>
                         </td>
                     </tr>

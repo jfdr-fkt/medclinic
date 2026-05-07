@@ -22,6 +22,23 @@ class User extends Authenticatable
     public function pinnedPatients() { return $this->belongsToMany(Patient::class, 'pinned_patients'); }
     public function chatGroups()     { return $this->belongsToMany(ChatGroup::class, 'chat_group_members', 'user_id', 'group_id')->withPivot('last_read_at')->withTimestamps(); }
 
+    public function can_($action): bool
+    {
+        $r = $this->role;
+        return match($action) {
+            'patients.create'  => in_array($r, ['admin','doctor','nurse']),
+            'patients.delete'  => in_array($r, ['admin','doctor']),
+            'patients.pin_all' => in_array($r, ['admin','doctor']),
+            'medicines.create' => $r === 'admin',
+            'medicines.delete' => $r === 'admin',
+            'medicines.dispense'   => true,
+            'medicines.locations'  => $r === 'admin',
+            'staff.create'         => $r === 'admin',
+            'staff.shifts.manage'  => $r === 'admin',
+            default => false,
+        };
+    }
+
     public function isOnline()
     {
         if ($this->status === 'offline') return false;

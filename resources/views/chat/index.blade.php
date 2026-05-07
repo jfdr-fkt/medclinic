@@ -153,7 +153,8 @@
                     </div>
                 </div>
                 @else
-                <div class="flex {{ $isMine ? 'justify-end' : 'justify-start' }} items-end gap-2">
+                <div class="flex {{ $isMine ? 'justify-end' : 'justify-start' }} items-end gap-2"
+                     @if($isMine) data-msg-mine data-msg-id="{{ $msg->id }}" @endif>
                     @if(!$isMine)
                     <div class="h-7 w-7 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
                         {{ strtoupper(substr($msg->sender->name, 0, 2)) }}
@@ -163,10 +164,12 @@
                         <div class="px-4 py-2.5 rounded-2xl text-sm {{ $isMine ? 'bg-brand-600 text-white rounded-br-sm' : 'bg-gray-100 text-gray-800 rounded-bl-sm' }}">{{ $msg->body }}</div>
                         <p class="text-xs text-gray-400 mt-1 {{ $isMine ? 'text-right' : 'text-left' }}">
                             {{ $msg->created_at->format('g:i A') }}
-                            @if($isMine && $msg->is_read && !isset($withGroup))
-                            <i class="fa-solid fa-check-double text-brand-400 ml-1" title="Seen"></i>
-                            @elseif($isMine && !isset($withGroup))
-                            <i class="fa-solid fa-check text-gray-300 ml-1" title="Sent"></i>
+                            @if($isMine && !isset($withGroup))
+                                @if($msg->is_read)
+                                <i class="fa-solid fa-check-double msg-status-icon text-brand-400 ml-1" title="Seen"></i>
+                                @else
+                                <i class="fa-solid fa-check msg-status-icon text-gray-300 ml-1" title="Sent"></i>
+                                @endif
                             @endif
                         </p>
                     </div>
@@ -196,7 +199,6 @@
                     <i class="fa-solid fa-paper-plane text-sm"></i>
                 </button>
             </div>
-            <p class="text-xs text-gray-400 mt-1.5 text-center">Press Enter to send &bull; Auto-refreshes</p>
         </div>
 
         @else
@@ -323,6 +325,7 @@ function appendMessage(msg, isMine) {
     const isGroup = CHAT_TARGET?.type === 'group';
     const div = document.createElement('div');
     div.className = `flex ${isMine ? 'justify-end' : 'justify-start'} items-end gap-2`;
+    if (isMine) { div.dataset.msgMine = ''; div.dataset.msgId = msg.id; }
 
     if (isMine) {
         div.innerHTML = `
@@ -330,7 +333,7 @@ function appendMessage(msg, isMine) {
                 <div class="px-4 py-2.5 rounded-2xl rounded-br-sm text-sm bg-brand-600 text-white">${escHtml(msg.body)}</div>
                 <p class="text-xs text-gray-400 mt-1 text-right">
                     ${msg.created_at}
-                    ${isGroup ? '' : '<i class="fa-solid fa-check text-gray-300 ml-1" title="Sent"></i>'}
+                    ${isGroup ? '' : '<i class="fa-solid fa-check msg-status-icon text-gray-300 ml-1" title="Sent"></i>'}
                 </p>
             </div>`;
     } else {
@@ -431,12 +434,23 @@ setInterval(() => {
             }
         });
 
-        // Update "Seen" indicators on my messages — refresh check icons
+        // Per-message seen indicators: only mark messages as "Seen" if their ID
+        // is <= the highest message ID the recipient has actually read.
         if (CHAT_TARGET?.type === 'dm') {
-            document.querySelectorAll('#messagesContainer .fa-check').forEach(icon => {
-                icon.classList.remove('fa-check', 'text-gray-300');
-                icon.classList.add('fa-check-double', 'text-brand-400');
-                icon.title = 'Seen';
+            const seenUntil = parseInt(data.seen_until?.[CHAT_TARGET.id] ?? 0);
+            document.querySelectorAll('[data-msg-mine][data-msg-id]').forEach(row => {
+                const id = parseInt(row.dataset.msgId);
+                const icon = row.querySelector('.msg-status-icon');
+                if (!icon) return;
+                if (id <= seenUntil) {
+                    icon.classList.remove('fa-check', 'text-gray-300');
+                    icon.classList.add('fa-check-double', 'text-brand-400');
+                    icon.title = 'Seen';
+                } else {
+                    icon.classList.remove('fa-check-double', 'text-brand-400');
+                    icon.classList.add('fa-check', 'text-gray-300');
+                    icon.title = 'Sent';
+                }
             });
         }
     })
