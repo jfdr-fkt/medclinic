@@ -8,15 +8,27 @@ class User extends Authenticatable
     protected $fillable = [
         'name', 'email', 'password', 'role', 'phone',
         'specialization', 'last_seen_at', 'is_active',
-        'status', 'avatar', 'bio',
+        'status', 'avatar', 'bio', 'theme', 'font_size', 'colorblind_mode',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'last_seen_at'    => 'datetime',
+            'is_active'       => 'boolean',
+            'colorblind_mode' => 'boolean',
+        ];
+    }
+
+    public function avatarUrl(): string
+    {
+        if ($this->avatar && str_starts_with($this->avatar, 'avatars/')) {
+            return asset('storage/' . $this->avatar);
+        }
+        return ''; // empty triggers initial-letters fallback in views
+    }
 
     protected $hidden = ['password', 'remember_token'];
-
-    protected $casts = [
-        'last_seen_at' => 'datetime',
-        'is_active'    => 'boolean',
-    ];
 
     public function shifts()         { return $this->hasMany(Shift::class); }
     public function pinnedPatients() { return $this->belongsToMany(Patient::class, 'pinned_patients'); }

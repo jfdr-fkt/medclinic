@@ -5,11 +5,15 @@
 @section('content')
 @php
     $isAdmin = Auth::user()->role === 'admin';
+    // Standardized role colors per spec:
+    // Admin = Charcoal/Slate, Doctor = Royal Blue, Nurse = Teal/Cyan,
+    // Assistant = Emerald/Mint, (Secretary placeholder = Amber/Coral)
     $roleColors = [
-        'admin'     => ['bg'=>'bg-brand-100',  'text'=>'text-brand-700',  'grad'=>'from-brand-400 to-brand-600',  'icon'=>'fa-user-shield'],
-        'doctor'    => ['bg'=>'bg-purple-100', 'text'=>'text-purple-700', 'grad'=>'from-purple-400 to-purple-600','icon'=>'fa-user-doctor'],
-        'nurse'     => ['bg'=>'bg-pink-100',   'text'=>'text-pink-700',   'grad'=>'from-pink-400 to-pink-600',    'icon'=>'fa-user-nurse'],
-        'assistant' => ['bg'=>'bg-amber-100',  'text'=>'text-amber-700',  'grad'=>'from-amber-400 to-amber-600',  'icon'=>'fa-user'],
+        'admin'     => ['bg'=>'bg-slate-100',   'text'=>'text-slate-700',   'grad'=>'from-slate-500 to-slate-700',    'icon'=>'fa-user-shield'],
+        'doctor'    => ['bg'=>'bg-blue-100',    'text'=>'text-blue-700',    'grad'=>'from-blue-500 to-blue-700',      'icon'=>'fa-user-doctor'],
+        'nurse'     => ['bg'=>'bg-cyan-100',    'text'=>'text-teal-700',    'grad'=>'from-cyan-500 to-teal-600',      'icon'=>'fa-user-nurse'],
+        'assistant' => ['bg'=>'bg-emerald-100', 'text'=>'text-emerald-700', 'grad'=>'from-emerald-400 to-emerald-600','icon'=>'fa-user'],
+        'secretary' => ['bg'=>'bg-amber-100',   'text'=>'text-amber-700',   'grad'=>'from-amber-400 to-amber-600',    'icon'=>'fa-user'],
     ];
 @endphp
 
@@ -30,36 +34,48 @@
 
     <!-- Search + filter (consistent layout) -->
     <form method="GET" action="{{ route('staff.index') }}" class="card p-3">
+        @php $hasFilters = request('role') || request('status') || request('sort') || request('direction'); @endphp
         <div class="flex items-center gap-2">
-            <!-- Filter icon -->
             <div class="relative">
-                @php $hasFilters = request('role') || request('status'); @endphp
                 <button type="button" onclick="toggleDropdown('staffFilterMenu')"
                         class="h-12 px-4 bg-white border-2 border-gray-200 rounded-xl hover:border-brand-400 transition-colors flex items-center gap-2 text-sm text-gray-600 font-medium {{ $hasFilters ? 'border-brand-500 text-brand-700' : '' }}">
-                    <i class="fa-solid fa-filter text-sm"></i>
-                    <span class="hidden sm:inline">Filter</span>
+                    <i class="fa-solid fa-sliders text-sm"></i>
+                    <span class="hidden sm:inline">Filter & Sort</span>
                     @if($hasFilters)
-                    <span class="bg-brand-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">{{ (int)!!request('role') + (int)!!request('status') }}</span>
+                    <span class="bg-brand-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">!</span>
                     @endif
                 </button>
-                <div id="staffFilterMenu" class="hidden absolute left-0 top-full mt-2 w-72 bg-white border border-gray-100 rounded-xl shadow-xl p-4 space-y-3 z-30">
+                <div id="staffFilterMenu" class="hidden absolute left-0 top-full mt-2 w-80 bg-white border border-gray-100 rounded-xl shadow-xl p-4 space-y-4 z-30">
                     <div>
-                        <label class="label">Role</label>
-                        <select name="role" class="input">
-                            <option value="">All Roles</option>
-                            <option value="admin"     {{ request('role')==='admin'?'selected':'' }}>Administrator</option>
-                            <option value="doctor"    {{ request('role')==='doctor'?'selected':'' }}>Doctor</option>
-                            <option value="nurse"     {{ request('role')==='nurse'?'selected':'' }}>Nurse</option>
-                            <option value="assistant" {{ request('role')==='assistant'?'selected':'' }}>Assistant</option>
-                        </select>
+                        <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-1.5"><i class="fa-solid fa-filter"></i> Filter by</p>
+                        <div class="space-y-2">
+                            <select name="role" class="input">
+                                <option value="">All Roles</option>
+                                <option value="admin"     {{ request('role')==='admin'?'selected':'' }}>Administrator</option>
+                                <option value="doctor"    {{ request('role')==='doctor'?'selected':'' }}>Doctor</option>
+                                <option value="nurse"     {{ request('role')==='nurse'?'selected':'' }}>Nurse</option>
+                                <option value="assistant" {{ request('role')==='assistant'?'selected':'' }}>Assistant</option>
+                            </select>
+                            <select name="status" class="input">
+                                <option value="">All Statuses</option>
+                                <option value="online"  {{ request('status')==='online'?'selected':'' }}>Online</option>
+                                <option value="offline" {{ request('status')==='offline'?'selected':'' }}>Offline</option>
+                            </select>
+                        </div>
                     </div>
-                    <div>
-                        <label class="label">Status</label>
-                        <select name="status" class="input">
-                            <option value="">All Statuses</option>
-                            <option value="online"  {{ request('status')==='online'?'selected':'' }}>Online</option>
-                            <option value="offline" {{ request('status')==='offline'?'selected':'' }}>Offline</option>
-                        </select>
+                    <div class="pt-2 border-t border-gray-100">
+                        <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-1.5"><i class="fa-solid fa-arrow-down-wide-short"></i> Sort by</p>
+                        <div class="grid grid-cols-2 gap-2">
+                            <select name="sort" class="input">
+                                @foreach(['name'=>'Name','role'=>'Role','last_seen_at'=>'Last Seen'] as $f=>$label)
+                                <option value="{{ $f }}" {{ $sortField===$f ? 'selected' : '' }}>{{ $label }}</option>
+                                @endforeach
+                            </select>
+                            <select name="direction" class="input">
+                                <option value="asc"  {{ $sortDir==='asc' ? 'selected' : '' }}>↑ Ascending</option>
+                                <option value="desc" {{ $sortDir==='desc' ? 'selected' : '' }}>↓ Descending</option>
+                            </select>
+                        </div>
                     </div>
                     <div class="flex gap-2 pt-2 border-t border-gray-100">
                         <button type="submit" class="btn-primary flex-1 justify-center text-xs py-2">Apply</button>
@@ -68,27 +84,18 @@
                 </div>
             </div>
 
-            <!-- Big consistent search bar -->
             <div class="relative flex-1">
                 <i class="fa-solid fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-base pointer-events-none"></i>
                 <input type="text" name="search" value="{{ request('search') }}"
                        placeholder="Search by name, email, specialization…"
                        class="block w-full h-12 pl-12 pr-4 border-2 border-gray-200 rounded-xl text-base text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all bg-white">
+                @if(request('sort'))<input type="hidden" name="sort" value="{{ request('sort') }}">@endif
+                @if(request('direction'))<input type="hidden" name="direction" value="{{ request('direction') }}">@endif
             </div>
 
-            <button type="submit" class="hidden md:inline-flex btn-primary h-12">
-                <i class="fa-solid fa-magnifying-glass"></i> Search
+            <button type="submit" class="hidden md:flex h-12 w-12 items-center justify-center bg-brand-600 hover:bg-brand-700 text-white rounded-xl transition-colors shadow-sm flex-shrink-0" title="Search">
+                <i class="fa-solid fa-magnifying-glass"></i>
             </button>
-        </div>
-
-        <div class="flex items-center gap-1 mt-3 text-sm text-gray-500">
-            <span class="mr-1">Sort:</span>
-            @foreach(['name'=>'Name','role'=>'Role','last_seen_at'=>'Last Seen'] as $f=>$label)
-            <a href="{{ request()->fullUrlWithQuery(['sort'=>$f,'direction'=>($sortField===$f&&$sortDir==='asc')?'desc':'asc']) }}"
-               class="px-2.5 py-1 rounded-lg font-medium transition-colors {{ $sortField===$f ? 'bg-brand-600 text-white' : 'text-gray-500 hover:bg-gray-100' }}">
-                {{ $label }}@if($sortField===$f) <i class="fa-solid fa-arrow-{{ $sortDir==='asc'?'up':'down' }} text-xs"></i>@endif
-            </a>
-            @endforeach
         </div>
     </form>
 
@@ -103,7 +110,7 @@
                         <th class="th text-center">Contact</th>
                         <th class="th text-center">Today's Shift</th>
                         <th class="th text-center">Status</th>
-                        <th class="th text-center" style="min-width: 200px;">Actions</th>
+                        <th class="th text-center" style="width: 280px;">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
@@ -115,30 +122,28 @@
                     @endphp
                     <tr data-href="{{ route('staff.show', $member) }}"
                         onclick="if(!event.target.closest('.row-action')) window.location=this.dataset.href"
-                        class="hover:bg-brand-50/40 transition-colors group cursor-pointer divide-x divide-gray-100">
+                        class="hover:bg-indigo-50/40 transition-colors group cursor-pointer divide-x divide-gray-100">
                         <td class="td">
                             <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-full bg-gradient-to-br {{ $cfg['grad'] }} flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
-                                    {{ strtoupper(substr($member->name, 0, 2)) }}
-                                </div>
+                                <x-avatar :user="$member" size="lg" :gradient="$cfg['grad']" />
                                 <div>
-                                    <p class="font-semibold text-gray-900 group-hover:text-brand-700 transition-colors">{{ $member->name }}</p>
+                                    <p class="font-semibold text-gray-900 group-hover:text-indigo-700 transition-colors">{{ $member->name }}</p>
                                     <p class="text-xs text-gray-400">{{ $member->specialization ?? '—' }}</p>
                                 </div>
                             </div>
                         </td>
                         <td class="td text-center">
-                            <span class="inline-flex items-center gap-1.5 {{ $cfg['bg'] }} {{ $cfg['text'] }} px-2.5 py-1 rounded-full text-xs font-semibold capitalize">
-                                <i class="fa-solid {{ $cfg['icon'] }} text-[10px]"></i> {{ $member->role }}
+                            <span class="inline-flex items-center gap-1.5 {{ $cfg['text'] }} font-bold capitalize text-sm">
+                                <i class="fa-solid {{ $cfg['icon'] }}"></i> {{ $member->role }}
                             </span>
                         </td>
                         <td class="td text-center">
-                            <p class="text-xs text-gray-700">{{ $member->email }}</p>
+                            <p class="text-sm text-gray-700">{{ $member->email }}</p>
                             <p class="text-xs text-gray-400">{{ $member->phone ?? 'No phone' }}</p>
                         </td>
                         <td class="td text-center">
                             @if($todayShift)
-                                <p class="text-xs font-semibold text-gray-800 capitalize">{{ $todayShift->shift_type }}</p>
+                                <p class="text-sm font-semibold text-gray-800 capitalize">{{ $todayShift->shift_type }}</p>
                                 <p class="text-xs text-gray-500">
                                     {{ \Carbon\Carbon::parse($todayShift->start_time)->format('g:i A') }} —
                                     {{ \Carbon\Carbon::parse($todayShift->end_time)->format('g:i A') }}
@@ -148,29 +153,27 @@
                             @endif
                         </td>
                         <td class="td text-center">
-                            <span class="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium {{ $isOnline ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-500' }}">
-                                <span class="w-1.5 h-1.5 rounded-full {{ $isOnline ? 'bg-emerald-400 animate-pulse' : 'bg-gray-300' }}"></span>
+                            <span class="inline-flex items-center gap-1.5 text-sm font-semibold {{ $isOnline ? 'text-emerald-600' : 'text-gray-400' }}">
+                                <span class="w-2 h-2 rounded-full {{ $isOnline ? 'bg-emerald-400 animate-pulse' : 'bg-gray-300' }}"></span>
                                 {{ $isOnline ? 'Online' : 'Offline' }}
                             </span>
                             @if(!$isOnline && $member->last_seen_at)
-                            <p class="text-[10px] text-gray-400 mt-0.5">{{ $member->last_seen_at->diffForHumans() }}</p>
+                            <p class="text-xs text-gray-400 mt-0.5">{{ $member->last_seen_at->diffForHumans() }}</p>
                             @endif
                         </td>
-                        <td class="td">
-                            <div class="flex items-center justify-center gap-3 row-action">
+                        <td class="td px-2">
+                            <div class="flex items-center justify-stretch gap-3 row-action w-full">
                                 @if($isAdmin)
                                 <button type="button" onclick="event.stopPropagation(); openShiftModal({{ $member->id }}, '{{ addslashes($member->name) }}')"
-                                        class="row-action inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold bg-brand-500 text-white hover:bg-brand-600 transition-colors shadow-sm"
+                                        class="row-action inline-flex flex-1 items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-semibold bg-indigo-500 text-white hover:bg-indigo-600 transition-colors shadow-sm justify-center"
                                         title="{{ $todayShift ? 'Revise Shift' : 'Assign Shift' }}">
-                                    <i class="fa-solid fa-calendar-plus"></i>
-                                    <span class="hidden lg:inline">Shift</span>
+                                    <i class="fa-solid fa-calendar-plus"></i> Shift
                                 </button>
                                 @endif
                                 <a href="{{ route('chat.index', ['with' => $member->id]) }}" onclick="event.stopPropagation()"
-                                   class="row-action inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold bg-purple-100 text-purple-700 hover:bg-purple-200 transition-colors"
+                                   class="row-action inline-flex flex-1 items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-semibold bg-purple-100 text-purple-700 hover:bg-purple-200 transition-colors justify-center"
                                    title="Message">
-                                    <i class="fa-solid fa-comment"></i>
-                                    <span class="hidden lg:inline">Chat</span>
+                                    <i class="fa-solid fa-comment"></i> Chat
                                 </a>
                             </div>
                         </td>

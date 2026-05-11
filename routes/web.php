@@ -24,10 +24,13 @@ Route::middleware(['auth', 'no.back'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     // Profile
-    Route::get('/profile',          [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::put('/profile',          [ProfileController::class, 'update'])->name('profile.update');
-    Route::put('/profile/password', [ProfileController::class, 'password'])->name('profile.password');
-    Route::post('/profile/status',  [ProfileController::class, 'status'])->name('profile.status');
+    Route::get('/profile',                [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::put('/profile',                [ProfileController::class, 'update'])->name('profile.update');
+    Route::put('/profile/password',       [ProfileController::class, 'password'])->name('profile.password');
+    Route::post('/profile/status',        [ProfileController::class, 'status'])->name('profile.status');
+    Route::post('/profile/theme',         [ProfileController::class, 'theme'])->name('profile.theme');
+    Route::put('/profile/appearance',     [ProfileController::class, 'appearance'])->name('profile.appearance');
+    Route::delete('/profile/avatar',      [ProfileController::class, 'removeAvatar'])->name('profile.avatar.remove');
 
     // Patients
     Route::get('/patients',                   [PatientController::class, 'index'])->name('patients.index');

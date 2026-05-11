@@ -4,11 +4,13 @@
 
 @section('content')
 @php
+    // Standardized role colors:
+    // Admin = Slate/Charcoal, Doctor = Royal Blue, Nurse = Teal/Cyan, Assistant = Emerald/Mint
     $roleConfig = [
-        'admin'     => ['label'=>'Administrators','icon'=>'fa-user-shield','accent'=>'brand',  'bg'=>'bg-brand-50',  'border'=>'border-brand-200',  'text'=>'text-brand-700',  'gradient'=>'from-brand-400 to-brand-600'],
-        'doctor'    => ['label'=>'Doctors',       'icon'=>'fa-user-doctor','accent'=>'purple', 'bg'=>'bg-purple-50', 'border'=>'border-purple-200', 'text'=>'text-purple-700', 'gradient'=>'from-purple-400 to-purple-600'],
-        'nurse'     => ['label'=>'Nurses',        'icon'=>'fa-user-nurse', 'accent'=>'pink',   'bg'=>'bg-pink-50',   'border'=>'border-pink-200',   'text'=>'text-pink-700',   'gradient'=>'from-pink-400 to-pink-600'],
-        'assistant' => ['label'=>'Assistants',    'icon'=>'fa-user',       'accent'=>'amber',  'bg'=>'bg-amber-50',  'border'=>'border-amber-200',  'text'=>'text-amber-700',  'gradient'=>'from-amber-400 to-amber-600'],
+        'admin'     => ['label'=>'Administrators','icon'=>'fa-user-shield','accent'=>'slate',   'bg'=>'bg-slate-50',   'border'=>'border-slate-200',   'text'=>'text-slate-700',   'gradient'=>'from-slate-500 to-slate-700'],
+        'doctor'    => ['label'=>'Doctors',       'icon'=>'fa-user-doctor','accent'=>'blue',    'bg'=>'bg-blue-50',    'border'=>'border-blue-200',    'text'=>'text-blue-700',    'gradient'=>'from-blue-500 to-blue-700'],
+        'nurse'     => ['label'=>'Nurses',        'icon'=>'fa-user-nurse', 'accent'=>'teal',    'bg'=>'bg-cyan-50',    'border'=>'border-cyan-200',    'text'=>'text-teal-700',    'gradient'=>'from-cyan-500 to-teal-600'],
+        'assistant' => ['label'=>'Assistants',    'icon'=>'fa-user',       'accent'=>'emerald', 'bg'=>'bg-emerald-50', 'border'=>'border-emerald-200', 'text'=>'text-emerald-700', 'gradient'=>'from-emerald-400 to-emerald-600'],
     ];
 @endphp
 
@@ -77,9 +79,13 @@
                                 ? $cfg['bg'].' border-l-2 border-l-'.$cfg['accent'].'-500'
                                 : 'hover:bg-gray-50' }}">
                         <div class="relative flex-shrink-0">
+                            @if($u->avatarUrl())
+                            <img src="{{ $u->avatarUrl() }}" alt="{{ $u->name }}" class="h-10 w-10 rounded-full object-cover">
+                            @else
                             <div class="h-10 w-10 rounded-full bg-gradient-to-br {{ $cfg['gradient'] }} flex items-center justify-center text-white text-sm font-bold">
                                 {{ strtoupper(substr($u->name, 0, 2)) }}
                             </div>
+                            @endif
                             <span class="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white {{ $u->isOnline() ? 'bg-emerald-400' : 'bg-gray-300' }}"></span>
                         </div>
                         <div class="flex-1 min-w-0">
@@ -109,9 +115,13 @@
             <!-- DM header -->
             <div class="flex items-center gap-3 px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex-shrink-0">
                 <div class="relative">
+                    @if($withUser->avatarUrl())
+                    <img src="{{ $withUser->avatarUrl() }}" alt="{{ $withUser->name }}" class="h-10 w-10 rounded-full object-cover">
+                    @else
                     <div class="h-10 w-10 rounded-full bg-gradient-to-br {{ $cfg['gradient'] }} flex items-center justify-center text-white text-sm font-bold">
                         {{ strtoupper(substr($withUser->name, 0, 2)) }}
                     </div>
+                    @endif
                     <span class="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white {{ $withUser->isOnline() ? 'bg-emerald-400' : 'bg-gray-300' }}"></span>
                 </div>
                 <div>

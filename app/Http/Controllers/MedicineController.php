@@ -55,17 +55,35 @@ class MedicineController extends Controller
                 break;
         }
 
+        // Sort
+        $sortField = in_array($request->get('sort'), ['name', 'updated_at', 'stock', 'expiry']) ? $request->get('sort') : 'name';
+        $sortDir   = $request->get('direction') === 'desc' ? 'desc' : 'asc';
+
+        if ($sortField === 'stock') {
+            $query->leftJoin('inventories', 'medicines.id', '=', 'inventories.medicine_id')
+                  ->select('medicines.*')
+                  ->orderBy('inventories.quantity', $sortDir)
+                  ->groupBy('medicines.id');
+        } elseif ($sortField === 'expiry') {
+            $query->leftJoin('inventories', 'medicines.id', '=', 'inventories.medicine_id')
+                  ->select('medicines.*')
+                  ->orderBy('inventories.expiration_date', $sortDir)
+                  ->groupBy('medicines.id');
+        } else {
+            $query->orderBy($sortField, $sortDir);
+        }
+
         // If user clicked "Expired Archive" card, show only expired in the main list
         if ($view === 'expired') {
             $medicines = (clone $query)
                 ->whereHas('latestInventory', fn($q) => $q->where('expiration_date', '<', now()))
-                ->orderBy('name')->paginate(15)->withQueryString();
+                ->paginate(15)->withQueryString();
             $expiredMedicines = collect();
         } else {
             // Active medicines (non-expired only)
             $medicines = (clone $query)
                 ->whereDoesntHave('latestInventory', fn($q) => $q->where('expiration_date', '<', now()))
-                ->orderBy('name')->paginate(15)->withQueryString();
+                ->paginate(15)->withQueryString();
             $expiredMedicines = collect(); // archive collapsed; users access it via the Expired card
         }
 
@@ -89,7 +107,8 @@ class MedicineController extends Controller
 
         return view('medicines.index', compact(
             'medicines', 'expiredMedicines', 'locations',
-            'totalMedicines', 'criticalStock', 'lowStock', 'expiringSoon', 'expiredCount'
+            'totalMedicines', 'criticalStock', 'lowStock', 'expiringSoon', 'expiredCount',
+            'sortField', 'sortDir'
         ));
     }
 

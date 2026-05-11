@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
 class ProfileController extends Controller
@@ -22,9 +23,31 @@ class ProfileController extends Controller
             'phone'          => 'nullable|string|max:50',
             'specialization' => 'nullable|string|max:255',
             'bio'            => 'nullable|string|max:500',
+            'avatar'         => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
         ]);
+
+        if ($request->hasFile('avatar')) {
+            // Delete old avatar if exists
+            if ($user->avatar && Storage::disk('public')->exists($user->avatar)) {
+                Storage::disk('public')->delete($user->avatar);
+            }
+            $validated['avatar'] = $request->file('avatar')->store('avatars', 'public');
+        } else {
+            unset($validated['avatar']);
+        }
+
         $user->update($validated);
         return back()->with('success', 'Profile updated!');
+    }
+
+    public function removeAvatar()
+    {
+        $user = Auth::user();
+        if ($user->avatar && Storage::disk('public')->exists($user->avatar)) {
+            Storage::disk('public')->delete($user->avatar);
+        }
+        $user->update(['avatar' => null]);
+        return back()->with('success', 'Avatar removed.');
     }
 
     public function password(Request $request)
@@ -52,5 +75,22 @@ class ProfileController extends Controller
             'label'   => Auth::user()->statusLabel(),
             'color'   => Auth::user()->statusColor(),
         ]);
+    }
+
+    public function theme(Request $request)
+    {
+        $request->validate(['theme' => 'required|in:light,dark']);
+        Auth::user()->update(['theme' => $request->theme]);
+        return response()->json(['success' => true, 'theme' => $request->theme]);
+    }
+
+    public function appearance(Request $request)
+    {
+        $validated = $request->validate([
+            'font_size'       => 'nullable|in:sm,md,lg,xl',
+            'colorblind_mode' => 'nullable|boolean',
+        ]);
+        Auth::user()->update(array_filter($validated, fn($v) => $v !== null));
+        return back()->with('success', 'Display preferences saved.');
     }
 }

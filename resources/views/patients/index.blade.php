@@ -27,37 +27,53 @@
         @endif
     </div>
 
-    <!-- Search + filter (consistent across pages) -->
+    <!-- Search + filter (sort merged into filter popover) -->
     <form method="GET" action="{{ route('patients.index') }}" class="card p-3">
+        @php $hasFilters = request('nurse_id') || request('doctor_id') || request('sort') || request('direction'); @endphp
         <div class="flex items-center gap-2">
-            <!-- Filter icon button -->
+            <!-- Filter + sort popover -->
             <div class="relative">
                 <button type="button" onclick="toggleDropdown('patientFilterMenu')"
-                        class="h-12 px-4 bg-white border-2 border-gray-200 rounded-xl hover:border-brand-400 transition-colors flex items-center gap-2 text-sm text-gray-600 font-medium {{ (request('nurse_id')||request('doctor_id')) ? 'border-brand-500 text-brand-700' : '' }}">
-                    <i class="fa-solid fa-filter text-sm"></i>
-                    <span class="hidden sm:inline">Filter</span>
-                    @if(request('nurse_id') || request('doctor_id'))
-                    <span class="bg-brand-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">{{ (int)!!request('nurse_id') + (int)!!request('doctor_id') }}</span>
+                        class="h-12 px-4 bg-white border-2 border-gray-200 rounded-xl hover:border-brand-400 transition-colors flex items-center gap-2 text-sm text-gray-600 font-medium {{ $hasFilters ? 'border-brand-500 text-brand-700' : '' }}">
+                    <i class="fa-solid fa-sliders text-sm"></i>
+                    <span class="hidden sm:inline">Filter & Sort</span>
+                    @if($hasFilters)
+                    <span class="bg-brand-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">!</span>
                     @endif
                 </button>
-                <div id="patientFilterMenu" class="hidden absolute left-0 top-full mt-2 w-72 bg-white border border-gray-100 rounded-xl shadow-xl p-4 space-y-3 z-30">
+                <div id="patientFilterMenu" class="hidden absolute left-0 top-full mt-2 w-80 bg-white border border-gray-100 rounded-xl shadow-xl p-4 space-y-4 z-30">
+                    <!-- Filter section -->
                     <div>
-                        <label class="label">Assigned Nurse</label>
-                        <select name="nurse_id" class="input">
-                            <option value="">All Nurses</option>
-                            @foreach($nurses as $n)
-                            <option value="{{ $n->id }}" {{ request('nurse_id')==$n->id ? 'selected' : '' }}>{{ $n->name }}</option>
-                            @endforeach
-                        </select>
+                        <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-1.5"><i class="fa-solid fa-filter"></i> Filter by</p>
+                        <div class="space-y-2">
+                            <select name="nurse_id" class="input">
+                                <option value="">All Nurses</option>
+                                @foreach($nurses as $n)
+                                <option value="{{ $n->id }}" {{ request('nurse_id')==$n->id ? 'selected' : '' }}>{{ $n->name }}</option>
+                                @endforeach
+                            </select>
+                            <select name="doctor_id" class="input">
+                                <option value="">All Doctors</option>
+                                @foreach($doctors as $d)
+                                <option value="{{ $d->id }}" {{ request('doctor_id')==$d->id ? 'selected' : '' }}>{{ $d->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
                     </div>
-                    <div>
-                        <label class="label">Assigned Doctor</label>
-                        <select name="doctor_id" class="input">
-                            <option value="">All Doctors</option>
-                            @foreach($doctors as $d)
-                            <option value="{{ $d->id }}" {{ request('doctor_id')==$d->id ? 'selected' : '' }}>{{ $d->name }}</option>
-                            @endforeach
-                        </select>
+                    <!-- Sort section -->
+                    <div class="pt-2 border-t border-gray-100">
+                        <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-1.5"><i class="fa-solid fa-arrow-down-wide-short"></i> Sort by</p>
+                        <div class="grid grid-cols-2 gap-2">
+                            <select name="sort" class="input">
+                                @foreach(['name'=>'Name','last_visit'=>'Last Visit','patient_id'=>'Patient ID'] as $f=>$label)
+                                <option value="{{ $f }}" {{ $sortField===$f ? 'selected' : '' }}>{{ $label }}</option>
+                                @endforeach
+                            </select>
+                            <select name="direction" class="input">
+                                <option value="asc"  {{ $sortDir==='asc' ? 'selected' : '' }}>↑ Ascending</option>
+                                <option value="desc" {{ $sortDir==='desc' ? 'selected' : '' }}>↓ Descending</option>
+                            </select>
+                        </div>
                     </div>
                     <div class="flex gap-2 pt-2 border-t border-gray-100">
                         <button type="submit" class="btn-primary flex-1 justify-center text-xs py-2">Apply</button>
@@ -72,22 +88,14 @@
                 <input type="text" name="search" value="{{ request('search') }}"
                        placeholder="Search by name, ID, nurse or doctor…"
                        class="block w-full h-12 pl-12 pr-4 border-2 border-gray-200 rounded-xl text-base text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all bg-white">
+                <!-- Preserve sort on search -->
+                @if(request('sort'))<input type="hidden" name="sort" value="{{ request('sort') }}">@endif
+                @if(request('direction'))<input type="hidden" name="direction" value="{{ request('direction') }}">@endif
             </div>
 
-            <button type="submit" class="hidden md:inline-flex btn-primary h-12">
-                <i class="fa-solid fa-magnifying-glass"></i> Search
+            <button type="submit" class="hidden md:flex h-12 w-12 items-center justify-center bg-brand-600 hover:bg-brand-700 text-white rounded-xl transition-colors shadow-sm flex-shrink-0" title="Search">
+                <i class="fa-solid fa-magnifying-glass"></i>
             </button>
-        </div>
-
-        <!-- Quick sort -->
-        <div class="flex items-center gap-1 mt-3 text-sm text-gray-500">
-            <span class="mr-1">Sort:</span>
-            @foreach(['name'=>'Name','last_visit'=>'Last Visit','patient_id'=>'Patient ID'] as $f=>$label)
-            <a href="{{ request()->fullUrlWithQuery(['sort'=>$f,'direction'=>($sortField===$f&&$sortDir==='asc')?'desc':'asc']) }}"
-               class="px-2.5 py-1 rounded-lg font-medium transition-colors {{ $sortField===$f ? 'bg-brand-600 text-white' : 'text-gray-500 hover:bg-gray-100' }}">
-                {{ $label }}@if($sortField===$f) <i class="fa-solid fa-arrow-{{ $sortDir==='asc'?'up':'down' }} text-xs"></i>@endif
-            </a>
-            @endforeach
         </div>
     </form>
 
@@ -102,7 +110,7 @@
                         <th class="th text-center">Age</th>
                         <th class="th text-center">Assigned To</th>
                         <th class="th text-center">Last Visit</th>
-                        <th class="th text-center" style="min-width: 220px;">Actions</th>
+                        <th class="th text-center" style="width: 280px;">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
@@ -110,25 +118,18 @@
                     @php $isPinned = in_array($patient->id, $pinnedIds); @endphp
                     <tr data-href="{{ route('patients.show', $patient) }}"
                         onclick="if(!event.target.closest('.row-action')) window.location=this.dataset.href"
-                        class="hover:bg-brand-50/40 transition-colors group cursor-pointer divide-x divide-gray-100">
+                        class="hover:bg-blue-50/40 transition-colors group cursor-pointer divide-x divide-gray-100">
                         <td class="td">
-                            <div class="flex items-center gap-3">
-                                <div class="w-9 h-9 rounded-full bg-gradient-to-br from-brand-400 to-brand-700 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-                                    {{ strtoupper(substr($patient->name,0,2)) }}
-                                </div>
-                                <div>
-                                    <p class="font-semibold text-gray-900 group-hover:text-brand-700 transition-colors flex items-center gap-1.5">
-                                        {{ $patient->name }}
-                                        @if($isPinned)
-                                        <i class="fa-solid fa-thumbtack text-amber-500 text-xs"></i>
-                                        @endif
-                                    </p>
-                                    <p class="text-xs text-gray-400">{{ $patient->phone ?? 'No phone' }}</p>
-                                </div>
-                            </div>
+                            <p class="font-semibold text-gray-900 dark:text-white group-hover:text-blue-700 transition-colors flex items-center gap-1.5">
+                                {{ $patient->name }}
+                                @if($isPinned)
+                                <i class="fa-solid fa-thumbtack text-amber-500 text-xs"></i>
+                                @endif
+                            </p>
+                            <p class="text-xs text-gray-400">{{ $patient->phone ?? 'No phone' }}</p>
                         </td>
                         <td class="td text-center">
-                            <span class="font-mono text-xs bg-slate-100 text-slate-700 px-2 py-1 rounded-lg inline-block">{{ $patient->patient_id }}</span>
+                            <span class="font-mono text-sm font-bold text-gray-700 dark:text-gray-200">{{ $patient->patient_id }}</span>
                         </td>
                         <td class="td text-center text-gray-600">
                             @if($patient->date_of_birth)
@@ -150,18 +151,18 @@
                                 <span class="text-gray-300">—</span>
                             @endif
                         </td>
-                        <td class="td">
-                            <div class="flex items-center justify-center gap-3 row-action">
-                                <!-- Pin dropdown (larger, colored, slightly more emphasis) -->
-                                <div class="relative">
+                        <td class="td px-2">
+                            <div class="flex items-center justify-stretch gap-3 row-action w-full">
+                                <!-- Pin dropdown -->
+                                <div class="relative flex-1">
                                     <button type="button"
                                             onclick="event.stopPropagation(); toggleDropdown('pinMenu-{{ $patient->id }}')"
-                                            class="row-action inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-colors
-                                                {{ $isPinned ? 'bg-amber-500 text-white hover:bg-amber-600' : 'bg-amber-100 text-amber-700 hover:bg-amber-200' }}"
+                                            class="row-action inline-flex w-full items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors justify-center
+                                                {{ $isPinned ? 'bg-amber-500 text-white hover:bg-amber-600 shadow-sm' : 'bg-amber-100 text-amber-700 hover:bg-amber-200' }}"
                                             title="Pin options">
                                         <i class="fa-solid fa-thumbtack"></i>
-                                        <span class="hidden lg:inline">{{ $isPinned ? 'Pinned' : 'Pin' }}</span>
-                                        <i class="fa-solid fa-chevron-down text-[9px]"></i>
+                                        {{ $isPinned ? 'Pinned' : 'Pin' }}
+                                        <i class="fa-solid fa-chevron-down text-[10px]"></i>
                                     </button>
                                     <div id="pinMenu-{{ $patient->id }}" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-20">
                                         <button type="button" onclick="event.stopPropagation(); pinPatient({{ $patient->id }}, 'self')"
@@ -181,15 +182,13 @@
                                     </div>
                                 </div>
                                 @if($canDelete)
-                                <!-- Delete button (separated, colored) -->
-                                <form method="POST" action="{{ route('patients.destroy', $patient) }}" class="inline row-action"
+                                <form method="POST" action="{{ route('patients.destroy', $patient) }}" class="inline row-action flex-1"
                                       onsubmit="event.stopPropagation(); return confirm('Delete {{ addslashes($patient->name) }}\'s record?')"
                                       onclick="event.stopPropagation()">
                                     @csrf @method('DELETE')
                                     <button type="submit" onclick="event.stopPropagation()"
-                                            class="row-action inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold bg-red-100 text-red-700 hover:bg-red-200 transition-colors">
-                                        <i class="fa-solid fa-trash"></i>
-                                        <span class="hidden lg:inline">Delete</span>
+                                            class="row-action inline-flex w-full items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-semibold bg-red-100 text-red-700 hover:bg-red-200 transition-colors justify-center">
+                                        <i class="fa-solid fa-trash"></i> Delete
                                     </button>
                                 </form>
                                 @endif

@@ -18,11 +18,18 @@
             <p class="text-sm text-gray-500 mt-0.5">Track stock, locations, and expiry dates</p>
         </div>
         @if($canAddMed)
-        <div class="relative">
-            <button type="button" onclick="toggleDropdown('addMedicineMenu')" class="btn-primary">
+        <div class="flex items-center gap-2">
+            <button type="button" onclick="openLocationModal()"
+                    class="inline-flex items-center gap-2 px-3 py-2.5 bg-amber-100 text-amber-700 hover:bg-amber-200 text-sm font-semibold rounded-xl transition-colors"
+                    title="Add a new storage location">
+                <i class="fa-solid fa-location-dot"></i> Location
+            </button>
+            <button type="button" onclick="openAddModal()" class="btn-primary">
                 <i class="fa-solid fa-plus"></i> Add Medicine
             </button>
-            <div id="addMedicineMenu" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-40">
+        </div>
+        <div class="hidden">
+            <div id="addMedicineMenu" class="hidden">
                 <button type="button" onclick="openAddModal();" class="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3">
                     <i class="fa-solid fa-keyboard text-brand-500 w-4"></i>
                     <div>
@@ -59,15 +66,15 @@
     @endphp
     <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
         <a href="{{ $cardLink('all') }}"
-           class="rounded-2xl p-5 bg-gradient-to-br from-brand-50 to-brand-100/50 border-2 {{ $activeFilter==='all' ? 'border-brand-600 ring-2 ring-brand-200' : 'border-brand-200 hover:border-brand-400' }} transition-all">
+           class="rounded-2xl p-5 bg-gradient-to-br from-green-50 to-green-100/50 border-2 {{ $activeFilter==='all' ? 'border-green-600 ring-2 ring-green-200' : 'border-green-200 hover:border-green-400' }} transition-all">
             <div class="flex items-center justify-between mb-3">
-                <div class="w-10 h-10 rounded-xl bg-brand-500 flex items-center justify-center shadow-md shadow-brand-200">
+                <div class="w-10 h-10 rounded-xl bg-green-500 flex items-center justify-center shadow-md shadow-green-200">
                     <i class="fa-solid fa-pills text-white text-sm"></i>
                 </div>
-                @if($activeFilter==='all')<i class="fa-solid fa-circle-check text-brand-600"></i>@endif
+                @if($activeFilter==='all')<i class="fa-solid fa-circle-check text-green-600"></i>@endif
             </div>
-            <p class="text-3xl font-extrabold text-brand-900">{{ $totalMedicines }}</p>
-            <p class="text-xs font-semibold text-brand-700/70 mt-1">Total Active</p>
+            <p class="text-3xl font-extrabold text-green-900">{{ $totalMedicines }}</p>
+            <p class="text-xs font-semibold text-green-700/70 mt-1">Total Active</p>
         </a>
         <a href="{{ $cardLink('critical') }}"
            class="rounded-2xl p-5 bg-gradient-to-br from-red-50 to-red-100/50 border-2 {{ $activeFilter==='critical' ? 'border-red-600 ring-2 ring-red-200' : 'border-red-200 hover:border-red-400' }} transition-all">
@@ -115,38 +122,50 @@
         </a>
     </div>
 
-    <!-- Search + filter (consistent layout with patients page) -->
+    <!-- Search + filter (sort merged into filter popover) -->
     <form method="GET" action="{{ route('medicines.index') }}" class="card p-3">
         @if(request('view'))<input type="hidden" name="view" value="{{ request('view') }}">@endif
+        @php $hasFilters = request('type') || request('location_id') || request('sort') || request('direction'); @endphp
         <div class="flex items-center gap-2">
-            <!-- Filter icon -->
             <div class="relative">
-                @php $hasFilters = request('type') || request('location_id'); @endphp
                 <button type="button" onclick="toggleDropdown('medicineFilterMenu')"
                         class="h-12 px-4 bg-white border-2 border-gray-200 rounded-xl hover:border-brand-400 transition-colors flex items-center gap-2 text-sm text-gray-600 font-medium {{ $hasFilters ? 'border-brand-500 text-brand-700' : '' }}">
-                    <i class="fa-solid fa-filter text-sm"></i>
-                    <span class="hidden sm:inline">Filter</span>
+                    <i class="fa-solid fa-sliders text-sm"></i>
+                    <span class="hidden sm:inline">Filter & Sort</span>
                     @if($hasFilters)
-                    <span class="bg-brand-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">{{ (int)!!request('type') + (int)!!request('location_id') }}</span>
+                    <span class="bg-brand-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">!</span>
                     @endif
                 </button>
-                <div id="medicineFilterMenu" class="hidden absolute left-0 top-full mt-2 w-72 bg-white border border-gray-100 rounded-xl shadow-xl p-4 space-y-3 z-30">
+                <div id="medicineFilterMenu" class="hidden absolute left-0 top-full mt-2 w-80 bg-white border border-gray-100 rounded-xl shadow-xl p-4 space-y-4 z-30">
                     <div>
-                        <label class="label">Type</label>
-                        <select name="type" class="input">
-                            <option value="">All Types</option>
-                            <option value="prescription" {{ request('type')==='prescription'?'selected':'' }}>Prescription (Rx)</option>
-                            <option value="normal"       {{ request('type')==='normal'?'selected':'' }}>Over-the-Counter</option>
-                        </select>
+                        <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-1.5"><i class="fa-solid fa-filter"></i> Filter by</p>
+                        <div class="space-y-2">
+                            <select name="type" class="input">
+                                <option value="">All Types</option>
+                                <option value="prescription" {{ request('type')==='prescription'?'selected':'' }}>Prescription (Rx)</option>
+                                <option value="normal"       {{ request('type')==='normal'?'selected':'' }}>Over-the-Counter</option>
+                            </select>
+                            <select name="location_id" class="input">
+                                <option value="">All Locations</option>
+                                @foreach($locations as $loc)
+                                <option value="{{ $loc->id }}" {{ request('location_id')==$loc->id?'selected':'' }}>{{ $loc->full_location }}</option>
+                                @endforeach
+                            </select>
+                        </div>
                     </div>
-                    <div>
-                        <label class="label">Location</label>
-                        <select name="location_id" class="input">
-                            <option value="">All Locations</option>
-                            @foreach($locations as $loc)
-                            <option value="{{ $loc->id }}" {{ request('location_id')==$loc->id?'selected':'' }}>{{ $loc->full_location }}</option>
-                            @endforeach
-                        </select>
+                    <div class="pt-2 border-t border-gray-100">
+                        <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-1.5"><i class="fa-solid fa-arrow-down-wide-short"></i> Sort by</p>
+                        <div class="grid grid-cols-2 gap-2">
+                            <select name="sort" class="input">
+                                @foreach(['name'=>'Name','stock'=>'Stock','expiry'=>'Expiry','updated_at'=>'Last Updated'] as $f=>$label)
+                                <option value="{{ $f }}" {{ $sortField===$f ? 'selected' : '' }}>{{ $label }}</option>
+                                @endforeach
+                            </select>
+                            <select name="direction" class="input">
+                                <option value="asc"  {{ $sortDir==='asc' ? 'selected' : '' }}>↑ Ascending</option>
+                                <option value="desc" {{ $sortDir==='desc' ? 'selected' : '' }}>↓ Descending</option>
+                            </select>
+                        </div>
                     </div>
                     <div class="flex gap-2 pt-2 border-t border-gray-100">
                         <button type="submit" class="btn-primary flex-1 justify-center text-xs py-2">Apply</button>
@@ -155,22 +174,23 @@
                 </div>
             </div>
 
-            <!-- Big consistent search bar -->
             <div class="relative flex-1">
                 <i class="fa-solid fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-base pointer-events-none"></i>
                 <input type="text" name="search" value="{{ request('search') }}"
                        placeholder="Search by name, generic name, or barcode…"
                        class="block w-full h-12 pl-12 pr-4 border-2 border-gray-200 rounded-xl text-base text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all bg-white">
+                @if(request('sort'))<input type="hidden" name="sort" value="{{ request('sort') }}">@endif
+                @if(request('direction'))<input type="hidden" name="direction" value="{{ request('direction') }}">@endif
             </div>
 
-            <button type="submit" class="hidden md:inline-flex btn-primary h-12">
-                <i class="fa-solid fa-magnifying-glass"></i> Search
+            <button type="submit" class="hidden md:flex h-12 w-12 items-center justify-center bg-brand-600 hover:bg-brand-700 text-white rounded-xl transition-colors shadow-sm flex-shrink-0" title="Search">
+                <i class="fa-solid fa-magnifying-glass"></i>
             </button>
         </div>
 
         @if(request('view') && request('view') !== 'all')
         <div class="mt-3 flex items-center gap-2 text-xs">
-            <span class="text-gray-500">Card filter:</span>
+            <span class="text-gray-400">Card filter:</span>
             <span class="inline-flex items-center gap-1 bg-brand-100 text-brand-700 px-2.5 py-1 rounded-full font-semibold">
                 {{ ucfirst(request('view')) }}
                 <a href="{{ $cardLink('all') }}" class="hover:text-brand-900"><i class="fa-solid fa-xmark"></i></a>
@@ -186,7 +206,7 @@
             'low'      => ['icon'=>'fa-circle-exclamation', 'color'=>'amber',   'title'=>'Low Stock'],
             'expiring' => ['icon'=>'fa-calendar-xmark',     'color'=>'orange',  'title'=>'Expiring Soon'],
             'expired'  => ['icon'=>'fa-box-archive',        'color'=>'gray',    'title'=>'Expired Archive'],
-            default    => ['icon'=>'fa-circle-check',       'color'=>'emerald', 'title'=>'Active Inventory'],
+            default    => ['icon'=>'fa-circle-check',       'color'=>'green',   'title'=>'Active Inventory'],
         };
     @endphp
     <div class="card overflow-hidden">
@@ -206,7 +226,7 @@
                         <th class="th text-center">Location</th>
                         <th class="th text-center">Expiry</th>
                         <th class="th text-center">Status</th>
-                        <th class="th text-center">Actions</th>
+                        <th class="th text-center" style="width: 280px;">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
@@ -219,21 +239,14 @@
                         $rowBg = $qty <= 0 ? 'bg-red-50/60 hover:bg-red-100/60'
                             : ($qty <= 5 ? 'bg-red-50/40 hover:bg-red-100/50'
                             : ($qty <= $min ? 'bg-amber-50/40 hover:bg-amber-100/50'
-                            : 'hover:bg-brand-50/40'));
+                            : 'hover:bg-green-50/40'));
                     @endphp
                     <tr data-href="{{ route('medicines.show', $m) }}"
                         onclick="if(!event.target.closest('.row-action')) window.location=this.dataset.href"
                         class="transition-colors group cursor-pointer divide-x divide-gray-100 {{ $rowBg }}">
                         <td class="td">
-                            <div class="flex items-center gap-3">
-                                <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
-                                    {{ strtoupper(substr($m->name, 0, 1)) }}
-                                </div>
-                                <div>
-                                    <p class="font-semibold text-gray-900 group-hover:text-brand-700">{{ $m->name }}</p>
-                                    <p class="text-xs text-gray-400">{{ $m->generic_name ?? '—' }}</p>
-                                </div>
-                            </div>
+                            <p class="font-semibold text-gray-900 dark:text-white group-hover:text-green-700">{{ $m->name }}</p>
+                            <p class="text-xs text-gray-400">{{ $m->generic_name ?? '—' }}</p>
                         </td>
                         <td class="td text-center">
                             @if($m->type === 'prescription')
@@ -270,26 +283,22 @@
                                 <span class="badge-ok"><i class="fa-solid fa-check"></i> Good</span>
                             @endif
                         </td>
-                        <td class="td">
-                            <div class="flex items-center justify-center gap-3 row-action">
-                                <!-- Dispense (larger, colored, primary action) -->
+                        <td class="td px-2">
+                            <div class="flex items-center justify-stretch gap-3 row-action w-full">
                                 <button type="button"
                                         onclick="event.stopPropagation(); openDispenseModal({{ $m->id }}, '{{ addslashes($m->name) }}', {{ $qty }})"
-                                        class="row-action inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold bg-emerald-500 text-white hover:bg-emerald-600 transition-colors shadow-sm"
+                                        class="row-action inline-flex flex-1 items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-semibold bg-emerald-500 text-white hover:bg-emerald-600 transition-colors shadow-sm justify-center"
                                         title="Dispense">
-                                    <i class="fa-solid fa-hand-holding-medical"></i>
-                                    <span class="hidden lg:inline">Dispense</span>
+                                    <i class="fa-solid fa-hand-holding-medical"></i> Dispense
                                 </button>
                                 @if($canDeleteMed)
-                                <!-- Delete (smaller, separated, colored) -->
-                                <form method="POST" action="{{ route('medicines.destroy', $m) }}" class="inline row-action"
+                                <form method="POST" action="{{ route('medicines.destroy', $m) }}" class="inline row-action flex-1"
                                       onsubmit="event.stopPropagation(); return confirm('Delete {{ addslashes($m->name) }}?')"
                                       onclick="event.stopPropagation()">
                                     @csrf @method('DELETE')
                                     <button type="submit" onclick="event.stopPropagation()"
-                                            class="row-action inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold bg-red-100 text-red-700 hover:bg-red-200 transition-colors">
-                                        <i class="fa-solid fa-trash"></i>
-                                        <span class="hidden lg:inline">Delete</span>
+                                            class="row-action inline-flex w-full items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-semibold bg-red-100 text-red-700 hover:bg-red-200 transition-colors justify-center">
+                                        <i class="fa-solid fa-trash"></i> Delete
                                     </button>
                                 </form>
                                 @endif
