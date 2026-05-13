@@ -17,6 +17,9 @@ class DemoDataSeeder extends Seeder
     {
         // Staff
         $admin  = User::create(['name'=>'Sarah Chen','email'=>'admin@clinic.com','password'=>Hash::make('password'),'role'=>'admin','phone'=>'0917-123-4567','specialization'=>'IT & Operations Admin','last_seen_at'=>now(),'is_active'=>true]);
+        $head   = User::create(['name'=>'Dr. Elena Ramos','email'=>'clinichead@clinic.com','password'=>Hash::make('password'),'role'=>'clinic_head','phone'=>'0917-900-0001','specialization'=>'General Medicine','last_seen_at'=>now()->subMinutes(3),'is_active'=>true]);
+        $pharm  = User::create(['name'=>'Carlo Reyes','email'=>'pharmacist@clinic.com','password'=>Hash::make('password'),'role'=>'pharmacist','phone'=>'0917-900-0002','specialization'=>'Clinical Pharmacist','last_seen_at'=>now()->subMinutes(5),'is_active'=>true]);
+        $sec    = User::create(['name'=>'Bianca Torres','email'=>'secretary@clinic.com','password'=>Hash::make('password'),'role'=>'secretary','phone'=>'0917-900-0003','specialization'=>'Patient Coordination','last_seen_at'=>now()->subMinutes(12),'is_active'=>true]);
         $doc1   = User::create(['name'=>'Dr. James Wilson','email'=>'doctor@clinic.com','password'=>Hash::make('password'),'role'=>'doctor','phone'=>'0918-234-5678','specialization'=>'Cardiology','last_seen_at'=>now()->subMinutes(2),'is_active'=>true]);
         $doc2   = User::create(['name'=>'Dr. Maria Santos','email'=>'doctor2@clinic.com','password'=>Hash::make('password'),'role'=>'doctor','phone'=>'0919-345-6789','specialization'=>'Pediatrics','last_seen_at'=>now()->subMinutes(10),'is_active'=>true]);
         $nurse1 = User::create(['name'=>'Nurse Joy Reyes','email'=>'nurse@clinic.com','password'=>Hash::make('password'),'role'=>'nurse','phone'=>'0920-456-7890','last_seen_at'=>now()->subMinutes(1),'is_active'=>true]);

@@ -13,7 +13,7 @@ class ChatController extends Controller
     public function index(Request $request)
     {
         $users = User::where('id', '!=', Auth::id())
-            ->orderByRaw("FIELD(role, 'admin', 'doctor', 'nurse', 'assistant')")
+            ->orderByRaw("FIELD(role, 'admin', 'clinic_head', 'doctor', 'pharmacist', 'nurse', 'secretary', 'assistant')")
             ->orderBy('name')
             ->get()
             ->groupBy('role');
@@ -210,6 +210,15 @@ class ChatController extends Controller
         $request->validate(['user_id' => 'required|exists:users,id']);
         $group->members()->syncWithoutDetaching([$request->user_id]);
         return back()->with('success', 'Member added to group.');
+    }
+
+    public function destroyMessage(Message $message)
+    {
+        if ($message->sender_id !== Auth::id()) {
+            abort(403, 'You can only delete your own messages.');
+        }
+        $message->delete();
+        return response()->json(['success' => true]);
     }
 
     private function groupUnreadCounts()

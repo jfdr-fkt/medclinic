@@ -11,11 +11,20 @@
            class="w-9 h-9 flex items-center justify-center rounded-xl text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors">
             <i class="fa-solid fa-arrow-left"></i>
         </a>
+        @if($medicine->image_path)
+            <img src="{{ $medicine->imageUrl() }}" alt="{{ $medicine->name }}"
+                 class="w-14 h-14 rounded-2xl object-cover border-2 border-gray-200 dark:border-slate-600 shadow-sm flex-shrink-0">
+        @else
+            <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-100 to-emerald-200 dark:from-emerald-900/40 dark:to-emerald-800/40 flex items-center justify-center flex-shrink-0">
+                <i class="fa-solid fa-pills text-emerald-600 text-xl"></i>
+            </div>
+        @endif
         <div>
-            <h1 class="text-2xl font-bold text-gray-900">{{ $medicine->name }}</h1>
+            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{{ $medicine->name }}</h1>
             <p class="text-sm text-gray-400 mt-0.5">
                 {{ $medicine->generic_name ?? 'No generic name' }}
                 @if($medicine->dosage) &bull; {{ $medicine->dosage }} @endif
+                @if($medicine->form_other_note) &bull; <em>{{ $medicine->form_other_note }}</em> @endif
             </p>
         </div>
     </div>

@@ -24,6 +24,8 @@ class AuthController extends Controller
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
             $request->session()->regenerate();
             Auth::user()->update(['last_seen_at' => now(), 'status' => 'available']);
+            // Flash so the dashboard can install a one-time back-button trap.
+            $request->session()->flash('just_logged_in', true);
             return redirect()->intended(route('dashboard'));
         }
 
@@ -60,6 +62,7 @@ class AuthController extends Controller
         ]);
 
         Auth::login($user);
+        $request->session()->flash('just_logged_in', true);
         return redirect()->route('dashboard')->with('success', "Welcome to ClinicMS, {$user->name}!");
     }
 

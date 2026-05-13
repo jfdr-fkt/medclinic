@@ -105,12 +105,15 @@
                 <!-- Demo accounts -->
                 <div class="border-t border-gray-100 px-8 py-5 bg-gray-50/50">
                     <p class="text-xs text-gray-400 font-medium uppercase tracking-wider mb-3 text-center">Demo Accounts — password: <span class="font-bold text-gray-600">password</span></p>
-                    <div class="grid grid-cols-2 gap-2">
+                    <div class="grid grid-cols-3 gap-2">
                         @foreach([
-                            ['admin@clinic.com',     'Admin',     'fa-user-shield', 'text-brand-600'],
-                            ['doctor@clinic.com',    'Doctor',    'fa-user-doctor', 'text-purple-600'],
-                            ['nurse@clinic.com',     'Nurse',     'fa-user-nurse',  'text-pink-600'],
-                            ['assistant@clinic.com', 'Assistant', 'fa-user',        'text-amber-600'],
+                            ['admin@clinic.com',        'Admin',        'fa-user-shield',                  'text-brand-600'],
+                            ['clinichead@clinic.com',   'Clinic Head',  'fa-user-tie',                     'text-purple-600'],
+                            ['doctor@clinic.com',       'Doctor',       'fa-user-doctor',                  'text-blue-600'],
+                            ['pharmacist@clinic.com',   'Pharmacist',   'fa-prescription-bottle-medical',  'text-green-600'],
+                            ['nurse@clinic.com',        'Nurse',        'fa-user-nurse',                   'text-pink-600'],
+                            ['secretary@clinic.com',    'Secretary',    'fa-id-badge',                     'text-rose-600'],
+                            ['assistant@clinic.com',    'Assistant',    'fa-user',                         'text-amber-600'],
                         ] as [$email, $label, $icon, $iconColor])
                         <button onclick="fillLogin('{{ $email }}')" class="text-left px-3 py-2 bg-white border border-gray-200 rounded-lg hover:border-brand-400 hover:shadow-sm transition-all">
                             <div class="flex items-center gap-2 mb-0.5">

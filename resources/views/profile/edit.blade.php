@@ -29,7 +29,7 @@
     <div class="card overflow-hidden">
         <div class="h-32 {{ $bannerColor }} relative">
             <div class="absolute -top-10 -right-10 w-48 h-48 bg-white/5 rounded-full"></div>
-            <div class="absolute bottom-4 right-6 text-white/30 text-xs font-medium uppercase tracking-widest">{{ $user->role }} profile</div>
+            <div class="absolute bottom-4 right-6 text-white/30 text-xs font-medium uppercase tracking-widest">{{ $user->roleLabel() }} profile</div>
         </div>
 
         <div class="px-6 pb-6 -mt-14">
@@ -53,7 +53,7 @@
                     <h2 class="text-2xl font-extrabold text-gray-900 dark:text-white truncate">{{ $user->name }}</h2>
                     <div class="flex items-center gap-2 mt-1 flex-wrap">
                         <span class="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider {{ $bannerColor }} text-white px-2 py-1 rounded-md">
-                            {{ $user->role }}
+                            {{ $user->roleLabel() }}
                         </span>
                         @if($user->specialization)
                         <span class="text-sm text-gray-500">{{ $user->specialization }}</span>
@@ -255,7 +255,7 @@
         <div class="grid grid-cols-2 gap-4 text-sm">
             <div>
                 <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Role</p>
-                <p class="font-semibold text-gray-900 dark:text-white capitalize">{{ $user->role }}</p>
+                <p class="font-semibold text-gray-900 dark:text-white">{{ $user->roleLabel() }}</p>
             </div>
             <div>
                 <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Joined</p>

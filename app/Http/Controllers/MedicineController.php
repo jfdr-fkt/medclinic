@@ -122,29 +122,46 @@ class MedicineController extends Controller
     {
         if (!Auth::user()->can_('medicines.create')) abort(403, 'Only admins can add medicines.');
         $validated = $request->validate([
-            'name'           => 'required|string|max:255',
-            'generic_name'   => 'nullable|string',
-            'barcode'        => 'nullable|string|unique:medicines',
-            'qr_code'        => 'nullable|string|unique:medicines',
-            'location_id'    => 'required|exists:medicine_locations,id',
-            'type'           => 'required|in:prescription,normal',
-            'description'    => 'nullable|string',
-            'dosage'         => 'nullable|string',
-            'quantity'       => 'required|integer|min:0',
-            'min_stock_level'=> 'required|integer|min:1',
-            'expiration_date'=> 'required|date|after:today',
-            'batch_number'   => 'nullable|string',
+            'name'            => 'required|string|max:255',
+            'generic_name'    => 'nullable|string',
+            'barcode'         => 'nullable|string|unique:medicines',
+            'qr_code'         => 'nullable|string|unique:medicines',
+            'location_id'     => 'required|exists:medicine_locations,id',
+            'type'            => 'required|in:prescription,normal',
+            'description'     => 'nullable|string',
+            'dosage'          => 'nullable|string',
+            'form'            => 'nullable|string',
+            'form_other_note' => 'nullable|string|max:255',
+            'image'           => 'nullable|image|max:4096',
+            'quantity'        => 'required|integer|min:0',
+            'min_stock_level' => 'required|integer|min:1',
+            'expiration_date' => 'required|date|after:today',
+            'batch_number'    => 'nullable|string',
         ]);
 
+        // "Other" form selected → note is mandatory.
+        if (($validated['form'] ?? '') === 'other' && empty(trim($validated['form_other_note'] ?? ''))) {
+            return back()
+                ->withErrors(['form_other_note' => 'A note is required when form is "Other".'])
+                ->withInput();
+        }
+
+        $imagePath = null;
+        if ($request->hasFile('image')) {
+            $imagePath = $request->file('image')->store('medicines', 'public');
+        }
+
         $medicine = Medicine::create([
-            'name'         => $validated['name'],
-            'generic_name' => $validated['generic_name'] ?? null,
-            'barcode'      => $validated['barcode'] ?? null,
-            'qr_code'      => $validated['qr_code'] ?? null,
-            'location_id'  => $validated['location_id'],
-            'type'         => $validated['type'],
-            'description'  => $validated['description'] ?? null,
-            'dosage'       => $validated['dosage'] ?? null,
+            'name'            => $validated['name'],
+            'generic_name'    => $validated['generic_name'] ?? null,
+            'barcode'         => $validated['barcode'] ?? null,
+            'qr_code'         => $validated['qr_code'] ?? null,
+            'location_id'     => $validated['location_id'],
+            'type'            => $validated['type'],
+            'description'     => $validated['description'] ?? null,
+            'dosage'          => $validated['dosage'] ?? null,
+            'image_path'      => $imagePath,
+            'form_other_note' => $validated['form_other_note'] ?? null,
         ]);
 
         Inventory::create([
@@ -158,7 +175,9 @@ class MedicineController extends Controller
         if ($request->wantsJson()) {
             return response()->json(['success' => true, 'medicine' => $medicine->load('location', 'latestInventory')]);
         }
-        return redirect()->route('medicines.index')->with('success', "Medicine '{$medicine->name}' added successfully!");
+        return redirect()
+            ->route('medicines.index', ['highlight' => $medicine->id])
+            ->with('success', "Medicine '{$medicine->name}' added successfully!");
     }
 
     public function show(Medicine $medicine)

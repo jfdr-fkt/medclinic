@@ -6,10 +6,13 @@
 @php
     $isAdmin = Auth::user()->role === 'admin';
     $roleColors = [
-        'admin'     => ['bg'=>'bg-brand-100',  'text'=>'text-brand-700',  'grad'=>'from-brand-400 to-brand-600',  'icon'=>'fa-user-shield'],
-        'doctor'    => ['bg'=>'bg-purple-100', 'text'=>'text-purple-700', 'grad'=>'from-purple-400 to-purple-600','icon'=>'fa-user-doctor'],
-        'nurse'     => ['bg'=>'bg-pink-100',   'text'=>'text-pink-700',   'grad'=>'from-pink-400 to-pink-600',    'icon'=>'fa-user-nurse'],
-        'assistant' => ['bg'=>'bg-amber-100',  'text'=>'text-amber-700',  'grad'=>'from-amber-400 to-amber-600',  'icon'=>'fa-user'],
+        'admin'       => ['bg'=>'bg-slate-100',  'text'=>'text-slate-700',  'grad'=>'from-slate-500 to-slate-700',  'icon'=>'fa-user-shield'],
+        'clinic_head' => ['bg'=>'bg-purple-100', 'text'=>'text-purple-700', 'grad'=>'from-purple-500 to-purple-700','icon'=>'fa-user-tie'],
+        'doctor'      => ['bg'=>'bg-blue-100',   'text'=>'text-blue-700',   'grad'=>'from-blue-500 to-blue-700',    'icon'=>'fa-user-doctor'],
+        'pharmacist'  => ['bg'=>'bg-green-100',  'text'=>'text-green-700',  'grad'=>'from-green-500 to-green-700',  'icon'=>'fa-prescription-bottle-medical'],
+        'nurse'       => ['bg'=>'bg-cyan-100',   'text'=>'text-teal-700',   'grad'=>'from-cyan-500 to-teal-600',    'icon'=>'fa-user-nurse'],
+        'secretary'   => ['bg'=>'bg-amber-100',  'text'=>'text-amber-700',  'grad'=>'from-amber-400 to-amber-600',  'icon'=>'fa-id-badge'],
+        'assistant'   => ['bg'=>'bg-emerald-100','text'=>'text-emerald-700','grad'=>'from-emerald-400 to-emerald-600','icon'=>'fa-user'],
     ];
     $cfg = $roleColors[$user->role] ?? $roleColors['assistant'];
 
@@ -44,8 +47,8 @@
                 <div class="flex-1 min-w-0 pb-1">
                     <h2 class="text-2xl font-bold text-gray-900">{{ $user->name }}</h2>
                     <div class="flex items-center gap-2 mt-1 flex-wrap">
-                        <span class="inline-flex items-center gap-1.5 {{ $cfg['bg'] }} {{ $cfg['text'] }} px-2.5 py-1 rounded-full text-xs font-semibold capitalize">
-                            <i class="fa-solid {{ $cfg['icon'] }} text-[10px]"></i> {{ $user->role }}
+                        <span class="inline-flex items-center gap-1.5 {{ $cfg['bg'] }} {{ $cfg['text'] }} px-2.5 py-1 rounded-full text-xs font-semibold">
+                            <i class="fa-solid {{ $cfg['icon'] }} text-[10px]"></i> {{ $user->roleLabel() }}
                         </span>
                         <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium {{ $user->isOnline() ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-500' }}">
                             <span class="w-1.5 h-1.5 rounded-full {{ $user->isOnline() ? 'bg-emerald-400 animate-pulse' : 'bg-gray-300' }}"></span>

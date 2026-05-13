@@ -23,12 +23,15 @@ class ScanController extends Controller
 
         if ($medicine) {
             return response()->json([
-                'found'    => true,
-                'name'     => $medicine->name,
-                'type'     => $medicine->type === 'prescription' ? 'prescription' : 'otc',
-                'category' => $medicine->type,
-                'location' => $medicine->location?->full_location,
-                'stock'    => $medicine->totalStock(),
+                'found'        => true,
+                'name'         => $medicine->name,
+                'generic_name' => $medicine->generic_name,
+                'brand_names'  => $medicine->brand_names,
+                'type'         => $medicine->type === 'prescription' ? 'prescription' : 'otc',
+                'category'     => $medicine->type,
+                'dosage_form'  => $medicine->dosage_form,
+                'location'     => $medicine->location?->full_location,
+                'stock'        => $medicine->totalStock(),
             ]);
         }
         return response()->json(['found' => false]);
@@ -38,7 +41,10 @@ class ScanController extends Controller
     {
         $validated = $request->validate([
             'name'             => 'required|string|max:255',
-            'type'             => 'nullable|string',
+            'generic_name'     => 'nullable|string|max:255',
+            'brand_names'      => 'nullable|string|max:500',
+            'dosage_form'      => 'nullable|string',
+            'form_other_note'  => 'nullable|string|max:255',
             'category'         => 'nullable|string',
             'quantity'         => 'required|integer|min:1',
             'unit'             => 'nullable|string',
@@ -47,8 +53,17 @@ class ScanController extends Controller
             'location_cabinet' => 'nullable|string',
             'location_level'   => 'nullable|string',
             'notes'            => 'nullable|string',
-            'code'             => 'nullable|string',
+            'scanned_raw_code' => 'nullable|string',
+            'image'            => 'nullable|image|max:4096',
         ]);
+
+        // "Other" form selected → note is mandatory.
+        if (($validated['dosage_form'] ?? '') === 'other' && empty(trim($validated['form_other_note'] ?? ''))) {
+            return response()->json([
+                'success' => false,
+                'errors'  => ['form_other_note' => 'A note is required when form is "Other".'],
+            ], 422);
+        }
 
         // Find or create a location if provided
         $locationId = null;
@@ -64,11 +79,22 @@ class ScanController extends Controller
 
         $isRx = in_array($validated['category'] ?? '', ['prescription', 'controlled']);
 
+        $imagePath = null;
+        if ($request->hasFile('image')) {
+            $imagePath = $request->file('image')->store('medicines', 'public');
+        }
+
         $medicine = Medicine::create([
-            'name'        => $validated['name'],
-            'type'        => $isRx ? 'prescription' : 'normal',
-            'barcode'     => $validated['code'] ?? null,
-            'location_id' => $locationId,
+            'name'            => $validated['name'],
+            'generic_name'    => $validated['generic_name'] ?? null,
+            'brand_names'     => $validated['brand_names'] ?? null,
+            'type'            => $isRx ? 'prescription' : 'normal',
+            'dosage_form'     => $validated['dosage_form'] ?? null,
+            'barcode'         => $validated['scanned_raw_code'] ?? null,
+            'location_id'     => $locationId,
+            'description'     => $validated['notes'] ?? null,
+            'image_path'      => $imagePath,
+            'form_other_note' => $validated['form_other_note'] ?? null,
         ]);
 
         Inventory::create([
@@ -80,8 +106,16 @@ class ScanController extends Controller
         ]);
 
         if ($request->wantsJson()) {
-            return response()->json(['success' => true, 'message' => "'{$medicine->name}' added to inventory!"]);
+            return response()->json([
+                'success'       => true,
+                'message'       => "'{$medicine->name}' added to inventory!",
+                'medicine_id'   => $medicine->id,
+                'medicine_name' => $medicine->name,
+                'view_url'      => route('medicines.index', ['highlight' => $medicine->id]),
+            ]);
         }
-        return redirect()->route('medicines.index')->with('success', "'{$medicine->name}' added via Smart Scan!");
+        return redirect()
+            ->route('medicines.index', ['highlight' => $medicine->id])
+            ->with('success', "'{$medicine->name}' added via Smart Scan!");
     }
 }

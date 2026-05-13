@@ -9,11 +9,13 @@
     // Admin = Charcoal/Slate, Doctor = Royal Blue, Nurse = Teal/Cyan,
     // Assistant = Emerald/Mint, (Secretary placeholder = Amber/Coral)
     $roleColors = [
-        'admin'     => ['bg'=>'bg-slate-100',   'text'=>'text-slate-700',   'grad'=>'from-slate-500 to-slate-700',    'icon'=>'fa-user-shield'],
-        'doctor'    => ['bg'=>'bg-blue-100',    'text'=>'text-blue-700',    'grad'=>'from-blue-500 to-blue-700',      'icon'=>'fa-user-doctor'],
-        'nurse'     => ['bg'=>'bg-cyan-100',    'text'=>'text-teal-700',    'grad'=>'from-cyan-500 to-teal-600',      'icon'=>'fa-user-nurse'],
-        'assistant' => ['bg'=>'bg-emerald-100', 'text'=>'text-emerald-700', 'grad'=>'from-emerald-400 to-emerald-600','icon'=>'fa-user'],
-        'secretary' => ['bg'=>'bg-amber-100',   'text'=>'text-amber-700',   'grad'=>'from-amber-400 to-amber-600',    'icon'=>'fa-user'],
+        'admin'       => ['bg'=>'bg-slate-100',   'text'=>'text-slate-700',   'grad'=>'from-slate-500 to-slate-700',    'icon'=>'fa-user-shield',    'label'=>'Admin'],
+        'clinic_head' => ['bg'=>'bg-purple-100',  'text'=>'text-purple-700',  'grad'=>'from-purple-500 to-purple-700',  'icon'=>'fa-user-tie',       'label'=>'Clinic Head'],
+        'doctor'      => ['bg'=>'bg-blue-100',    'text'=>'text-blue-700',    'grad'=>'from-blue-500 to-blue-700',      'icon'=>'fa-user-doctor',    'label'=>'Doctor'],
+        'pharmacist'  => ['bg'=>'bg-green-100',   'text'=>'text-green-700',   'grad'=>'from-green-500 to-green-700',    'icon'=>'fa-prescription-bottle-medical', 'label'=>'Pharmacist'],
+        'nurse'       => ['bg'=>'bg-cyan-100',    'text'=>'text-teal-700',    'grad'=>'from-cyan-500 to-teal-600',      'icon'=>'fa-user-nurse',     'label'=>'Nurse'],
+        'secretary'   => ['bg'=>'bg-amber-100',   'text'=>'text-amber-700',   'grad'=>'from-amber-400 to-amber-600',    'icon'=>'fa-id-badge',       'label'=>'Secretary'],
+        'assistant'   => ['bg'=>'bg-emerald-100', 'text'=>'text-emerald-700', 'grad'=>'from-emerald-400 to-emerald-600','icon'=>'fa-user',           'label'=>'Assistant'],
     ];
 @endphp
 
@@ -51,10 +53,13 @@
                         <div class="space-y-2">
                             <select name="role" class="input">
                                 <option value="">All Roles</option>
-                                <option value="admin"     {{ request('role')==='admin'?'selected':'' }}>Administrator</option>
-                                <option value="doctor"    {{ request('role')==='doctor'?'selected':'' }}>Doctor</option>
-                                <option value="nurse"     {{ request('role')==='nurse'?'selected':'' }}>Nurse</option>
-                                <option value="assistant" {{ request('role')==='assistant'?'selected':'' }}>Assistant</option>
+                                <option value="admin"       {{ request('role')==='admin'?'selected':'' }}>Admin</option>
+                                <option value="clinic_head" {{ request('role')==='clinic_head'?'selected':'' }}>Clinic Head</option>
+                                <option value="doctor"      {{ request('role')==='doctor'?'selected':'' }}>Doctor</option>
+                                <option value="pharmacist"  {{ request('role')==='pharmacist'?'selected':'' }}>Pharmacist</option>
+                                <option value="nurse"       {{ request('role')==='nurse'?'selected':'' }}>Nurse</option>
+                                <option value="secretary"   {{ request('role')==='secretary'?'selected':'' }}>Secretary</option>
+                                <option value="assistant"   {{ request('role')==='assistant'?'selected':'' }}>Assistant</option>
                             </select>
                             <select name="status" class="input">
                                 <option value="">All Statuses</option>
@@ -133,8 +138,8 @@
                             </div>
                         </td>
                         <td class="td text-center">
-                            <span class="inline-flex items-center gap-1.5 {{ $cfg['text'] }} font-bold capitalize text-sm">
-                                <i class="fa-solid {{ $cfg['icon'] }}"></i> {{ $member->role }}
+                            <span class="inline-flex items-center gap-1.5 {{ $cfg['text'] }} font-bold text-sm">
+                                <i class="fa-solid {{ $cfg['icon'] }}"></i> {{ $cfg['label'] ?? ucfirst($member->role) }}
                             </span>
                         </td>
                         <td class="td text-center">
@@ -259,7 +264,10 @@
                     <select name="role" required class="input">
                         <option value="nurse">Nurse</option>
                         <option value="doctor">Doctor</option>
+                        <option value="pharmacist">Pharmacist</option>
+                        <option value="secretary">Secretary</option>
                         <option value="assistant">Assistant</option>
+                        <option value="clinic_head">Clinic Head</option>
                         <option value="admin">Admin</option>
                     </select>
                 </div>

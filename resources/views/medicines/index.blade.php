@@ -2,6 +2,18 @@
 @section('title', 'Medicines')
 @section('page-title', 'Medicines & Inventory')
 
+@push('head')
+<style>
+    @keyframes highlightFadeInOut {
+        0%   { background-color: transparent;            box-shadow: inset 0 0 0 0px rgba(16,185,129,0); }
+        12%  { background-color: rgba(16,185,129,0.22); box-shadow: inset 0 0 0 2px rgba(16,185,129,0.8); }
+        65%  { background-color: rgba(16,185,129,0.12); box-shadow: inset 0 0 0 2px rgba(16,185,129,0.5); }
+        100% { background-color: transparent;            box-shadow: inset 0 0 0 0px rgba(16,185,129,0); }
+    }
+    .rowHighlight { animation: highlightFadeInOut 3s ease-in-out 1 forwards; }
+</style>
+@endpush
+
 @section('content')
 <div class="space-y-5">
 
@@ -18,15 +30,15 @@
             <p class="text-sm text-gray-500 mt-0.5">Track stock, locations, and expiry dates</p>
         </div>
         @if($canAddMed)
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2 flex-wrap">
             <button type="button" onclick="openLocationModal()"
                     class="inline-flex items-center gap-2 px-3 py-2.5 bg-amber-100 text-amber-700 hover:bg-amber-200 text-sm font-semibold rounded-xl transition-colors"
                     title="Add a new storage location">
                 <i class="fa-solid fa-location-dot"></i> Location
             </button>
-            <button type="button" onclick="openAddModal()" class="btn-primary">
+            <a href="{{ route('scan.index') }}" class="btn-primary">
                 <i class="fa-solid fa-plus"></i> Add Medicine
-            </button>
+            </a>
         </div>
         <div class="hidden">
             <div id="addMedicineMenu" class="hidden">
@@ -242,11 +254,24 @@
                             : 'hover:bg-green-50/40'));
                     @endphp
                     <tr data-href="{{ route('medicines.show', $m) }}"
+                        data-medicine-id="{{ $m->id }}"
                         onclick="if(!event.target.closest('.row-action')) window.location=this.dataset.href"
                         class="transition-colors group cursor-pointer divide-x divide-gray-100 {{ $rowBg }}">
                         <td class="td">
-                            <p class="font-semibold text-gray-900 dark:text-white group-hover:text-green-700">{{ $m->name }}</p>
-                            <p class="text-xs text-gray-400">{{ $m->generic_name ?? '—' }}</p>
+                            <div class="flex items-center gap-3">
+                                @if($m->image_path)
+                                    <img src="{{ $m->imageUrl() }}" alt="{{ $m->name }}"
+                                         class="w-10 h-10 rounded-xl object-cover border-2 border-gray-200 dark:border-slate-600 flex-shrink-0">
+                                @else
+                                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-100 to-emerald-200 dark:from-emerald-900/40 dark:to-emerald-800/40 flex items-center justify-center flex-shrink-0">
+                                        <i class="fa-solid fa-pills text-emerald-600 text-sm"></i>
+                                    </div>
+                                @endif
+                                <div class="min-w-0">
+                                    <p class="font-semibold text-gray-900 dark:text-white group-hover:text-green-700 truncate">{{ $m->name }}</p>
+                                    <p class="text-xs text-gray-400 truncate">{{ $m->generic_name ?? '—' }}</p>
+                                </div>
+                            </div>
                         </td>
                         <td class="td text-center">
                             @if($m->type === 'prescription')
@@ -346,8 +371,23 @@
                 </button>
             </div>
         </div>
-        <form method="POST" action="{{ route('medicines.store') }}" class="px-6 py-5 space-y-5">
+        <form method="POST" action="{{ route('medicines.store') }}" enctype="multipart/form-data" class="px-6 py-5 space-y-5">
             @csrf
+
+            <!-- Picture -->
+            <div class="flex items-center gap-4">
+                <div id="modalImgPreview" class="w-24 h-24 rounded-2xl border-2 border-dashed border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-slate-800 flex items-center justify-center overflow-hidden flex-shrink-0">
+                    <i class="fa-solid fa-image text-gray-300 dark:text-gray-500 text-2xl"></i>
+                </div>
+                <div>
+                    <label class="label">Medicine Picture <span class="text-gray-400 normal-case">(optional)</span></label>
+                    <label for="modalMedImage" class="btn-secondary cursor-pointer">
+                        <i class="fa-solid fa-upload"></i> Choose Image
+                    </label>
+                    <input type="file" id="modalMedImage" name="image" accept="image/*" class="hidden" onchange="previewModalImage(this)">
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1.5">JPG or PNG up to ~4 MB</p>
+                </div>
+            </div>
 
             <div class="border-l-4 border-blue-400 bg-blue-50/30 rounded-r-xl p-4 space-y-3">
                 <p class="text-xs font-bold text-blue-700 uppercase tracking-wider flex items-center gap-2"><i class="fa-solid fa-tag"></i> Identity</p>
@@ -370,6 +410,22 @@
                     <div>
                         <label class="label">Dosage</label>
                         <input type="text" name="dosage" class="input" placeholder="500mg">
+                    </div>
+                    <div>
+                        <label class="label">Form</label>
+                        <select name="form" id="modalFormSelect" class="input" onchange="onModalFormChange()">
+                            <option value="">Select…</option>
+                            <option value="tablet">Tablet</option>
+                            <option value="capsule">Capsule</option>
+                            <option value="syrup">Syrup</option>
+                            <option value="injection">Injection</option>
+                            <option value="cream">Cream / Ointment</option>
+                            <option value="other">Other (specify)</option>
+                        </select>
+                    </div>
+                    <div id="modalOtherNoteRow" class="hidden">
+                        <label class="label">Describe Form <span class="text-red-500">*</span></label>
+                        <input type="text" name="form_other_note" id="modalFormOtherNote" class="input" placeholder="e.g. Suppository, Inhaler…">
                     </div>
                     <div>
                         <label class="label">Barcode</label>
@@ -506,6 +562,49 @@ function toggleArchive() {
 }
 
 document.addEventListener('keydown', e => { if(e.key==='Escape'){ closeAddModal(); closeLocationModal(); closeDispenseModal(); } });
+
+// Highlight & scroll to a newly-added medicine when arriving from Smart Scan (?highlight=ID)
+(function () {
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get('highlight');
+    if (!id) return;
+    const row = document.querySelector(`tr[data-medicine-id="${id}"]`);
+    if (!row) return;
+    setTimeout(() => {
+        row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        row.classList.add('rowHighlight');
+        row.addEventListener('animationend', () => row.classList.remove('rowHighlight'), { once: true });
+        const url = new URL(window.location);
+        url.searchParams.delete('highlight');
+        window.history.replaceState({}, '', url);
+    }, 150);
+})();
+
+// Add-modal: "Other" form (Type ≠ Form here, but if you choose Other-form in modal, ask for a note)
+function onModalFormChange() {
+    const sel = document.getElementById('modalFormSelect');
+    const row = document.getElementById('modalOtherNoteRow');
+    const note = document.getElementById('modalFormOtherNote');
+    if (!sel || !row || !note) return;
+    if (sel.value === 'other') {
+        row.classList.remove('hidden');
+        note.required = true;
+    } else {
+        row.classList.add('hidden');
+        note.required = false;
+        note.value = '';
+    }
+}
+
+function previewModalImage(input) {
+    const file = input.files[0];
+    if (!file) return;
+    const r = new FileReader();
+    r.onload = e => {
+        document.getElementById('modalImgPreview').innerHTML = `<img src="${e.target.result}" class="w-full h-full object-cover" alt="preview">`;
+    };
+    r.readAsDataURL(file);
+}
 
 @if($errors->any()) openAddModal(); @endif
 </script>

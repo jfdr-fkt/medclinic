@@ -318,11 +318,11 @@
                         </a>
                     </li>
                     <li>
-                        <a href="{{ route('scan.index') }}" title="Smart Scan"
+                        <a href="{{ route('scan.index') }}" title="Add Medicine"
                            class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold transition-all
                                {{ request()->routeIs('scan.*') ? 'bg-brand-500/20 text-white border border-brand-400/40 shadow-sm' : 'text-slate-100 hover:bg-slate-700 hover:text-white' }}">
-                            <i class="fa-solid fa-barcode w-5 text-center {{ request()->routeIs('scan.*') ? 'text-brand-300' : 'text-slate-300' }}"></i>
-                            <span class="nav-text">Smart Scan</span>
+                            <i class="fa-solid fa-plus w-5 text-center {{ request()->routeIs('scan.*') ? 'text-brand-300' : 'text-slate-300' }}"></i>
+                            <span class="nav-text">Add Medicine</span>
                         </a>
                     </li>
                 </ul>
@@ -399,7 +399,7 @@
                 <ul class="space-y-1">
                     <li><a href="{{ route('patients.index') }}"  class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold {{ request()->routeIs('patients.*') ? 'bg-brand-500/20 text-white border border-brand-400/40' : 'text-slate-100 hover:bg-slate-700 hover:text-white' }}"><i class="fa-solid fa-user-injured w-5 text-center text-slate-300"></i> Patients</a></li>
                     <li><a href="{{ route('medicines.index') }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold {{ request()->routeIs('medicines.*') ? 'bg-brand-500/20 text-white border border-brand-400/40' : 'text-slate-100 hover:bg-slate-700 hover:text-white' }}"><i class="fa-solid fa-pills w-5 text-center text-slate-300"></i> Medicines</a></li>
-                    <li><a href="{{ route('scan.index') }}"      class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold {{ request()->routeIs('scan.*') ? 'bg-brand-500/20 text-white border border-brand-400/40' : 'text-slate-100 hover:bg-slate-700 hover:text-white' }}"><i class="fa-solid fa-barcode w-5 text-center text-slate-300"></i> Smart Scan</a></li>
+                    <li><a href="{{ route('scan.index') }}"      class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold {{ request()->routeIs('scan.*') ? 'bg-brand-500/20 text-white border border-brand-400/40' : 'text-slate-100 hover:bg-slate-700 hover:text-white' }}"><i class="fa-solid fa-plus w-5 text-center text-slate-300"></i> Add Medicine</a></li>
                 </ul>
             </div>
             <div>

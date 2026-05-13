@@ -69,6 +69,7 @@ Route::middleware(['auth', 'no.back'])->group(function () {
     Route::get('/chat/sidebar',                   [ChatController::class, 'sidebar'])->name('chat.sidebar');
     Route::post('/chat/groups',                   [ChatController::class, 'storeGroup'])->name('chat.groups.store');
     Route::post('/chat/groups/{group}/add',       [ChatController::class, 'addToGroup'])->name('chat.groups.add');
+    Route::delete('/chat/messages/{message}',    [ChatController::class, 'destroyMessage'])->name('chat.messages.destroy');
 
     // AJAX API endpoints
     Route::prefix('api')->group(function () {

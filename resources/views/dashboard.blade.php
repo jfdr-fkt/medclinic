@@ -2,6 +2,23 @@
 @section('title', 'Dashboard')
 @section('page-title', 'Dashboard')
 
+@if(session('just_logged_in'))
+@push('scripts')
+<script>
+    // Back-button trap: keep the user on the dashboard right after login.
+    // We push a duplicate history entry and re-push on every popstate so
+    // pressing back stays on /dashboard. Subsequent dashboard visits do
+    // not install the trap (flash is one-shot), so footsteps work normally.
+    (function () {
+        history.pushState({ locked: true }, '', location.href);
+        window.addEventListener('popstate', function () {
+            history.pushState({ locked: true }, '', location.href);
+        });
+    })();
+</script>
+@endpush
+@endif
+
 @section('content')
 <div class="space-y-6">
 

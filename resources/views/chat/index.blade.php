@@ -7,10 +7,13 @@
     // Standardized role colors:
     // Admin = Slate/Charcoal, Doctor = Royal Blue, Nurse = Teal/Cyan, Assistant = Emerald/Mint
     $roleConfig = [
-        'admin'     => ['label'=>'Administrators','icon'=>'fa-user-shield','accent'=>'slate',   'bg'=>'bg-slate-50',   'border'=>'border-slate-200',   'text'=>'text-slate-700',   'gradient'=>'from-slate-500 to-slate-700'],
-        'doctor'    => ['label'=>'Doctors',       'icon'=>'fa-user-doctor','accent'=>'blue',    'bg'=>'bg-blue-50',    'border'=>'border-blue-200',    'text'=>'text-blue-700',    'gradient'=>'from-blue-500 to-blue-700'],
-        'nurse'     => ['label'=>'Nurses',        'icon'=>'fa-user-nurse', 'accent'=>'teal',    'bg'=>'bg-cyan-50',    'border'=>'border-cyan-200',    'text'=>'text-teal-700',    'gradient'=>'from-cyan-500 to-teal-600'],
-        'assistant' => ['label'=>'Assistants',    'icon'=>'fa-user',       'accent'=>'emerald', 'bg'=>'bg-emerald-50', 'border'=>'border-emerald-200', 'text'=>'text-emerald-700', 'gradient'=>'from-emerald-400 to-emerald-600'],
+        'admin'       => ['label'=>'Admins',        'icon'=>'fa-user-shield',             'accent'=>'slate',   'bg'=>'bg-slate-50',   'border'=>'border-slate-200',   'text'=>'text-slate-700',   'gradient'=>'from-slate-500 to-slate-700'],
+        'clinic_head' => ['label'=>'Clinic Heads',  'icon'=>'fa-user-tie',                'accent'=>'purple',  'bg'=>'bg-purple-50',  'border'=>'border-purple-200',  'text'=>'text-purple-700',  'gradient'=>'from-purple-500 to-purple-700'],
+        'doctor'      => ['label'=>'Doctors',        'icon'=>'fa-user-doctor',             'accent'=>'blue',    'bg'=>'bg-blue-50',    'border'=>'border-blue-200',    'text'=>'text-blue-700',    'gradient'=>'from-blue-500 to-blue-700'],
+        'pharmacist'  => ['label'=>'Pharmacists',    'icon'=>'fa-prescription-bottle-medical','accent'=>'green','bg'=>'bg-green-50',  'border'=>'border-green-200',   'text'=>'text-green-700',   'gradient'=>'from-green-500 to-green-700'],
+        'nurse'       => ['label'=>'Nurses',         'icon'=>'fa-user-nurse',              'accent'=>'teal',    'bg'=>'bg-cyan-50',    'border'=>'border-cyan-200',    'text'=>'text-teal-700',    'gradient'=>'from-cyan-500 to-teal-600'],
+        'secretary'   => ['label'=>'Secretaries',    'icon'=>'fa-id-badge',                'accent'=>'amber',   'bg'=>'bg-amber-50',   'border'=>'border-amber-200',   'text'=>'text-amber-700',   'gradient'=>'from-amber-400 to-amber-600'],
+        'assistant'   => ['label'=>'Assistants',     'icon'=>'fa-user',                    'accent'=>'emerald', 'bg'=>'bg-emerald-50', 'border'=>'border-emerald-200', 'text'=>'text-emerald-700', 'gradient'=>'from-emerald-400 to-emerald-600'],
     ];
 @endphp
 
@@ -90,7 +93,7 @@
                         </div>
                         <div class="flex-1 min-w-0">
                             <p class="text-sm font-semibold text-gray-800 truncate">{{ $u->name }}</p>
-                            <p class="text-xs text-gray-400 truncate">{{ $u->specialization ?? ucfirst($u->role) }}</p>
+                            <p class="text-xs text-gray-400 truncate">{{ $u->specialization ?? $u->roleLabel() }}</p>
                         </div>
                         @if(($unreadCounts[$u->id] ?? 0) > 0)
                         <span data-dm-badge="{{ $u->id }}" class="flex-shrink-0 bg-red-500 text-white text-xs font-bold rounded-full px-1.5 py-0.5 min-w-[20px] text-center leading-tight">
@@ -130,7 +133,7 @@
                         {{ $withUser->isOnline() ? 'Online now' : ($withUser->last_seen_at ? 'Last seen '.$withUser->last_seen_at->diffForHumans() : 'Offline') }}
                     </p>
                 </div>
-                <span class="ml-auto text-xs {{ $cfg['bg'] }} {{ $cfg['text'] }} px-2.5 py-1 rounded-full capitalize font-medium">{{ $withUser->role }}</span>
+                <span class="ml-auto text-xs {{ $cfg['bg'] }} {{ $cfg['text'] }} px-2.5 py-1 rounded-full font-medium">{{ $withUser->roleLabel() }}</span>
             </div>
         @elseif(isset($withGroup))
             <!-- Group header -->
@@ -163,14 +166,14 @@
                     </div>
                 </div>
                 @else
-                <div class="flex {{ $isMine ? 'justify-end' : 'justify-start' }} items-end gap-2"
+                <div class="flex {{ $isMine ? 'justify-end' : 'justify-start' }} items-end gap-2 msg-row"
                      @if($isMine) data-msg-mine data-msg-id="{{ $msg->id }}" @endif>
                     @if(!$isMine)
                     <div class="h-7 w-7 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
                         {{ strtoupper(substr($msg->sender->name, 0, 2)) }}
                     </div>
                     @endif
-                    <div class="max-w-xs lg:max-w-md">
+                    <div class="max-w-xs lg:max-w-md {{ $isMine ? 'flex flex-col items-end' : '' }}">
                         <div class="px-4 py-2.5 rounded-2xl text-sm {{ $isMine ? 'bg-brand-600 text-white rounded-br-sm' : 'bg-gray-100 text-gray-800 rounded-bl-sm' }}">{{ $msg->body }}</div>
                         <p class="text-xs text-gray-400 mt-1 {{ $isMine ? 'text-right' : 'text-left' }}">
                             {{ $msg->created_at->format('g:i A') }}
@@ -180,6 +183,14 @@
                                 @else
                                 <i class="fa-solid fa-check msg-status-icon text-gray-300 ml-1" title="Sent"></i>
                                 @endif
+                            @endif
+                            @if($isMine)
+                            <button onclick="deleteMessage({{ $msg->id }}, this)"
+                                    class="msg-del-btn ml-1.5 text-red-400 hover:text-red-600 transition-opacity"
+                                    style="opacity:0;"
+                                    title="Delete message">
+                                <i class="fa-solid fa-trash-can text-[10px]"></i>
+                            </button>
                             @endif
                         </p>
                     </div>
@@ -283,7 +294,7 @@
                     @foreach($users as $role => $list)
                         @foreach($list as $u)
                             @if(!$existingMemberIds->contains($u->id))
-                            <option value="{{ $u->id }}">{{ $u->name }} ({{ ucfirst($u->role) }})</option>
+                            <option value="{{ $u->id }}">{{ $u->name }} ({{ $u->roleLabel() }})</option>
                             @endif
                         @endforeach
                     @endforeach
@@ -329,21 +340,58 @@ function escHtml(str) {
     return div.innerHTML;
 }
 
+function deleteMessage(id, btn) {
+    if (!confirm('Delete this message? This cannot be undone.')) return;
+    fetch(`/chat/messages/${id}`, {
+        method: 'DELETE',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            'Accept': 'application/json',
+        },
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            const row = btn.closest('[data-msg-mine]');
+            if (row) row.remove();
+        }
+    })
+    .catch(() => alert('Could not delete. Try again.'));
+}
+
+// Show/hide delete button on hover for own messages
+document.addEventListener('mouseover', e => {
+    const row = e.target.closest('.msg-row[data-msg-mine]');
+    if (row) row.querySelector('.msg-del-btn')?.style.setProperty('opacity', '1');
+});
+document.addEventListener('mouseout', e => {
+    const row = e.target.closest('.msg-row[data-msg-mine]');
+    if (row && !row.contains(e.relatedTarget)) {
+        row.querySelector('.msg-del-btn')?.style.setProperty('opacity', '0');
+    }
+});
+
 function appendMessage(msg, isMine) {
     const container = document.getElementById('messagesContainer');
     if (!container) return;
     const isGroup = CHAT_TARGET?.type === 'group';
     const div = document.createElement('div');
-    div.className = `flex ${isMine ? 'justify-end' : 'justify-start'} items-end gap-2`;
+    div.className = `flex ${isMine ? 'justify-end' : 'justify-start'} items-end gap-2 msg-row`;
     if (isMine) { div.dataset.msgMine = ''; div.dataset.msgId = msg.id; }
 
     if (isMine) {
         div.innerHTML = `
-            <div class="max-w-xs lg:max-w-md">
+            <div class="max-w-xs lg:max-w-md flex flex-col items-end">
                 <div class="px-4 py-2.5 rounded-2xl rounded-br-sm text-sm bg-brand-600 text-white">${escHtml(msg.body)}</div>
                 <p class="text-xs text-gray-400 mt-1 text-right">
                     ${msg.created_at}
                     ${isGroup ? '' : '<i class="fa-solid fa-check msg-status-icon text-gray-300 ml-1" title="Sent"></i>'}
+                    <button onclick="deleteMessage(${msg.id}, this)"
+                            class="msg-del-btn ml-1.5 text-red-400 hover:text-red-600 transition-opacity"
+                            style="opacity:0;"
+                            title="Delete message">
+                        <i class="fa-solid fa-trash-can text-[10px]"></i>
+                    </button>
                 </p>
             </div>`;
     } else {

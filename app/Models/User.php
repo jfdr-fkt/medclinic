@@ -38,16 +38,33 @@ class User extends Authenticatable
     {
         $r = $this->role;
         return match($action) {
-            'patients.create'  => in_array($r, ['admin','doctor','nurse']),
-            'patients.delete'  => in_array($r, ['admin','doctor']),
-            'patients.pin_all' => in_array($r, ['admin','doctor']),
-            'medicines.create' => $r === 'admin',
-            'medicines.delete' => $r === 'admin',
-            'medicines.dispense'   => true,
-            'medicines.locations'  => $r === 'admin',
-            'staff.create'         => $r === 'admin',
-            'staff.shifts.manage'  => $r === 'admin',
+            // Patient management
+            'patients.create'  => in_array($r, ['admin','clinic_head','doctor','nurse','secretary']),
+            'patients.delete'  => in_array($r, ['admin','clinic_head','doctor']),
+            'patients.pin_all' => in_array($r, ['admin','clinic_head','doctor']),
+            // Medicine management — pharmacist is the dedicated restocking role
+            'medicines.create'    => in_array($r, ['admin','clinic_head','pharmacist']),
+            'medicines.delete'    => in_array($r, ['admin','clinic_head']),
+            'medicines.dispense'  => in_array($r, ['admin','clinic_head','doctor','pharmacist','nurse']),
+            'medicines.locations' => in_array($r, ['admin','clinic_head']),
+            // Staff management
+            'staff.create'        => $r === 'admin',
+            'staff.shifts.manage' => in_array($r, ['admin','clinic_head']),
             default => false,
+        };
+    }
+
+    public function roleLabel(): string
+    {
+        return match($this->role) {
+            'admin'       => 'Admin',
+            'clinic_head' => 'Clinic Head',
+            'doctor'      => 'Doctor',
+            'pharmacist'  => 'Pharmacist',
+            'nurse'       => 'Nurse',
+            'secretary'   => 'Secretary',
+            'assistant'   => 'Assistant',
+            default       => ucfirst(str_replace('_', ' ', $this->role)),
         };
     }
 

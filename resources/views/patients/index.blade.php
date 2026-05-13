@@ -335,7 +335,7 @@
             <select id="pinSomeoneUser" class="input">
                 <option value="">Select…</option>
                 @foreach(\App\Models\User::orderBy('name')->get() as $u)
-                <option value="{{ $u->id }}">{{ $u->name }} ({{ ucfirst($u->role) }})</option>
+                <option value="{{ $u->id }}">{{ $u->name }} ({{ $u->roleLabel() }})</option>
                 @endforeach
             </select>
             <div class="flex justify-between gap-3 pt-3 border-t border-gray-100">
