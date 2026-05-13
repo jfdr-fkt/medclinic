@@ -10,11 +10,12 @@ use App\Http\Controllers\ScanController;
 use App\Http\Controllers\StaffController;
 use Illuminate\Support\Facades\Route;
 
-// Public auth routes
-Route::get('/', fn() => redirect()->route('login'));
-Route::get('/login',    [AuthController::class, 'showLogin'])->name('login');
+// Public auth routes — no.back keeps the browser from showing a cached login page
+// after the user has already authenticated (back button bounces them to dashboard).
+Route::get('/', fn() => redirect()->route('login'))->middleware('no.back');
+Route::get('/login',    [AuthController::class, 'showLogin'])->name('login')->middleware('no.back');
 Route::post('/login',   [AuthController::class, 'login'])->name('login.post');
-Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
+Route::get('/register', [AuthController::class, 'showRegister'])->name('register')->middleware('no.back');
 Route::post('/register',[AuthController::class, 'register'])->name('register.post');
 Route::post('/logout',  [AuthController::class, 'logout'])->name('logout');
 
