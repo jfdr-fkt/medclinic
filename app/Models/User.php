@@ -10,7 +10,9 @@ class User extends Authenticatable
         'specialization', 'last_seen_at', 'is_active',
         'status', 'avatar', 'bio', 'theme', 'font_size', 'colorblind_mode',
         'date_of_birth', 'hire_date', 'address',
-        'emergency_contact_name', 'emergency_contact_phone', 'license_number',
+        'emergency_contact_name', 'emergency_contact_phone',
+        'emergency_contact_2_name', 'emergency_contact_2_phone',
+        'license_number',
     ];
 
     protected function casts(): array

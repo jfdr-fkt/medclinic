@@ -55,20 +55,41 @@ class StaffController extends Controller
     {
         if (!\Illuminate\Support\Facades\Auth::user()->can_('staff.create')) abort(403, 'Only admins can add staff.');
         $validated = $request->validate([
-            'name'                    => 'required|string|max:255',
-            'email'                   => 'required|email|unique:users',
-            'password'                => 'required|string|min:6',
-            'role'                    => 'required|in:admin,clinic_head,doctor,pharmacist,nurse,secretary,assistant',
-            'phone'                   => 'nullable|string|max:60',
-            'specialization'          => 'nullable|string|max:120',
-            'date_of_birth'           => 'nullable|date|before:today',
-            'hire_date'               => 'nullable|date',
-            'address'                 => 'nullable|string|max:255',
-            'emergency_contact_name'  => 'nullable|string|max:120',
-            'emergency_contact_phone' => 'nullable|string|max:60',
-            'license_number'          => 'nullable|string|max:80',
-            'bio'                     => 'nullable|string|max:500',
+            'name'                      => 'required|string|max:255',
+            'email'                     => 'required|email|unique:users',
+            'password'                  => 'required|string|min:6',
+            'role'                      => 'required|in:admin,clinic_head,doctor,pharmacist,nurse,secretary,assistant',
+            'phone'                     => 'nullable|string|max:60',
+            'specialization'            => 'nullable|string|max:120',
+            'date_of_birth'             => 'nullable|date|before:today',
+            'hire_date'                 => 'nullable|date',
+            // Address comes in as separate Philippine-style parts and is joined into one string.
+            'address_street'            => 'nullable|string|max:120',
+            'address_barangay'          => 'nullable|string|max:80',
+            'address_city'              => 'nullable|string|max:80',
+            'address_province'          => 'nullable|string|max:80',
+            'address_zip'               => 'nullable|string|max:12',
+            'emergency_contact_name'    => 'nullable|string|max:120',
+            'emergency_contact_phone'   => 'nullable|string|max:60',
+            'emergency_contact_2_name'  => 'nullable|string|max:120',
+            'emergency_contact_2_phone' => 'nullable|string|max:60',
+            'license_number'            => 'nullable|string|max:80',
         ]);
+
+        // Join the address parts so the existing single `address` column stays the source of truth.
+        $parts = array_filter([
+            $validated['address_street']   ?? null,
+            $validated['address_barangay'] ?? null,
+            $validated['address_city']     ?? null,
+            $validated['address_province'] ?? null,
+            $validated['address_zip']      ?? null,
+        ], fn($p) => trim((string)$p) !== '');
+        $validated['address'] = $parts ? implode(', ', $parts) : null;
+
+        foreach (['address_street','address_barangay','address_city','address_province','address_zip'] as $k) {
+            unset($validated[$k]);
+        }
+
         $validated['password']     = Hash::make($validated['password']);
         $validated['is_active']    = true;
         $validated['last_seen_at'] = now();

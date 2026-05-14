@@ -18,7 +18,69 @@
 @endphp
 
 @push('head')
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4/dist/flatpickr.min.css">
 <style>
+/* ── Flatpickr brand theme (same look as Add Medicine) ── */
+.flatpickr-calendar {
+    border-radius: 1rem !important;
+    border: 2px solid #e5e7eb !important;
+    box-shadow: 0 10px 30px rgba(0,0,0,.14) !important;
+    font-family: inherit !important;
+    padding: 8px !important;
+    width: 22rem !important;
+}
+.flatpickr-innerContainer, .flatpickr-rContainer, .dayContainer { width: 100% !important; }
+.dayContainer { min-width: 100% !important; max-width: 100% !important; }
+.flatpickr-days { width: 100% !important; }
+.flatpickr-monthDropdown-months {
+    appearance: none !important; -webkit-appearance: none !important;
+    background: #f1f5f9 !important; color: #0f172a !important;
+    border: 1.5px solid #e5e7eb !important; border-radius: .55rem !important;
+    padding: .25rem .6rem !important; font-weight: 700 !important; font-size: .9rem !important;
+    cursor: pointer; transition: background .12s, border-color .12s;
+}
+.flatpickr-monthDropdown-months:hover { background: #ecfdf5 !important; border-color: #14b8a6 !important; }
+.numInputWrapper input.cur-year {
+    background: #f1f5f9 !important; border: 1.5px solid #e5e7eb !important;
+    border-radius: .55rem !important; padding: .25rem .35rem !important;
+    font-weight: 700 !important; font-size: .9rem !important; color: #0f172a !important;
+}
+.dark .flatpickr-monthDropdown-months, .dark .numInputWrapper input.cur-year {
+    background: #243050 !important; border-color: #3f4d6b !important; color: #f1f5f9 !important;
+}
+.dark .flatpickr-monthDropdown-months:hover { background: rgba(20,184,166,.15) !important; border-color: #14b8a6 !important; }
+.flatpickr-months { padding-top: 4px !important; }
+.flatpickr-month { color: #0f172a !important; height: 38px !important; }
+.flatpickr-current-month { font-weight: 700 !important; font-size: .95rem !important; padding-top: 6px !important; }
+.flatpickr-weekday { color: #6b7280 !important; font-weight: 700 !important; font-size: .72rem !important; text-transform: uppercase; letter-spacing: .04em; }
+.flatpickr-day { border-radius: .65rem !important; color: #1f2937 !important; font-weight: 500 !important; transition: background .12s, color .12s; }
+.flatpickr-day:hover, .flatpickr-day.prevMonthDay:hover, .flatpickr-day.nextMonthDay:hover {
+    background: #ecfdf5 !important; border-color: transparent !important; color: #065f46 !important;
+}
+.flatpickr-day.today { border-color: #0d9488 !important; color: #0d9488 !important; font-weight: 700 !important; }
+.flatpickr-day.selected, .flatpickr-day.selected:hover, .flatpickr-day.selected.today {
+    background: #0d9488 !important; border-color: #0d9488 !important; color: #fff !important;
+    box-shadow: 0 2px 8px rgba(13,148,136,.35) !important;
+}
+.flatpickr-day.flatpickr-disabled, .flatpickr-day.flatpickr-disabled:hover { color: #cbd5e1 !important; background: transparent !important; }
+.flatpickr-day.prevMonthDay, .flatpickr-day.nextMonthDay { color: #cbd5e1 !important; }
+.flatpickr-prev-month, .flatpickr-next-month { color: #6b7280 !important; fill: #6b7280 !important; padding: 8px !important; }
+.flatpickr-prev-month:hover svg, .flatpickr-next-month:hover svg { fill: #0d9488 !important; }
+.dark .flatpickr-calendar { background: #1a2438 !important; border-color: #2d3a52 !important; box-shadow: 0 10px 30px rgba(0,0,0,.5) !important; }
+.dark .flatpickr-month, .dark .flatpickr-current-month,
+.dark .flatpickr-current-month .flatpickr-monthDropdown-months,
+.dark .flatpickr-current-month input.cur-year { color: #f1f5f9 !important; }
+.dark .flatpickr-weekday { color: #94a3b8 !important; }
+.dark .flatpickr-day { color: #e2e8f0 !important; }
+.dark .flatpickr-day:hover { background: rgba(20,184,166,.15) !important; color: #6ee7b7 !important; }
+.dark .flatpickr-day.today { border-color: #14b8a6 !important; color: #6ee7b7 !important; }
+.dark .flatpickr-day.selected, .dark .flatpickr-day.selected:hover {
+    background: #14b8a6 !important; border-color: #14b8a6 !important; color: #042f2e !important;
+}
+.dark .flatpickr-day.prevMonthDay, .dark .flatpickr-day.nextMonthDay,
+.dark .flatpickr-day.flatpickr-disabled { color: #475569 !important; }
+.dark .flatpickr-prev-month, .dark .flatpickr-next-month { color: #94a3b8 !important; fill: #94a3b8 !important; }
+
 .staff-card {
     background: #fff;
     border: 2px solid #e5e7eb;
@@ -376,10 +438,7 @@
                 <div class="w-11 h-11 rounded-2xl bg-white/15 flex items-center justify-center backdrop-blur-sm">
                     <i class="fa-solid fa-user-plus text-xl"></i>
                 </div>
-                <div>
-                    <h3 class="text-lg font-bold">Add Staff Member</h3>
-                    <p class="text-xs text-white/80 mt-0.5">Create an account for a new clinic staff member</p>
-                </div>
+                <h3 class="text-lg font-bold">Add Staff Member</h3>
             </div>
             <button type="button" onclick="closeAddStaffModal()" class="w-9 h-9 rounded-xl flex items-center justify-center text-white/80 hover:text-white hover:bg-white/20 transition-colors">
                 <i class="fa-solid fa-xmark"></i>
@@ -390,15 +449,12 @@
             @csrf
 
             {{-- Section: Account & Identity --}}
-            <div class="rounded-2xl border-2 border-blue-200 dark:border-blue-800/50 overflow-hidden">
-                <div class="px-4 py-3 bg-blue-50 dark:bg-blue-900/25 border-b-2 border-blue-200 dark:border-blue-800/50 flex items-center gap-2">
+            <div class="rounded-2xl border-2 border-blue-200 dark:border-blue-800/50">
+                <div class="px-4 py-3 bg-blue-50 dark:bg-blue-900/25 border-b-2 border-blue-200 dark:border-blue-800/50 flex items-center gap-2 rounded-t-[14px]">
                     <div class="w-7 h-7 rounded-lg bg-blue-500 flex items-center justify-center">
                         <i class="fa-solid fa-id-card text-white text-xs"></i>
                     </div>
-                    <div>
-                        <p class="text-sm font-bold text-blue-800 dark:text-blue-200">Account & Identity</p>
-                        <p class="text-[11px] text-blue-600 dark:text-blue-300">Login credentials and basic info</p>
-                    </div>
+                    <p class="text-sm font-bold text-blue-800 dark:text-blue-200">Account & Identity</p>
                 </div>
                 <div class="p-4 space-y-3">
                     <div>
@@ -418,7 +474,7 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                             <label class="label">Role <span class="text-red-500">*</span></label>
-                            <select name="role" required class="input">
+                            <select name="role" required class="input cs-select">
                                 <option value="nurse">Nurse</option>
                                 <option value="doctor">Doctor</option>
                                 <option value="pharmacist">Pharmacist</option>
@@ -430,56 +486,54 @@
                         </div>
                         <div>
                             <label class="label">Date of Birth</label>
-                            <input type="date" name="date_of_birth" class="input">
+                            <input type="text" name="date_of_birth" class="input staff-date" placeholder="Pick a date" readonly>
                         </div>
                     </div>
                 </div>
             </div>
 
             {{-- Section: Contact --}}
-            <div class="rounded-2xl border-2 border-emerald-200 dark:border-emerald-800/50 overflow-hidden">
-                <div class="px-4 py-3 bg-emerald-50 dark:bg-emerald-900/25 border-b-2 border-emerald-200 dark:border-emerald-800/50 flex items-center gap-2">
+            <div class="rounded-2xl border-2 border-emerald-200 dark:border-emerald-800/50">
+                <div class="px-4 py-3 bg-emerald-50 dark:bg-emerald-900/25 border-b-2 border-emerald-200 dark:border-emerald-800/50 flex items-center gap-2 rounded-t-[14px]">
                     <div class="w-7 h-7 rounded-lg bg-emerald-500 flex items-center justify-center">
                         <i class="fa-solid fa-address-book text-white text-xs"></i>
                     </div>
-                    <div>
-                        <p class="text-sm font-bold text-emerald-800 dark:text-emerald-200">Contact</p>
-                        <p class="text-[11px] text-emerald-600 dark:text-emerald-300">How to reach this staff member</p>
-                    </div>
+                    <p class="text-sm font-bold text-emerald-800 dark:text-emerald-200">Contact</p>
                 </div>
                 <div class="p-4 space-y-3">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div>
-                            <label class="label">Phone</label>
-                            <input type="tel" name="phone" class="input" placeholder="0917-xxx-xxxx">
-                        </div>
-                        <div>
-                            <label class="label">Address</label>
-                            <input type="text" name="address" class="input" placeholder="Street, City">
+                    <div>
+                        <label class="label">Phone</label>
+                        <input type="tel" name="phone" class="input" placeholder="0917-xxx-xxxx">
+                    </div>
+                    <div>
+                        <label class="label">Address</label>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <input type="text" name="address_street" class="input" placeholder="House No. / Street">
+                            <input type="text" name="address_barangay" class="input" placeholder="Barangay">
+                            <input type="text" name="address_city" class="input" placeholder="City / Municipality">
+                            <input type="text" name="address_province" class="input" placeholder="Province">
+                            <input type="text" name="address_zip" class="input sm:col-span-2" placeholder="Postal / ZIP code">
                         </div>
                     </div>
                 </div>
             </div>
 
             {{-- Section: Employment --}}
-            <div class="rounded-2xl border-2 border-amber-200 dark:border-amber-800/50 overflow-hidden">
-                <div class="px-4 py-3 bg-amber-50 dark:bg-amber-900/25 border-b-2 border-amber-200 dark:border-amber-800/50 flex items-center gap-2">
+            <div class="rounded-2xl border-2 border-amber-200 dark:border-amber-800/50">
+                <div class="px-4 py-3 bg-amber-50 dark:bg-amber-900/25 border-b-2 border-amber-200 dark:border-amber-800/50 flex items-center gap-2 rounded-t-[14px]">
                     <div class="w-7 h-7 rounded-lg bg-amber-500 flex items-center justify-center">
                         <i class="fa-solid fa-briefcase-medical text-white text-xs"></i>
                     </div>
-                    <div>
-                        <p class="text-sm font-bold text-amber-800 dark:text-amber-200">Employment</p>
-                        <p class="text-[11px] text-amber-600 dark:text-amber-300">Role details and professional credentials</p>
-                    </div>
+                    <p class="text-sm font-bold text-amber-800 dark:text-amber-200">Employment</p>
                 </div>
                 <div class="p-4 space-y-3">
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                             <label class="label">Hire Date</label>
-                            <input type="date" name="hire_date" class="input" value="{{ date('Y-m-d') }}">
+                            <input type="text" name="hire_date" class="input staff-date" value="{{ date('Y-m-d') }}" placeholder="Pick a date" readonly>
                         </div>
                         <div>
-                            <label class="label">License No. <span class="font-normal normal-case text-gray-400">(if applicable)</span></label>
+                            <label class="label">License No.</label>
                             <input type="text" name="license_number" class="input" placeholder="e.g. PRC-12345">
                         </div>
                     </div>
@@ -487,32 +541,37 @@
                         <label class="label">Specialization</label>
                         <input type="text" name="specialization" class="input" placeholder="e.g. Cardiology, Pediatrics, Clinical Pharmacist">
                     </div>
-                    <div>
-                        <label class="label">Bio / Notes <span class="font-normal normal-case text-gray-400">(optional)</span></label>
-                        <textarea name="bio" rows="2" class="input resize-y" placeholder="Short bio, certifications, special skills"></textarea>
-                    </div>
                 </div>
             </div>
 
             {{-- Section: Emergency Contact --}}
-            <div class="rounded-2xl border-2 border-rose-200 dark:border-rose-800/50 overflow-hidden">
-                <div class="px-4 py-3 bg-rose-50 dark:bg-rose-900/25 border-b-2 border-rose-200 dark:border-rose-800/50 flex items-center gap-2">
+            <div class="rounded-2xl border-2 border-rose-200 dark:border-rose-800/50">
+                <div class="px-4 py-3 bg-rose-50 dark:bg-rose-900/25 border-b-2 border-rose-200 dark:border-rose-800/50 flex items-center gap-2 rounded-t-[14px]">
                     <div class="w-7 h-7 rounded-lg bg-rose-500 flex items-center justify-center">
                         <i class="fa-solid fa-heart-pulse text-white text-xs"></i>
                     </div>
-                    <div>
-                        <p class="text-sm font-bold text-rose-800 dark:text-rose-200">Emergency Contact</p>
-                        <p class="text-[11px] text-rose-600 dark:text-rose-300">Who to call if something goes wrong</p>
-                    </div>
+                    <p class="text-sm font-bold text-rose-800 dark:text-rose-200">Emergency Contact</p>
                 </div>
-                <div class="p-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                        <label class="label">Contact Name</label>
-                        <input type="text" name="emergency_contact_name" class="input" placeholder="e.g. Maria Mendoza (sister)">
+                <div class="p-4 space-y-3">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="label">Primary Contact Name</label>
+                            <input type="text" name="emergency_contact_name" class="input" placeholder="e.g. Maria Mendoza (sister)">
+                        </div>
+                        <div>
+                            <label class="label">Primary Contact Phone</label>
+                            <input type="tel" name="emergency_contact_phone" class="input" placeholder="0917-xxx-xxxx">
+                        </div>
                     </div>
-                    <div>
-                        <label class="label">Contact Phone</label>
-                        <input type="tel" name="emergency_contact_phone" class="input" placeholder="0917-xxx-xxxx">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="label">Secondary Contact Name</label>
+                            <input type="text" name="emergency_contact_2_name" class="input" placeholder="e.g. Carlos Mendoza (father)">
+                        </div>
+                        <div>
+                            <label class="label">Secondary Contact Phone</label>
+                            <input type="tel" name="emergency_contact_2_phone" class="input" placeholder="0918-yyy-yyyy">
+                        </div>
                     </div>
                 </div>
             </div>
@@ -533,6 +592,7 @@
 </div>
 
 @push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/flatpickr@4"></script>
 <script>
 function openShiftModal(userId, userName) {
     document.getElementById('shiftUserId').value = userId;
@@ -551,6 +611,17 @@ document.getElementById('shiftTypeSelect').addEventListener('change', function (
     const [s, e] = times[this.value] || ['',''];
     document.getElementById('startTime').value = s;
     document.getElementById('endTime').value   = e;
+});
+
+// Branded date picker for Add Staff dates — uses static month nav so the OS-styled
+// dropdown never appears. Same look as the Add Medicine page.
+document.querySelectorAll('.staff-date').forEach(el => {
+    flatpickr(el, {
+        dateFormat: 'Y-m-d',
+        allowInput: false,
+        monthSelectorType: 'static',
+        defaultDate: el.value || null,
+    });
 });
 </script>
 @endpush
