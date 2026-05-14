@@ -280,6 +280,61 @@
         select.input:focus, select.add-input:focus {
             background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20' fill='none'%3E%3Cpath d='M5 7.5L10 12.5L15 7.5' stroke='%230d9488' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
         }
+
+        /* ── Custom select (rounded popup, replaces native OS dropdown) ──
+           Apply by adding `cs-select` to any <select class="input cs-select"> — JS in the
+           layout wraps it with a styled trigger + dropdown panel and hides the native control. */
+        .cs-wrapper { position: relative; }
+        .cs-trigger {
+            display: flex !important;
+            align-items: center;
+            justify-content: space-between;
+            gap: .5rem;
+            cursor: pointer;
+            text-align: left;
+            user-select: none;
+            background-image: none !important;
+            padding-right: .875rem !important;
+        }
+        .cs-trigger .cs-value { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .cs-trigger .cs-chevron {
+            flex-shrink: 0; width: 1.125rem; height: 1.125rem;
+            color: #6b7280; transition: transform .2s, color .2s;
+        }
+        .cs-wrapper.open .cs-chevron { transform: rotate(180deg); color: #0d9488; }
+        .cs-wrapper.open .cs-trigger { border-color: #0d9488; box-shadow: 0 0 0 3px rgba(13,148,136,.18); }
+        .dark .cs-wrapper.open .cs-trigger { border-color: #14b8a6 !important; box-shadow: 0 0 0 3px rgba(20,184,166,.2) !important; }
+        .cs-panel {
+            position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 200;
+            background: #fff;
+            border: 2px solid #e5e7eb;
+            border-radius: 1rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,.14);
+            overflow: hidden;
+            max-height: 18rem;
+            overflow-y: auto;
+            animation: csDropIn .15s ease;
+        }
+        @keyframes csDropIn {
+            from { opacity: 0; transform: translateY(-6px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .dark .cs-panel { background: #1a2438 !important; border-color: #2d3a52 !important; box-shadow: 0 10px 30px rgba(0,0,0,.5) !important; }
+        .cs-option {
+            padding: .6rem .9rem;
+            cursor: pointer;
+            font-size: .875rem;
+            color: #111827;
+            transition: background .1s;
+        }
+        .cs-option:hover { background: #f3f4f6; }
+        .cs-option.selected { background: #ecfdf5; color: #065f46; font-weight: 700; }
+        .cs-option.placeholder { color: #9ca3af; font-style: italic; }
+        .dark .cs-option { color: #e2e8f0; }
+        .dark .cs-option:hover { background: #243050; }
+        .dark .cs-option.selected { background: rgba(16,185,129,.18) !important; color: #6ee7b7 !important; }
+        .dark .cs-option.placeholder { color: #64748b; }
+
         .label         { @apply block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wide; }
         .th { @apply px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider; }
         .td { @apply px-5 py-4 text-sm text-gray-700; }
@@ -661,6 +716,97 @@ function setStatus(status) {
         body: JSON.stringify({ status })
     }).then(r => r.json()).then(() => location.reload());
 }
+
+// ───────────────────────────────────────────────────────────
+// Custom select — replaces native <select class="cs-select"> with a
+// fully styled trigger + rounded panel (native popup can't be styled).
+// ───────────────────────────────────────────────────────────
+(function() {
+    const CS_CHEVRON = '<svg class="cs-chevron" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="none"><path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+    function initOne(native) {
+        if (native.dataset.csInited) return;
+        native.dataset.csInited = '1';
+
+        const wrapper = document.createElement('div');
+        wrapper.className = 'cs-wrapper';
+        native.parentNode.insertBefore(wrapper, native);
+        wrapper.appendChild(native);
+        native.style.cssText = 'position:absolute;opacity:0;width:1px;height:1px;pointer-events:none;';
+
+        const trigger = document.createElement('button');
+        trigger.type = 'button';
+        // Inherit native's classes (so .input gets applied) plus cs-trigger
+        trigger.className = (native.className.replace('cs-select', '').trim() + ' cs-trigger').replace(/\s+/g, ' ');
+        trigger.innerHTML = '<span class="cs-value"></span>' + CS_CHEVRON;
+        wrapper.appendChild(trigger);
+
+        const panel = document.createElement('div');
+        panel.className = 'cs-panel hidden';
+        Array.from(native.options).forEach(opt => {
+            const item = document.createElement('div');
+            item.className = 'cs-option' + (!opt.value ? ' placeholder' : '');
+            item.dataset.value = opt.value;
+            item.textContent = opt.textContent;
+            item.addEventListener('click', e => {
+                e.stopPropagation();
+                native.value = opt.value;
+                native.dispatchEvent(new Event('change', { bubbles: true }));
+                closeCs(wrapper);
+            });
+            panel.appendChild(item);
+        });
+        wrapper.appendChild(panel);
+
+        updateCsTrigger(wrapper);
+        native.addEventListener('change', () => updateCsTrigger(wrapper));
+
+        trigger.addEventListener('click', e => {
+            e.stopPropagation();
+            if (wrapper.classList.contains('open')) closeCs(wrapper);
+            else openCs(wrapper);
+        });
+        trigger.addEventListener('keydown', e => {
+            if (e.key === 'Escape') closeCs(wrapper);
+            if ((e.key === 'Enter' || e.key === ' ') && !wrapper.classList.contains('open')) {
+                e.preventDefault(); openCs(wrapper);
+            }
+        });
+    }
+
+    function updateCsTrigger(wrapper) {
+        const sel = wrapper.querySelector('select');
+        const valueSpan = wrapper.querySelector('.cs-value');
+        if (!sel || !valueSpan) return;
+        const opt = sel.options[sel.selectedIndex];
+        const isEmpty = !opt || !opt.value;
+        valueSpan.textContent = opt ? opt.textContent : '';
+        valueSpan.style.color = isEmpty ? '#9ca3af' : '';
+        wrapper.querySelectorAll('.cs-option').forEach(item => {
+            item.classList.toggle('selected', !isEmpty && item.dataset.value === sel.value);
+        });
+    }
+    function openCs(wrapper) {
+        document.querySelectorAll('.cs-wrapper.open').forEach(w => { if (w !== wrapper) closeCs(w); });
+        wrapper.classList.add('open');
+        wrapper.querySelector('.cs-panel').classList.remove('hidden');
+    }
+    function closeCs(wrapper) {
+        wrapper.classList.remove('open');
+        wrapper.querySelector('.cs-panel')?.classList.add('hidden');
+    }
+
+    document.addEventListener('click', () => {
+        document.querySelectorAll('.cs-wrapper.open').forEach(closeCs);
+    });
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') document.querySelectorAll('.cs-wrapper.open').forEach(closeCs);
+    });
+
+    function initAll() { document.querySelectorAll('select.cs-select').forEach(initOne); }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initAll);
+    else initAll();
+})();
 </script>
 @stack('scripts')
 </body>

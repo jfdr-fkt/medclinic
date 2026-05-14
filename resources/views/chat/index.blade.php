@@ -188,7 +188,7 @@
             <!-- ── Direct messages by role ── -->
             @foreach($roleConfig as $role => $cfg)
                 @if(isset($users[$role]) && $users[$role]->count() > 0)
-                <div class="mb-4 conv-section" data-section="{{ $role }}" data-sort-key="1_{{ strtolower($cfg['label']) }}">
+                <div class="mb-4 conv-section" data-section="{{ $role }}" data-sort-key="{{ $loop->iteration }}_{{ $role }}">
                     <div class="conv-section-header flex items-center gap-2 px-4 py-2.5 border-y-2 {{ $cfg['bg'] }} {{ $cfg['darkBg'] }} {{ $cfg['border'] }} {{ $cfg['darkBorder'] }}"
                          style="filter: saturate(1.1);"
                          onclick="toggleSection(this.parentElement)">
@@ -596,70 +596,6 @@ function setConvOrder(mode) {
 (function restoreOrder() {
     const mode = localStorage.getItem(ORDER_KEY) || 'hierarchy';
     setConvOrder(mode);
-})();
-
-// ═══════════════════════════════════════════════════════
-// Section collapse + role order toggle (persisted in localStorage)
-// ═══════════════════════════════════════════════════════
-const CONV_COLLAPSE_KEY = 'clinicms.chat.collapsedSections';
-const CONV_ORDER_KEY    = 'clinicms.chat.order';
-
-function getCollapsedSet() {
-    try { return new Set(JSON.parse(localStorage.getItem(CONV_COLLAPSE_KEY) || '[]')); }
-    catch (e) { return new Set(); }
-}
-function saveCollapsedSet(set) {
-    localStorage.setItem(CONV_COLLAPSE_KEY, JSON.stringify([...set]));
-}
-
-function toggleSection(sectionEl) {
-    const key = sectionEl.dataset.section;
-    const collapsed = getCollapsedSet();
-    if (sectionEl.classList.toggle('is-collapsed')) {
-        collapsed.add(key);
-    } else {
-        collapsed.delete(key);
-    }
-    saveCollapsedSet(collapsed);
-}
-
-// Re-order role sections in DOM. Groups stay pinned at top.
-function setConvOrder(mode) {
-    localStorage.setItem(CONV_ORDER_KEY, mode);
-    document.querySelectorAll('.conv-order-btn').forEach(btn => {
-        btn.classList.toggle('is-active', btn.dataset.order === mode);
-    });
-
-    const scroll = document.getElementById('convScroll');
-    if (!scroll) return;
-    const sections = Array.from(scroll.querySelectorAll('.conv-section'));
-    if (mode === 'alpha') {
-        // Alphabetical by section label; groups still first.
-        sections.sort((a, b) => {
-            // Pinned groups
-            const ag = a.dataset.section === 'groups' ? -1 : 0;
-            const bg = b.dataset.section === 'groups' ? -1 : 0;
-            if (ag !== bg) return ag - bg;
-            // Compare by label text inside the header
-            const al = a.querySelector('.conv-section-header p')?.textContent.trim().toLowerCase() || '';
-            const bl = b.querySelector('.conv-section-header p')?.textContent.trim().toLowerCase() || '';
-            return al.localeCompare(bl);
-        });
-    } else {
-        // Original DOM order is the hierarchical order — use the data-sort-key fallback.
-        sections.sort((a, b) => (a.dataset.sortKey || '').localeCompare(b.dataset.sortKey || ''));
-    }
-    sections.forEach(s => scroll.appendChild(s));
-}
-
-// Restore state on load
-(function restoreConvUiState() {
-    const collapsed = getCollapsedSet();
-    document.querySelectorAll('.conv-section').forEach(section => {
-        if (collapsed.has(section.dataset.section)) section.classList.add('is-collapsed');
-    });
-    const order = localStorage.getItem(CONV_ORDER_KEY) || 'hierarchy';
-    setConvOrder(order);
 })();
 
 function escHtml(str) {

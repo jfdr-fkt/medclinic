@@ -41,9 +41,9 @@
     $canEditIdentity = in_array($user->role, ['admin', 'clinic_head']);
 @endphp
 
-<div class="space-y-6 max-w-3xl">
+<div class="space-y-6 max-w-3xl mx-auto">
 
-    <!-- ── Profile header (centered) ── -->
+    <!-- ── Profile header (left-aligned) ── -->
     <div class="card overflow-hidden">
         <div class="h-36 relative overflow-hidden bg-gradient-to-br {{ $bannerGradient }}">
             {{-- Soft radial highlight — works as a subtle visual accent in both modes --}}
@@ -53,8 +53,8 @@
         </div>
 
         <div class="px-6 pb-6 -mt-14">
-            <div class="flex flex-col items-center text-center gap-3">
-                <div class="relative">
+            <div class="flex items-end gap-5 flex-wrap">
+                <div class="relative flex-shrink-0">
                     @if($user->avatarUrl())
                     <img src="{{ $user->avatarUrl() }}" alt="{{ $user->name }}"
                          class="h-28 w-28 rounded-2xl object-cover ring-4 ring-white dark:ring-slate-900 shadow-lg">
@@ -69,9 +69,9 @@
                         <i class="fa-solid fa-camera text-sm"></i>
                     </button>
                 </div>
-                <div>
-                    <h2 class="text-2xl font-extrabold text-gray-900 dark:text-white">{{ $user->name }}</h2>
-                    <div class="flex items-center justify-center gap-2 mt-2 flex-wrap">
+                <div class="flex-1 min-w-0 pb-1">
+                    <h2 class="text-2xl font-extrabold text-gray-900 dark:text-white truncate">{{ $user->name }}</h2>
+                    <div class="flex items-center gap-2 mt-2 flex-wrap">
                         <span class="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider {{ $bannerColor }} text-white px-2.5 py-1 rounded-md">
                             <i class="fa-solid {{ match($user->role) {
                                 'admin' => 'fa-user-shield',
@@ -89,13 +89,13 @@
                         <span class="text-sm text-gray-500 dark:text-gray-400">{{ $user->specialization }}</span>
                         @endif
                     </div>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-2 flex items-center justify-center gap-1.5">
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-2 flex items-center gap-1.5">
                         <span class="status-dot {{ $statusKey }}"></span>
                         Status: <span class="font-medium text-gray-700 dark:text-gray-300">{{ $user->statusLabel() }}</span>
                     </p>
                 </div>
                 @if($user->avatarUrl())
-                <form method="POST" action="{{ route('profile.avatar.remove') }}"
+                <form method="POST" action="{{ route('profile.avatar.remove') }}" class="pb-1"
                       onsubmit="return confirm('Remove your avatar?')">
                     @csrf @method('DELETE')
                     <button type="submit" class="inline-flex items-center gap-2 text-sm text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 font-medium px-3 py-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">

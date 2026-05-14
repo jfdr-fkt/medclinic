@@ -46,13 +46,13 @@
                     <div>
                         <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-1.5"><i class="fa-solid fa-filter"></i> Filter by</p>
                         <div class="space-y-2">
-                            <select name="nurse_id" class="input">
+                            <select name="nurse_id" class="input cs-select">
                                 <option value="">All Nurses</option>
                                 @foreach($nurses as $n)
                                 <option value="{{ $n->id }}" {{ request('nurse_id')==$n->id ? 'selected' : '' }}>{{ $n->name }}</option>
                                 @endforeach
                             </select>
-                            <select name="doctor_id" class="input">
+                            <select name="doctor_id" class="input cs-select">
                                 <option value="">All Doctors</option>
                                 @foreach($doctors as $d)
                                 <option value="{{ $d->id }}" {{ request('doctor_id')==$d->id ? 'selected' : '' }}>{{ $d->name }}</option>
@@ -64,14 +64,14 @@
                     <div class="pt-2 border-t border-gray-100">
                         <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-1.5"><i class="fa-solid fa-arrow-down-wide-short"></i> Sort by</p>
                         <div class="grid grid-cols-2 gap-2">
-                            <select name="sort" class="input">
+                            <select name="sort" class="input cs-select">
                                 @foreach(['name'=>'Name','last_visit'=>'Last Visit','patient_id'=>'Patient ID'] as $f=>$label)
                                 <option value="{{ $f }}" {{ $sortField===$f ? 'selected' : '' }}>{{ $label }}</option>
                                 @endforeach
                             </select>
-                            <select name="direction" class="input">
-                                <option value="asc"  {{ $sortDir==='asc' ? 'selected' : '' }}>↑ Ascending</option>
-                                <option value="desc" {{ $sortDir==='desc' ? 'selected' : '' }}>↓ Descending</option>
+                            <select name="direction" class="input cs-select">
+                                <option value="asc"  {{ $sortDir==='asc' ? 'selected' : '' }}>↑ Asc</option>
+                                <option value="desc" {{ $sortDir==='desc' ? 'selected' : '' }}>↓ Desc</option>
                             </select>
                         </div>
                     </div>

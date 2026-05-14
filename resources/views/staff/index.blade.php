@@ -160,7 +160,7 @@
                     <div>
                         <p class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1.5"><i class="fa-solid fa-filter"></i> Filter by</p>
                         <div class="space-y-2">
-                            <select name="role" class="input">
+                            <select name="role" class="input cs-select">
                                 <option value="">All Roles</option>
                                 <option value="admin"       {{ request('role')==='admin'?'selected':'' }}>Admin</option>
                                 <option value="clinic_head" {{ request('role')==='clinic_head'?'selected':'' }}>Clinic Head</option>
@@ -170,7 +170,7 @@
                                 <option value="secretary"   {{ request('role')==='secretary'?'selected':'' }}>Secretary</option>
                                 <option value="assistant"   {{ request('role')==='assistant'?'selected':'' }}>Assistant</option>
                             </select>
-                            <select name="status" class="input">
+                            <select name="status" class="input cs-select">
                                 <option value="">All Statuses</option>
                                 <option value="online"  {{ request('status')==='online'?'selected':'' }}>Online</option>
                                 <option value="offline" {{ request('status')==='offline'?'selected':'' }}>Offline</option>
@@ -180,14 +180,14 @@
                     <div class="pt-2 border-t border-gray-100 dark:border-slate-700">
                         <p class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1.5"><i class="fa-solid fa-arrow-down-wide-short"></i> Sort by</p>
                         <div class="grid grid-cols-2 gap-2">
-                            <select name="sort" class="input">
+                            <select name="sort" class="input cs-select">
                                 @foreach(['name'=>'Name','role'=>'Role (A–Z)','last_seen_at'=>'Last Seen'] as $f=>$label)
                                 <option value="{{ $f }}" {{ $sortField===$f ? 'selected' : '' }}>{{ $label }}</option>
                                 @endforeach
                             </select>
-                            <select name="direction" class="input">
-                                <option value="asc"  {{ $sortDir==='asc' ? 'selected' : '' }}>↑ Ascending</option>
-                                <option value="desc" {{ $sortDir==='desc' ? 'selected' : '' }}>↓ Descending</option>
+                            <select name="direction" class="input cs-select">
+                                <option value="asc"  {{ $sortDir==='asc' ? 'selected' : '' }}>↑ Asc</option>
+                                <option value="desc" {{ $sortDir==='desc' ? 'selected' : '' }}>↓ Desc</option>
                             </select>
                         </div>
                     </div>
@@ -224,11 +224,11 @@
                 <thead>
                     <tr>
                         <th>Staff Member</th>
-                        <th>Role</th>
-                        <th>Contact</th>
-                        <th>Today's Shift</th>
-                        <th>Status</th>
-                        <th style="width: 260px;">Actions</th>
+                        <th style="width: 130px;">Role</th>
+                        <th style="width: 200px;">Contact</th>
+                        <th style="width: 230px;">Today's Shift</th>
+                        <th style="width: 250px;">Status</th>
+                        <th style="width: 325px;">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -283,7 +283,7 @@
                             @endif
                         </td>
                         <td>
-                            <div class="flex items-center justify-center gap-2 flex-wrap">
+                            <div class="flex items-center justify-center gap-2 whitespace-nowrap">
                                 <span class="inline-flex items-center gap-1.5 text-sm font-semibold {{ $isOnline ? 'text-emerald-700 dark:text-emerald-300' : 'text-gray-500 dark:text-gray-400' }}">
                                     <span class="w-2 h-2 rounded-full {{ $isOnline ? 'bg-emerald-500 animate-pulse' : 'bg-gray-300 dark:bg-slate-600' }}"></span>
                                     {{ $isOnline ? 'Online' : 'Offline' }}

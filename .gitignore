@@ -24,3 +24,6 @@ _ide_helper.php
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# Local agent handoff notes — never push to the school repo
+HANDOFF.md
