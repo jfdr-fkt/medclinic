@@ -237,18 +237,51 @@ class MedicineController extends Controller
         return back()->with('success', "{$request->quantity} unit(s) of {$medicine->name} dispensed.");
     }
 
+    public function locationsIndex()
+    {
+        if (!Auth::user()->can_('medicines.locations')) abort(403, 'Only admins can manage locations.');
+        $locations = MedicineLocation::withCount('medicines')->orderBy('storage_type')->orderBy('cabinet')->orderBy('shelf')->get();
+        return view('medicines.locations', compact('locations'));
+    }
+
     public function storeLocation(Request $request)
     {
         if (!Auth::user()->can_('medicines.locations')) abort(403, 'Only admins can manage locations.');
         $validated = $request->validate([
-            'cabinet' => 'required|string',
-            'shelf'   => 'required|string',
-            'level'   => 'required|string',
-            'section' => 'nullable|string',
-            'notes'   => 'nullable|string',
+            'storage_type' => 'required|string|max:50',
+            'cabinet'      => 'required|string|max:100',
+            'shelf'        => 'required|string|max:50',
+            'level'        => 'required|string|max:50',
+            'section'      => 'nullable|string|max:50',
+            'notes'        => 'nullable|string|max:255',
         ]);
         MedicineLocation::create($validated);
         return back()->with('success', 'Location added!');
+    }
+
+    public function updateLocation(Request $request, MedicineLocation $location)
+    {
+        if (!Auth::user()->can_('medicines.locations')) abort(403, 'Only admins can manage locations.');
+        $validated = $request->validate([
+            'storage_type' => 'required|string|max:50',
+            'cabinet'      => 'required|string|max:100',
+            'shelf'        => 'required|string|max:50',
+            'level'        => 'required|string|max:50',
+            'section'      => 'nullable|string|max:50',
+            'notes'        => 'nullable|string|max:255',
+        ]);
+        $location->update($validated);
+        return back()->with('success', 'Location updated!');
+    }
+
+    public function destroyLocation(MedicineLocation $location)
+    {
+        if (!Auth::user()->can_('medicines.locations')) abort(403, 'Only admins can manage locations.');
+        if ($location->medicines()->exists()) {
+            return back()->withErrors(['location' => 'Cannot delete a location that still has medicines assigned. Move or remove those medicines first.']);
+        }
+        $location->delete();
+        return back()->with('success', 'Location removed.');
     }
 
     public function lookupByCode($code)

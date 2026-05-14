@@ -5,27 +5,118 @@
 @section('content')
 @php
     $isAdmin = Auth::user()->role === 'admin';
-    // Standardized role colors per spec:
-    // Admin = Charcoal/Slate, Doctor = Royal Blue, Nurse = Teal/Cyan,
-    // Assistant = Emerald/Mint, (Secretary placeholder = Amber/Coral)
+    // Role styling — light + dark variants used inline across the page
     $roleColors = [
-        'admin'       => ['bg'=>'bg-slate-100',   'text'=>'text-slate-700',   'grad'=>'from-slate-500 to-slate-700',    'icon'=>'fa-user-shield',    'label'=>'Admin'],
-        'clinic_head' => ['bg'=>'bg-purple-100',  'text'=>'text-purple-700',  'grad'=>'from-purple-500 to-purple-700',  'icon'=>'fa-user-tie',       'label'=>'Clinic Head'],
-        'doctor'      => ['bg'=>'bg-blue-100',    'text'=>'text-blue-700',    'grad'=>'from-blue-500 to-blue-700',      'icon'=>'fa-user-doctor',    'label'=>'Doctor'],
-        'pharmacist'  => ['bg'=>'bg-green-100',   'text'=>'text-green-700',   'grad'=>'from-green-500 to-green-700',    'icon'=>'fa-prescription-bottle-medical', 'label'=>'Pharmacist'],
-        'nurse'       => ['bg'=>'bg-cyan-100',    'text'=>'text-teal-700',    'grad'=>'from-cyan-500 to-teal-600',      'icon'=>'fa-user-nurse',     'label'=>'Nurse'],
-        'secretary'   => ['bg'=>'bg-amber-100',   'text'=>'text-amber-700',   'grad'=>'from-amber-400 to-amber-600',    'icon'=>'fa-id-badge',       'label'=>'Secretary'],
-        'assistant'   => ['bg'=>'bg-emerald-100', 'text'=>'text-emerald-700', 'grad'=>'from-emerald-400 to-emerald-600','icon'=>'fa-user',           'label'=>'Assistant'],
+        'admin'       => ['bg'=>'bg-slate-100',   'darkBg'=>'dark:bg-slate-800/60',  'text'=>'text-slate-700',   'darkText'=>'dark:text-slate-200',   'border'=>'border-slate-200',   'darkBorder'=>'dark:border-slate-700',     'grad'=>'from-slate-500 to-slate-700',    'icon'=>'fa-user-shield',                'label'=>'Admin'],
+        'clinic_head' => ['bg'=>'bg-purple-100',  'darkBg'=>'dark:bg-purple-900/35', 'text'=>'text-purple-700',  'darkText'=>'dark:text-purple-300',  'border'=>'border-purple-200', 'darkBorder'=>'dark:border-purple-800/60',  'grad'=>'from-purple-500 to-purple-700',  'icon'=>'fa-user-tie',                   'label'=>'Clinic Head'],
+        'doctor'      => ['bg'=>'bg-blue-100',    'darkBg'=>'dark:bg-blue-900/35',   'text'=>'text-blue-700',    'darkText'=>'dark:text-blue-300',    'border'=>'border-blue-200',   'darkBorder'=>'dark:border-blue-800/60',    'grad'=>'from-blue-500 to-blue-700',      'icon'=>'fa-user-doctor',                'label'=>'Doctor'],
+        'pharmacist'  => ['bg'=>'bg-green-100',   'darkBg'=>'dark:bg-green-900/35',  'text'=>'text-green-700',   'darkText'=>'dark:text-green-300',   'border'=>'border-green-200',  'darkBorder'=>'dark:border-green-800/60',   'grad'=>'from-green-500 to-green-700',    'icon'=>'fa-prescription-bottle-medical','label'=>'Pharmacist'],
+        'nurse'       => ['bg'=>'bg-cyan-100',    'darkBg'=>'dark:bg-cyan-900/35',   'text'=>'text-teal-700',    'darkText'=>'dark:text-teal-300',    'border'=>'border-cyan-200',   'darkBorder'=>'dark:border-cyan-800/60',    'grad'=>'from-cyan-500 to-teal-600',      'icon'=>'fa-user-nurse',                 'label'=>'Nurse'],
+        'secretary'   => ['bg'=>'bg-amber-100',   'darkBg'=>'dark:bg-amber-900/35',  'text'=>'text-amber-700',   'darkText'=>'dark:text-amber-300',   'border'=>'border-amber-200',  'darkBorder'=>'dark:border-amber-800/60',   'grad'=>'from-amber-400 to-amber-600',    'icon'=>'fa-id-badge',                   'label'=>'Secretary'],
+        'assistant'   => ['bg'=>'bg-emerald-100', 'darkBg'=>'dark:bg-emerald-900/35','text'=>'text-emerald-700', 'darkText'=>'dark:text-emerald-300', 'border'=>'border-emerald-200','darkBorder'=>'dark:border-emerald-800/60', 'grad'=>'from-emerald-400 to-emerald-600','icon'=>'fa-user',                       'label'=>'Assistant'],
     ];
 @endphp
+
+@push('head')
+<style>
+.staff-card {
+    background: #fff;
+    border: 2px solid #e5e7eb;
+    border-radius: 1.25rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,.05);
+    /* No overflow:hidden here — apply explicitly on the table card so dropdowns from the filter form aren't clipped */
+}
+.dark .staff-card { background:#1a2438 !important; border-color:#2d3a52 !important; }
+
+.staff-table thead th {
+    padding: 0.85rem 1.1rem;
+    font-size: 0.7rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: #64748b;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border-bottom: 2px solid #e2e8f0;
+}
+.dark .staff-table thead th {
+    background: linear-gradient(135deg, #0f1a2e 0%, #1a2438 100%) !important;
+    color: #94a3b8 !important;
+    border-bottom-color: #2d3a52 !important;
+}
+.staff-table tbody td { padding: 0.95rem 1.1rem; vertical-align: middle; }
+.staff-table tbody tr {
+    transition: background-color .12s, transform .12s;
+    border-bottom: 1px solid #f1f5f9;
+    cursor: pointer;
+}
+.dark .staff-table tbody tr { border-bottom-color:#1f2c45; }
+.staff-table tbody tr:hover { background: linear-gradient(90deg, rgba(13,148,136,.05), rgba(99,102,241,.04)); }
+.dark .staff-table tbody tr:hover { background: linear-gradient(90deg, rgba(20,184,166,.10), rgba(99,102,241,.08)) !important; }
+.staff-table tbody tr:last-child { border-bottom: none; }
+
+.shift-chip {
+    display: inline-flex; align-items: center; gap: .35rem;
+    padding: .3rem .65rem;
+    border-radius: 9999px;
+    font-size: .7rem;
+    font-weight: 700;
+    letter-spacing: .02em;
+}
+.shift-morning   { background: #fef3c7; color: #92400e; }
+.shift-afternoon { background: #ffedd5; color: #9a3412; }
+.shift-night     { background: #e0e7ff; color: #3730a3; }
+.shift-on_call   { background: #f3e8ff; color: #6b21a8; }
+.dark .shift-morning   { background: rgba(245,158,11,.2); color: #fcd34d; }
+.dark .shift-afternoon { background: rgba(249,115,22,.2); color: #fdba74; }
+.dark .shift-night     { background: rgba(79,70,229,.25); color: #a5b4fc; }
+.dark .shift-on_call   { background: rgba(168,85,247,.2); color: #d8b4fe; }
+
+.role-pill {
+    display: inline-flex; align-items: center; gap: .4rem;
+    padding: .3rem .75rem;
+    border-radius: 9999px;
+    font-size: .72rem;
+    font-weight: 700;
+    border: 1.5px solid transparent;
+}
+
+.btn-row-primary {
+    display:inline-flex; align-items:center; justify-content:center; gap:.5rem;
+    padding: 0.625rem 0.75rem;       /* py-2.5 px-3 */
+    border-radius: 0.75rem;          /* rounded-xl */
+    font-size: 0.875rem;             /* text-sm */
+    font-weight: 600;
+    flex: 1;
+    background:#6366f1; color:#fff;
+    transition:background .12s, box-shadow .12s;
+    box-shadow: 0 2px 6px rgba(99,102,241,.3);
+}
+.btn-row-primary:hover { background:#4f46e5; box-shadow: 0 4px 10px rgba(99,102,241,.45); }
+.btn-row-secondary {
+    display:inline-flex; align-items:center; justify-content:center; gap:.5rem;
+    padding: 0.625rem 0.75rem;
+    border-radius: 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    flex: 1;
+    background:#ede9fe; color:#6b21a8;
+    transition: background .12s;
+}
+.btn-row-secondary:hover { background:#ddd6fe; }
+.dark .btn-row-secondary { background: rgba(168,85,247,.18); color:#d8b4fe; }
+.dark .btn-row-secondary:hover { background: rgba(168,85,247,.28); }
+</style>
+@endpush
 
 <div class="space-y-5">
 
     <!-- Header -->
     <div class="flex items-center justify-between flex-wrap gap-3">
         <div>
-            <h1 class="text-2xl font-bold text-gray-900">Staff Directory</h1>
-            <p class="text-sm text-gray-500 mt-0.5">{{ $staff->total() }} members &bull; {{ $isAdmin ? 'Manage staff and assign shifts' : 'View clinic staff and shifts' }}</p>
+            <h1 class="text-2xl font-extrabold text-gray-900 dark:text-white">Staff Directory</h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+                {{ $staff->total() }} members &bull; {{ $isAdmin ? 'Manage staff and assign shifts' : 'View clinic staff and shifts' }}
+            </p>
         </div>
         @if($isAdmin)
         <button onclick="openAddStaffModal()" class="btn-primary">
@@ -34,22 +125,22 @@
         @endif
     </div>
 
-    <!-- Search + filter (consistent layout) -->
-    <form method="GET" action="{{ route('staff.index') }}" class="card p-3">
+    <!-- Search + filter -->
+    <form method="GET" action="{{ route('staff.index') }}" class="staff-card p-3">
         @php $hasFilters = request('role') || request('status') || request('sort') || request('direction'); @endphp
         <div class="flex items-center gap-2">
             <div class="relative">
                 <button type="button" onclick="toggleDropdown('staffFilterMenu')"
-                        class="h-12 px-4 bg-white border-2 border-gray-200 rounded-xl hover:border-brand-400 transition-colors flex items-center gap-2 text-sm text-gray-600 font-medium {{ $hasFilters ? 'border-brand-500 text-brand-700' : '' }}">
+                        class="h-12 px-4 bg-white dark:bg-slate-800 border-2 border-gray-200 dark:border-slate-600 rounded-xl hover:border-brand-400 dark:hover:border-brand-500 transition-colors flex items-center gap-2 text-sm text-gray-600 dark:text-gray-200 font-medium {{ $hasFilters ? 'border-brand-500 text-brand-700 dark:text-brand-300' : '' }}">
                     <i class="fa-solid fa-sliders text-sm"></i>
                     <span class="hidden sm:inline">Filter & Sort</span>
                     @if($hasFilters)
                     <span class="bg-brand-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">!</span>
                     @endif
                 </button>
-                <div id="staffFilterMenu" class="hidden absolute left-0 top-full mt-2 w-80 bg-white border border-gray-100 rounded-xl shadow-xl p-4 space-y-4 z-30">
+                <div id="staffFilterMenu" class="hidden absolute left-0 top-full mt-2 w-80 bg-white dark:bg-slate-800 border-2 border-gray-100 dark:border-slate-700 rounded-2xl shadow-xl p-4 space-y-4 z-30">
                     <div>
-                        <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-1.5"><i class="fa-solid fa-filter"></i> Filter by</p>
+                        <p class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1.5"><i class="fa-solid fa-filter"></i> Filter by</p>
                         <div class="space-y-2">
                             <select name="role" class="input">
                                 <option value="">All Roles</option>
@@ -68,8 +159,8 @@
                             </select>
                         </div>
                     </div>
-                    <div class="pt-2 border-t border-gray-100">
-                        <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-1.5"><i class="fa-solid fa-arrow-down-wide-short"></i> Sort by</p>
+                    <div class="pt-2 border-t border-gray-100 dark:border-slate-700">
+                        <p class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1.5"><i class="fa-solid fa-arrow-down-wide-short"></i> Sort by</p>
                         <div class="grid grid-cols-2 gap-2">
                             <select name="sort" class="input">
                                 @foreach(['name'=>'Name','role'=>'Role','last_seen_at'=>'Last Seen'] as $f=>$label)
@@ -82,9 +173,13 @@
                             </select>
                         </div>
                     </div>
-                    <div class="flex gap-2 pt-2 border-t border-gray-100">
-                        <button type="submit" class="btn-primary flex-1 justify-center text-xs py-2">Apply</button>
-                        <a href="{{ route('staff.index') }}" class="btn-secondary flex-1 justify-center text-xs py-2">Reset</a>
+                    <div class="flex gap-2 pt-3 border-t border-gray-100 dark:border-slate-700">
+                        <a href="{{ route('staff.index') }}" class="inline-flex flex-1 items-center justify-center gap-2 px-4 py-2.5 rounded-xl border-2 border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-slate-700 text-sm font-semibold transition-colors">
+                            <i class="fa-solid fa-rotate-left"></i> Reset
+                        </a>
+                        <button type="submit" class="inline-flex flex-1 items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-sm font-bold transition-colors shadow-sm">
+                            <i class="fa-solid fa-check"></i> Apply
+                        </button>
                     </div>
                 </div>
             </div>
@@ -93,32 +188,32 @@
                 <i class="fa-solid fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-base pointer-events-none"></i>
                 <input type="text" name="search" value="{{ request('search') }}"
                        placeholder="Search by name, email, specialization…"
-                       class="block w-full h-12 pl-12 pr-4 border-2 border-gray-200 rounded-xl text-base text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all bg-white">
-                @if(request('sort'))<input type="hidden" name="sort" value="{{ request('sort') }}">@endif
-                @if(request('direction'))<input type="hidden" name="direction" value="{{ request('direction') }}">@endif
+                       class="block w-full h-12 pl-12 pr-4 border-2 border-gray-200 dark:border-slate-600 rounded-xl text-base text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all bg-white dark:bg-slate-800">
+                {{-- Sort/direction are preserved by the dropdown's <select> selected attributes — no hidden inputs needed (they used to override the new selection). --}}
             </div>
 
-            <button type="submit" class="hidden md:flex h-12 w-12 items-center justify-center bg-brand-600 hover:bg-brand-700 text-white rounded-xl transition-colors shadow-sm flex-shrink-0" title="Search">
+            <button type="submit" class="hidden md:inline-flex h-12 px-5 items-center justify-center gap-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl transition-colors shadow-sm flex-shrink-0 text-sm font-semibold" title="Search">
                 <i class="fa-solid fa-magnifying-glass"></i>
+                <span class="hidden lg:inline">Search</span>
             </button>
         </div>
     </form>
 
-    <!-- Staff table (clickable rows → details) -->
-    <div class="card overflow-hidden">
+    <!-- Staff table -->
+    <div class="staff-card overflow-hidden">
         <div class="overflow-x-auto">
-            <table class="min-w-full">
+            <table class="min-w-full staff-table">
                 <thead>
-                    <tr class="bg-gradient-to-r from-gray-50 to-slate-50 border-b-2 border-gray-200 divide-x divide-gray-200">
-                        <th class="th">Staff Member</th>
-                        <th class="th text-center">Role</th>
-                        <th class="th text-center">Contact</th>
-                        <th class="th text-center">Today's Shift</th>
-                        <th class="th text-center">Status</th>
-                        <th class="th text-center" style="width: 280px;">Actions</th>
+                    <tr>
+                        <th class="text-left">Staff Member</th>
+                        <th class="text-center">Role</th>
+                        <th class="text-center">Contact</th>
+                        <th class="text-center">Today's Shift</th>
+                        <th class="text-center">Status</th>
+                        <th class="text-center" style="width: 260px;">Actions</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-100">
+                <tbody>
                     @forelse($staff as $member)
                     @php
                         $isOnline = $member->isOnline();
@@ -127,56 +222,65 @@
                     @endphp
                     <tr data-href="{{ route('staff.show', $member) }}"
                         onclick="if(!event.target.closest('.row-action')) window.location=this.dataset.href"
-                        class="hover:bg-indigo-50/40 transition-colors group cursor-pointer divide-x divide-gray-100">
-                        <td class="td">
+                        class="group">
+                        <td>
                             <div class="flex items-center gap-3">
                                 <x-avatar :user="$member" size="lg" :gradient="$cfg['grad']" />
-                                <div>
-                                    <p class="font-semibold text-gray-900 group-hover:text-indigo-700 transition-colors">{{ $member->name }}</p>
-                                    <p class="text-xs text-gray-400">{{ $member->specialization ?? '—' }}</p>
+                                <div class="min-w-0">
+                                    <p class="font-semibold text-gray-900 dark:text-white group-hover:text-brand-700 dark:group-hover:text-brand-300 transition-colors truncate">{{ $member->name }}</p>
+                                    <p class="text-xs text-gray-400 dark:text-gray-500 truncate">{{ $member->specialization ?? '—' }}</p>
                                 </div>
                             </div>
                         </td>
-                        <td class="td text-center">
-                            <span class="inline-flex items-center gap-1.5 {{ $cfg['text'] }} font-bold text-sm">
-                                <i class="fa-solid {{ $cfg['icon'] }}"></i> {{ $cfg['label'] ?? ucfirst($member->role) }}
+                        <td class="text-center">
+                            <span class="role-pill {{ $cfg['bg'] }} {{ $cfg['darkBg'] }} {{ $cfg['text'] }} {{ $cfg['darkText'] }} {{ $cfg['border'] }} {{ $cfg['darkBorder'] }}">
+                                <i class="fa-solid {{ $cfg['icon'] }} text-xs"></i> {{ $cfg['label'] }}
                             </span>
                         </td>
-                        <td class="td text-center">
-                            <p class="text-sm text-gray-700">{{ $member->email }}</p>
-                            <p class="text-xs text-gray-400">{{ $member->phone ?? 'No phone' }}</p>
+                        <td class="text-center">
+                            <p class="text-sm text-gray-700 dark:text-gray-200 truncate">{{ $member->email }}</p>
+                            <p class="text-xs text-gray-400 dark:text-gray-500">{{ $member->phone ?? 'No phone' }}</p>
                         </td>
-                        <td class="td text-center">
+                        <td class="text-center">
                             @if($todayShift)
-                                <p class="text-sm font-semibold text-gray-800 capitalize">{{ $todayShift->shift_type }}</p>
-                                <p class="text-xs text-gray-500">
+                                <span class="shift-chip shift-{{ $todayShift->shift_type }}">
+                                    <i class="fa-solid {{ match($todayShift->shift_type) {
+                                        'morning' => 'fa-sun',
+                                        'afternoon' => 'fa-cloud-sun',
+                                        'night' => 'fa-moon',
+                                        'on_call' => 'fa-phone',
+                                        default => 'fa-clock',
+                                    } }} text-[10px]"></i>
+                                    {{ ucfirst(str_replace('_', ' ', $todayShift->shift_type)) }}
+                                </span>
+                                <p class="text-[11px] text-gray-500 dark:text-gray-400 mt-1">
                                     {{ \Carbon\Carbon::parse($todayShift->start_time)->format('g:i A') }} —
                                     {{ \Carbon\Carbon::parse($todayShift->end_time)->format('g:i A') }}
                                 </p>
                             @else
-                                <span class="text-xs text-gray-300">No shift today</span>
+                                <span class="text-xs text-gray-300 dark:text-gray-600 italic">Rest day</span>
                             @endif
                         </td>
-                        <td class="td text-center">
-                            <span class="inline-flex items-center gap-1.5 text-sm font-semibold {{ $isOnline ? 'text-emerald-600' : 'text-gray-400' }}">
-                                <span class="w-2 h-2 rounded-full {{ $isOnline ? 'bg-emerald-400 animate-pulse' : 'bg-gray-300' }}"></span>
+                        <td class="text-center">
+                            <span class="inline-flex items-center gap-1.5 text-sm font-semibold {{ $isOnline ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-400 dark:text-gray-500' }}">
+                                <span class="w-2 h-2 rounded-full {{ $isOnline ? 'bg-emerald-400 animate-pulse' : 'bg-gray-300 dark:bg-slate-600' }}"></span>
                                 {{ $isOnline ? 'Online' : 'Offline' }}
                             </span>
                             @if(!$isOnline && $member->last_seen_at)
-                            <p class="text-xs text-gray-400 mt-0.5">{{ $member->last_seen_at->diffForHumans() }}</p>
+                            <p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{{ $member->last_seen_at->diffForHumans() }}</p>
                             @endif
                         </td>
-                        <td class="td px-2">
-                            <div class="flex items-center justify-stretch gap-3 row-action w-full">
+                        <td>
+                            <div class="flex items-center gap-3 row-action w-full">
                                 @if($isAdmin)
                                 <button type="button" onclick="event.stopPropagation(); openShiftModal({{ $member->id }}, '{{ addslashes($member->name) }}')"
-                                        class="row-action inline-flex flex-1 items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-semibold bg-indigo-500 text-white hover:bg-indigo-600 transition-colors shadow-sm justify-center"
+                                        class="row-action btn-row-primary"
                                         title="{{ $todayShift ? 'Revise Shift' : 'Assign Shift' }}">
                                     <i class="fa-solid fa-calendar-plus"></i> Shift
                                 </button>
                                 @endif
                                 <a href="{{ route('chat.index', ['with' => $member->id]) }}" onclick="event.stopPropagation()"
-                                   class="row-action inline-flex flex-1 items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-semibold bg-purple-100 text-purple-700 hover:bg-purple-200 transition-colors justify-center"
+                                   class="row-action btn-row-secondary"
                                    title="Message">
                                     <i class="fa-solid fa-comment"></i> Chat
                                 </a>
@@ -186,10 +290,10 @@
                     @empty
                     <tr>
                         <td colspan="6" class="py-16 text-center">
-                            <div class="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
-                                <i class="fa-solid fa-users text-gray-400 text-2xl"></i>
+                            <div class="w-16 h-16 bg-gray-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                                <i class="fa-solid fa-users text-gray-400 dark:text-gray-500 text-2xl"></i>
                             </div>
-                            <p class="text-gray-500 font-medium">No staff match your filters</p>
+                            <p class="text-gray-500 dark:text-gray-400 font-medium">No staff match your filters</p>
                         </td>
                     </tr>
                     @endforelse
@@ -197,7 +301,7 @@
             </table>
         </div>
         @if($staff->hasPages())
-        <div class="px-6 py-3 border-t border-gray-100 bg-gray-50/50">{{ $staff->links() }}</div>
+        <div class="px-6 py-3 border-t border-gray-100 dark:border-slate-700 bg-gray-50/50 dark:bg-slate-900/40">{{ $staff->links() }}</div>
         @endif
     </div>
 </div>
@@ -205,20 +309,20 @@
 @if($isAdmin)
 <!-- ── Assign Shift Modal ── -->
 <div id="shiftModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-md border-2 border-gray-100 dark:border-slate-700">
         <div class="bg-gradient-to-r from-brand-600 to-brand-700 px-6 py-5 text-white">
             <div class="flex items-center justify-between">
                 <div>
                     <h3 class="text-lg font-bold">Assign Shift</h3>
                     <p class="text-xs text-white/80 mt-0.5">Schedule a work shift for this staff member</p>
                 </div>
-                <button type="button" onclick="closeShiftModal()" class="w-8 h-8 rounded-xl flex items-center justify-center text-white/80 hover:text-white hover:bg-white/20"><i class="fa-solid fa-xmark"></i></button>
+                <button type="button" onclick="closeShiftModal()" class="w-9 h-9 rounded-xl flex items-center justify-center text-white/80 hover:text-white hover:bg-white/20 transition-colors"><i class="fa-solid fa-xmark"></i></button>
             </div>
         </div>
         <form id="shiftForm" action="{{ route('staff.shifts.store') }}" method="POST" class="px-6 py-5 space-y-4">
             @csrf
             <input type="hidden" name="user_id" id="shiftUserId">
-            <div><label class="label">Staff Member</label><input type="text" id="shiftStaffName" readonly class="input bg-gray-50 text-gray-500"></div>
+            <div><label class="label">Staff Member</label><input type="text" id="shiftStaffName" readonly class="input bg-gray-50 dark:bg-slate-800 text-gray-500 dark:text-gray-400"></div>
             <div>
                 <label class="label">Shift Type <span class="text-red-500">*</span></label>
                 <select name="shift_type" id="shiftTypeSelect" required class="input">
@@ -233,50 +337,173 @@
                 <div><label class="label">Start <span class="text-red-500">*</span></label><input type="time" name="start_time" id="startTime" required value="07:00" class="input"></div>
                 <div><label class="label">End <span class="text-red-500">*</span></label><input type="time" name="end_time" id="endTime" required value="15:00" class="input"></div>
             </div>
-            <div class="flex justify-between gap-3 pt-3 border-t border-gray-100">
-                <button type="button" onclick="closeShiftModal()" class="px-5 py-2 bg-red-100 hover:bg-red-200 text-red-700 text-sm font-semibold rounded-xl">Cancel</button>
-                <button type="submit" class="px-5 py-2 bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold rounded-xl">Save Shift</button>
+            <div class="flex justify-between gap-3 pt-3 border-t border-gray-100 dark:border-slate-700">
+                <button type="button" onclick="closeShiftModal()" class="btn-secondary">Cancel</button>
+                <button type="submit" class="btn-primary"><i class="fa-solid fa-floppy-disk"></i> Save Shift</button>
             </div>
         </form>
     </div>
 </div>
 
 <!-- ── Add Staff Modal ── -->
-<div id="addStaffModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
-        <div class="bg-gradient-to-r from-brand-600 to-brand-700 px-6 py-5 text-white">
-            <div class="flex items-center justify-between">
+<div id="addStaffModal" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[92vh] overflow-y-auto border-2 border-gray-100 dark:border-slate-700">
+        <div class="bg-gradient-to-r from-brand-600 to-brand-700 px-6 py-5 text-white flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-11 h-11 rounded-2xl bg-white/15 flex items-center justify-center backdrop-blur-sm">
+                    <i class="fa-solid fa-user-plus text-xl"></i>
+                </div>
                 <div>
                     <h3 class="text-lg font-bold">Add Staff Member</h3>
                     <p class="text-xs text-white/80 mt-0.5">Create an account for a new clinic staff member</p>
                 </div>
-                <button type="button" onclick="closeAddStaffModal()" class="w-8 h-8 rounded-xl flex items-center justify-center text-white/80 hover:text-white hover:bg-white/20"><i class="fa-solid fa-xmark"></i></button>
             </div>
+            <button type="button" onclick="closeAddStaffModal()" class="w-9 h-9 rounded-xl flex items-center justify-center text-white/80 hover:text-white hover:bg-white/20 transition-colors">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
         </div>
-        <form method="POST" action="{{ route('staff.store') }}" class="px-6 py-5 space-y-4">
+
+        <form method="POST" action="{{ route('staff.store') }}" class="px-6 py-5 space-y-5">
             @csrf
-            <div><label class="label">Full Name <span class="text-red-500">*</span></label><input type="text" name="name" required class="input"></div>
-            <div><label class="label">Email <span class="text-red-500">*</span></label><input type="email" name="email" required class="input"></div>
-            <div><label class="label">Password <span class="text-red-500">*</span></label><input type="password" name="password" required minlength="6" class="input"></div>
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label class="label">Role <span class="text-red-500">*</span></label>
-                    <select name="role" required class="input">
-                        <option value="nurse">Nurse</option>
-                        <option value="doctor">Doctor</option>
-                        <option value="pharmacist">Pharmacist</option>
-                        <option value="secretary">Secretary</option>
-                        <option value="assistant">Assistant</option>
-                        <option value="clinic_head">Clinic Head</option>
-                        <option value="admin">Admin</option>
-                    </select>
+
+            {{-- Section: Account & Identity --}}
+            <div class="rounded-2xl border-2 border-blue-200 dark:border-blue-800/50 overflow-hidden">
+                <div class="px-4 py-3 bg-blue-50 dark:bg-blue-900/25 border-b-2 border-blue-200 dark:border-blue-800/50 flex items-center gap-2">
+                    <div class="w-7 h-7 rounded-lg bg-blue-500 flex items-center justify-center">
+                        <i class="fa-solid fa-id-card text-white text-xs"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm font-bold text-blue-800 dark:text-blue-200">Account & Identity</p>
+                        <p class="text-[11px] text-blue-600 dark:text-blue-300">Login credentials and basic info</p>
+                    </div>
                 </div>
-                <div><label class="label">Phone</label><input type="tel" name="phone" class="input"></div>
+                <div class="p-4 space-y-3">
+                    <div>
+                        <label class="label">Full Name <span class="text-red-500">*</span></label>
+                        <input type="text" name="name" required class="input" placeholder="e.g. Dr. Jane Mendoza">
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="label">Email <span class="text-red-500">*</span></label>
+                            <input type="email" name="email" required class="input" placeholder="jane@clinic.com">
+                        </div>
+                        <div>
+                            <label class="label">Temporary Password <span class="text-red-500">*</span></label>
+                            <input type="password" name="password" required minlength="6" class="input" placeholder="min. 6 characters">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="label">Role <span class="text-red-500">*</span></label>
+                            <select name="role" required class="input">
+                                <option value="nurse">Nurse</option>
+                                <option value="doctor">Doctor</option>
+                                <option value="pharmacist">Pharmacist</option>
+                                <option value="secretary">Secretary</option>
+                                <option value="assistant">Assistant</option>
+                                <option value="clinic_head">Clinic Head</option>
+                                <option value="admin">Admin</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="label">Date of Birth</label>
+                            <input type="date" name="date_of_birth" class="input">
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div><label class="label">Specialization</label><input type="text" name="specialization" class="input"></div>
-            <div class="flex justify-between gap-3 pt-3 border-t border-gray-100">
-                <button type="button" onclick="closeAddStaffModal()" class="px-5 py-2 bg-red-100 hover:bg-red-200 text-red-700 text-sm font-semibold rounded-xl">Cancel</button>
-                <button type="submit" class="px-5 py-2 bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold rounded-xl">Add Staff</button>
+
+            {{-- Section: Contact --}}
+            <div class="rounded-2xl border-2 border-emerald-200 dark:border-emerald-800/50 overflow-hidden">
+                <div class="px-4 py-3 bg-emerald-50 dark:bg-emerald-900/25 border-b-2 border-emerald-200 dark:border-emerald-800/50 flex items-center gap-2">
+                    <div class="w-7 h-7 rounded-lg bg-emerald-500 flex items-center justify-center">
+                        <i class="fa-solid fa-address-book text-white text-xs"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm font-bold text-emerald-800 dark:text-emerald-200">Contact</p>
+                        <p class="text-[11px] text-emerald-600 dark:text-emerald-300">How to reach this staff member</p>
+                    </div>
+                </div>
+                <div class="p-4 space-y-3">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="label">Phone</label>
+                            <input type="tel" name="phone" class="input" placeholder="0917-xxx-xxxx">
+                        </div>
+                        <div>
+                            <label class="label">Address</label>
+                            <input type="text" name="address" class="input" placeholder="Street, City">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Section: Employment --}}
+            <div class="rounded-2xl border-2 border-amber-200 dark:border-amber-800/50 overflow-hidden">
+                <div class="px-4 py-3 bg-amber-50 dark:bg-amber-900/25 border-b-2 border-amber-200 dark:border-amber-800/50 flex items-center gap-2">
+                    <div class="w-7 h-7 rounded-lg bg-amber-500 flex items-center justify-center">
+                        <i class="fa-solid fa-briefcase-medical text-white text-xs"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm font-bold text-amber-800 dark:text-amber-200">Employment</p>
+                        <p class="text-[11px] text-amber-600 dark:text-amber-300">Role details and professional credentials</p>
+                    </div>
+                </div>
+                <div class="p-4 space-y-3">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="label">Hire Date</label>
+                            <input type="date" name="hire_date" class="input" value="{{ date('Y-m-d') }}">
+                        </div>
+                        <div>
+                            <label class="label">License No. <span class="font-normal normal-case text-gray-400">(if applicable)</span></label>
+                            <input type="text" name="license_number" class="input" placeholder="e.g. PRC-12345">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="label">Specialization</label>
+                        <input type="text" name="specialization" class="input" placeholder="e.g. Cardiology, Pediatrics, Clinical Pharmacist">
+                    </div>
+                    <div>
+                        <label class="label">Bio / Notes <span class="font-normal normal-case text-gray-400">(optional)</span></label>
+                        <textarea name="bio" rows="2" class="input resize-y" placeholder="Short bio, certifications, special skills…"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Section: Emergency Contact --}}
+            <div class="rounded-2xl border-2 border-rose-200 dark:border-rose-800/50 overflow-hidden">
+                <div class="px-4 py-3 bg-rose-50 dark:bg-rose-900/25 border-b-2 border-rose-200 dark:border-rose-800/50 flex items-center gap-2">
+                    <div class="w-7 h-7 rounded-lg bg-rose-500 flex items-center justify-center">
+                        <i class="fa-solid fa-heart-pulse text-white text-xs"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm font-bold text-rose-800 dark:text-rose-200">Emergency Contact</p>
+                        <p class="text-[11px] text-rose-600 dark:text-rose-300">Who to call if something goes wrong</p>
+                    </div>
+                </div>
+                <div class="p-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="label">Contact Name</label>
+                        <input type="text" name="emergency_contact_name" class="input" placeholder="e.g. Maria Mendoza (sister)">
+                    </div>
+                    <div>
+                        <label class="label">Contact Phone</label>
+                        <input type="tel" name="emergency_contact_phone" class="input" placeholder="0917-xxx-xxxx">
+                    </div>
+                </div>
+            </div>
+
+            {{-- Actions --}}
+            <div class="flex flex-col sm:flex-row gap-3 pt-3 border-t border-gray-100 dark:border-slate-700">
+                <button type="button" onclick="closeAddStaffModal()"
+                        class="inline-flex flex-1 items-center justify-center gap-2 px-5 py-3 rounded-xl border-2 border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-slate-700 text-sm font-semibold transition-colors">
+                    <i class="fa-solid fa-xmark"></i> Cancel
+                </button>
+                <button type="submit"
+                        class="inline-flex flex-1 items-center justify-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-brand-600 to-brand-700 hover:from-brand-700 hover:to-brand-800 text-white text-sm font-bold transition-all shadow-md shadow-brand-500/30">
+                    <i class="fa-solid fa-user-plus"></i> Add Staff Member
+                </button>
             </div>
         </form>
     </div>

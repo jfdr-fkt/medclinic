@@ -9,12 +9,16 @@ class User extends Authenticatable
         'name', 'email', 'password', 'role', 'phone',
         'specialization', 'last_seen_at', 'is_active',
         'status', 'avatar', 'bio', 'theme', 'font_size', 'colorblind_mode',
+        'date_of_birth', 'hire_date', 'address',
+        'emergency_contact_name', 'emergency_contact_phone', 'license_number',
     ];
 
     protected function casts(): array
     {
         return [
             'last_seen_at'    => 'datetime',
+            'date_of_birth'   => 'date',
+            'hire_date'       => 'date',
             'is_active'       => 'boolean',
             'colorblind_mode' => 'boolean',
         ];

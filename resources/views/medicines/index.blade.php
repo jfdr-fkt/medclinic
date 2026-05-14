@@ -29,17 +29,21 @@
             <h1 class="text-2xl font-bold text-gray-900">Medicines & Inventory</h1>
             <p class="text-sm text-gray-500 mt-0.5">Track stock, locations, and expiry dates</p>
         </div>
-        @if($canAddMed)
         <div class="flex items-center gap-2 flex-wrap">
-            <button type="button" onclick="openLocationModal()"
-                    class="inline-flex items-center gap-2 px-3 py-2.5 bg-amber-100 text-amber-700 hover:bg-amber-200 text-sm font-semibold rounded-xl transition-colors"
-                    title="Add a new storage location">
-                <i class="fa-solid fa-location-dot"></i> Location
-            </button>
+            @if(auth()->user()->can_('medicines.locations'))
+            <a href="{{ route('medicines.locations.index') }}"
+               class="inline-flex items-center gap-2 px-3 py-2.5 bg-amber-100 text-amber-700 hover:bg-amber-200 text-sm font-semibold rounded-xl transition-colors"
+               title="Manage storage locations">
+                <i class="fa-solid fa-location-dot"></i> Locations
+            </a>
+            @endif
+            @if($canAddMed)
             <a href="{{ route('scan.index') }}" class="btn-primary">
                 <i class="fa-solid fa-plus"></i> Add Medicine
             </a>
+            @endif
         </div>
+        @if($canAddMed)
         <div class="hidden">
             <div id="addMedicineMenu" class="hidden">
                 <button type="button" onclick="openAddModal();" class="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3">
@@ -191,12 +195,12 @@
                 <input type="text" name="search" value="{{ request('search') }}"
                        placeholder="Search by name, generic name, or barcode…"
                        class="block w-full h-12 pl-12 pr-4 border-2 border-gray-200 rounded-xl text-base text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all bg-white">
-                @if(request('sort'))<input type="hidden" name="sort" value="{{ request('sort') }}">@endif
-                @if(request('direction'))<input type="hidden" name="direction" value="{{ request('direction') }}">@endif
+                {{-- Sort/direction live in the filter dropdown <select>s; no hidden inputs needed. --}}
             </div>
 
-            <button type="submit" class="hidden md:flex h-12 w-12 items-center justify-center bg-brand-600 hover:bg-brand-700 text-white rounded-xl transition-colors shadow-sm flex-shrink-0" title="Search">
+            <button type="submit" class="hidden md:inline-flex h-12 px-5 items-center justify-center gap-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl transition-colors shadow-sm flex-shrink-0 text-sm font-semibold" title="Search">
                 <i class="fa-solid fa-magnifying-glass"></i>
+                <span class="hidden lg:inline">Search</span>
             </button>
         </div>
 

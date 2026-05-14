@@ -49,7 +49,11 @@ Route::middleware(['auth', 'no.back'])->group(function () {
     Route::put('/medicines/{medicine}',               [MedicineController::class, 'update'])->name('medicines.update');
     Route::delete('/medicines/{medicine}',            [MedicineController::class, 'destroy'])->name('medicines.destroy');
     Route::post('/medicines/{medicine}/dispense',     [MedicineController::class, 'dispense'])->name('medicines.dispense');
-    Route::post('/medicines/locations/store',         [MedicineController::class, 'storeLocation'])->name('medicines.locations.store');
+    // Storage location management (admin / clinic_head)
+    Route::get('/medicines/locations',                [MedicineController::class, 'locationsIndex'])->name('medicines.locations.index');
+    Route::post('/medicines/locations',               [MedicineController::class, 'storeLocation'])->name('medicines.locations.store');
+    Route::put('/medicines/locations/{location}',     [MedicineController::class, 'updateLocation'])->name('medicines.locations.update');
+    Route::delete('/medicines/locations/{location}',  [MedicineController::class, 'destroyLocation'])->name('medicines.locations.destroy');
 
     // Smart Scan
     Route::get('/scan',         [ScanController::class, 'index'])->name('scan.index');

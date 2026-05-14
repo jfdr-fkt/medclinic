@@ -3,7 +3,60 @@
 @section('page-title', 'Add Medicine')
 
 @push('head')
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4/dist/flatpickr.min.css">
 <style>
+/* ── Flatpickr brand theme ── */
+.flatpickr-calendar {
+    border-radius: 1rem !important;
+    border: 2px solid #e5e7eb !important;
+    box-shadow: 0 10px 30px rgba(0,0,0,.14) !important;
+    font-family: inherit !important;
+    padding: 6px !important;
+}
+.flatpickr-calendar.arrowTop:before, .flatpickr-calendar.arrowTop:after { border-bottom-color: #e5e7eb !important; }
+.flatpickr-months { padding-top: 4px !important; }
+.flatpickr-month { color: #0f172a !important; height: 38px !important; }
+.flatpickr-current-month { font-weight: 700 !important; font-size: .95rem !important; padding-top: 6px !important; }
+.flatpickr-current-month .flatpickr-monthDropdown-months,
+.flatpickr-current-month input.cur-year { color: #0f172a !important; font-weight: 700 !important; }
+.flatpickr-weekday { color: #6b7280 !important; font-weight: 700 !important; font-size: .72rem !important; text-transform: uppercase; letter-spacing: .04em; }
+.flatpickr-day {
+    border-radius: .65rem !important;
+    color: #1f2937 !important;
+    font-weight: 500 !important;
+    transition: background .12s, color .12s;
+}
+.flatpickr-day:hover, .flatpickr-day.prevMonthDay:hover, .flatpickr-day.nextMonthDay:hover {
+    background: #ecfdf5 !important; border-color: transparent !important; color: #065f46 !important;
+}
+.flatpickr-day.today {
+    border-color: #0d9488 !important; color: #0d9488 !important; font-weight: 700 !important;
+}
+.flatpickr-day.selected, .flatpickr-day.selected:hover, .flatpickr-day.selected.today {
+    background: #0d9488 !important; border-color: #0d9488 !important; color: #fff !important;
+    box-shadow: 0 2px 8px rgba(13,148,136,.35) !important;
+}
+.flatpickr-day.flatpickr-disabled, .flatpickr-day.flatpickr-disabled:hover { color: #cbd5e1 !important; background: transparent !important; }
+.flatpickr-day.prevMonthDay, .flatpickr-day.nextMonthDay { color: #cbd5e1 !important; }
+.flatpickr-prev-month, .flatpickr-next-month { color: #6b7280 !important; fill: #6b7280 !important; padding: 8px !important; }
+.flatpickr-prev-month:hover svg, .flatpickr-next-month:hover svg { fill: #0d9488 !important; }
+/* Dark mode for flatpickr */
+.dark .flatpickr-calendar { background: #1a2438 !important; border-color: #2d3a52 !important; box-shadow: 0 10px 30px rgba(0,0,0,.5) !important; }
+.dark .flatpickr-calendar.arrowTop:before, .dark .flatpickr-calendar.arrowTop:after { border-bottom-color: #2d3a52 !important; }
+.dark .flatpickr-month, .dark .flatpickr-current-month,
+.dark .flatpickr-current-month .flatpickr-monthDropdown-months,
+.dark .flatpickr-current-month input.cur-year { color: #f1f5f9 !important; }
+.dark .flatpickr-weekday { color: #94a3b8 !important; }
+.dark .flatpickr-day { color: #e2e8f0 !important; }
+.dark .flatpickr-day:hover { background: rgba(20,184,166,.15) !important; color: #6ee7b7 !important; }
+.dark .flatpickr-day.today { border-color: #14b8a6 !important; color: #6ee7b7 !important; }
+.dark .flatpickr-day.selected, .dark .flatpickr-day.selected:hover {
+    background: #14b8a6 !important; border-color: #14b8a6 !important; color: #042f2e !important;
+}
+.dark .flatpickr-day.prevMonthDay, .dark .flatpickr-day.nextMonthDay,
+.dark .flatpickr-day.flatpickr-disabled { color: #475569 !important; }
+.dark .flatpickr-prev-month, .dark .flatpickr-next-month { color: #94a3b8 !important; fill: #94a3b8 !important; }
+
 /* ── Page-scoped input style: bigger, more rounded, high-contrast ── */
 .add-input {
     display: block; width: 100%;
@@ -323,24 +376,21 @@ select.add-input:focus {
         </div>
 
         {{-- Upload / Paste --}}
-        <div class="add-card overflow-hidden">
+        <div class="add-card overflow-hidden flex flex-col">
             <div class="px-5 py-3.5 border-b-2 border-gray-100 dark:border-slate-700 flex items-center gap-2">
                 <div class="w-8 h-8 rounded-xl bg-purple-100 dark:bg-purple-900/40 flex items-center justify-center">
                     <i class="fa-solid fa-image text-purple-600 text-sm"></i>
                 </div>
                 <h2 class="font-bold text-gray-800 dark:text-white text-sm">Upload / Paste Image</h2>
             </div>
-            <div class="p-5 space-y-3">
-                <label id="qrDropZone" for="qrFile" class="drop-zone flex flex-col items-center justify-center p-8 text-center"
-                       style="min-height:200px;" ondragover="onDragOver(event)" ondrop="onDrop(event)" ondragleave="onDragLeave(event)">
+            <div class="p-5 flex flex-col flex-1 gap-3">
+                <label id="qrDropZone" for="qrFile" class="drop-zone flex flex-col items-center justify-center p-8 text-center flex-1"
+                       style="min-height:160px;" ondragover="onDragOver(event)" ondrop="onDrop(event)" ondragleave="onDragLeave(event)">
                     <div class="w-14 h-14 rounded-2xl bg-purple-50 dark:bg-purple-900/30 flex items-center justify-center mb-3">
                         <i class="fa-solid fa-cloud-arrow-up text-purple-400 text-2xl"></i>
                     </div>
                     <p class="text-sm font-semibold text-gray-700 dark:text-white">Click, drag & drop, or paste</p>
                     <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">a QR code or barcode image</p>
-                    <p class="text-[11px] text-brand-600 dark:text-brand-400 mt-2 font-medium">
-                        <i class="fa-solid fa-clipboard mr-1"></i>Ctrl+V / ⌘V also works
-                    </p>
                     <input type="file" id="qrFile" accept="image/*" class="hidden">
                 </label>
                 <div id="fileScanStatus" class="hidden rounded-xl px-4 py-2.5 text-xs font-medium text-center"></div>
@@ -443,7 +493,7 @@ select.add-input:focus {
                                     class="hidden ml-2 inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20">
                                 <i class="fa-solid fa-trash"></i> Remove
                             </button>
-                            <p class="text-xs text-gray-400 dark:text-gray-500">JPG / PNG · max 4 MB · You can also paste (Ctrl+V)</p>
+                            <p class="text-xs text-gray-400 dark:text-gray-500">JPG / PNG · max 4 MB</p>
                         </div>
                     </div>
                 </div>
@@ -520,15 +570,6 @@ select.add-input:focus {
                            placeholder="e.g. Suppository, Inhaler, Lozenge, Transdermal Patch…">
                 </div>
 
-                {{-- Category info --}}
-                <div class="rounded-2xl border-2 border-blue-100 dark:border-blue-900/40 bg-blue-50/50 dark:bg-blue-900/10 p-4 text-sm">
-                    <p class="font-bold text-blue-700 dark:text-blue-300 mb-1.5"><i class="fa-solid fa-circle-info mr-1.5"></i>What do these categories mean?</p>
-                    <ul class="space-y-1 text-blue-800 dark:text-blue-200 text-xs ml-4 list-disc">
-                        <li><strong>OTC:</strong> No prescription needed (paracetamol, ibuprofen, antacids)</li>
-                        <li><strong>Rx:</strong> Doctor's prescription required (antibiotics, blood pressure meds)</li>
-                        <li><strong>Controlled:</strong> Strictly regulated narcotics — logged with extra care (morphine, diazepam)</li>
-                    </ul>
-                </div>
             </div>
         </div>
 
@@ -558,25 +599,23 @@ select.add-input:focus {
                             <option value="ml">Milliliters / mL</option>
                         </select>
                     </div>
-                    <div>
-                        <label class="add-label">Cabinet / Area</label>
-                        <input type="text" name="location_cabinet" class="add-input" placeholder="e.g. Cabinet A"
-                               list="cabinetSuggestions" autocomplete="off">
-                        <datalist id="cabinetSuggestions">
-                            @foreach($locations->pluck('cabinet')->filter()->unique()->sort() as $cab)
-                            <option value="{{ $cab }}">
+                    <div class="sm:col-span-2">
+                        <label class="add-label">Storage Location <span class="text-red-500">*</span></label>
+                        @if($locations->isEmpty())
+                            <div class="add-input flex items-center justify-between gap-3" style="background:#fef3c7;border-color:#fde68a;color:#92400e;">
+                                <span class="text-sm">No storage locations defined yet.</span>
+                                @if(auth()->user()->can_('medicines.locations'))
+                                <a href="{{ route('medicines.locations.index') }}" class="text-xs font-bold underline">Add one →</a>
+                                @endif
+                            </div>
+                        @else
+                        <select name="location_id" required class="add-input">
+                            <option value="">Select where to store this medicine…</option>
+                            @foreach($locations as $loc)
+                                <option value="{{ $loc->id }}">{{ $loc->full_location }}</option>
                             @endforeach
-                        </datalist>
-                    </div>
-                    <div>
-                        <label class="add-label">Shelf / Level</label>
-                        <input type="text" name="location_level" class="add-input" placeholder="e.g. Shelf 2"
-                               list="shelfSuggestions" autocomplete="off">
-                        <datalist id="shelfSuggestions">
-                            @foreach($locations->pluck('shelf')->filter()->unique()->sort() as $shelf)
-                            <option value="{{ $shelf }}">
-                            @endforeach
-                        </datalist>
+                        </select>
+                        @endif
                     </div>
                     <div>
                         <label class="add-label">Batch Number</label>
@@ -584,17 +623,8 @@ select.add-input:focus {
                     </div>
                     <div>
                         <label class="add-label">Expiry Date <span class="text-red-500">*</span></label>
-                        <input type="date" name="expiry_date" required class="add-input">
+                        <input type="text" name="expiry_date" id="expiryDate" required class="add-input" placeholder="Pick a date…" autocomplete="off">
                     </div>
-                </div>
-                <div class="rounded-2xl border-2 border-emerald-100 dark:border-emerald-900/40 bg-emerald-50/50 dark:bg-emerald-900/10 p-4 text-xs">
-                    <p class="font-bold text-emerald-700 dark:text-emerald-300 mb-2"><i class="fa-solid fa-map-pin mr-1.5"></i>Where do these go?</p>
-                    <ul class="space-y-1 text-emerald-800 dark:text-emerald-200 ml-4 list-disc">
-                        <li><strong>Cabinet A / B / C</strong> — the labeled physical storage unit in the room (cabinet, refrigerator, drawer)</li>
-                        <li><strong>Shelf 1 / 2 / 3</strong> — the horizontal row inside that cabinet, counted from top to bottom</li>
-                        <li><strong>Level</strong> — height position on the shelf (Top, Middle, Bottom)</li>
-                    </ul>
-                    <p class="mt-2 text-emerald-600 dark:text-emerald-400">Example: <strong>Cabinet A, Shelf 2</strong> = second row inside Cabinet A.</p>
                 </div>
             </div>
         </div>
@@ -643,6 +673,7 @@ select.add-input:focus {
 </div>
 
 <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr@4"></script>
 <script>
 // ═══════════════════════════════════════════════════════
 // Globals
@@ -864,7 +895,12 @@ function autofillFromParsed(data) {
     if (setField('input[name="quantity"]', data.quantity)) filled.push('Quantity');
     if (setField('select[name="unit"]', normalizeUnit(data.unit))) filled.push('Unit');
     if (setField('input[name="batch_number"]', data.batch)) filled.push('Batch');
-    if (setField('input[name="expiry_date"]', normalizeDate(data.expiry))) filled.push('Expiry');
+    const exp = normalizeDate(data.expiry);
+    if (exp) {
+        if (window.expiryPicker) window.expiryPicker.setDate(exp, true);
+        else setField('input[name="expiry_date"]', exp);
+        filled.push('Expiry');
+    }
     return filled;
 }
 
@@ -996,6 +1032,7 @@ function clearCode() {
     syncAllCustomSelects();
     removeMedImage();
     onFormChange();
+    if (window.expiryPicker) window.expiryPicker.clear();
     document.getElementById('successBanner').classList.add('hidden');
     document.getElementById('pageToast').classList.add('hidden');
 }
@@ -1086,6 +1123,7 @@ document.getElementById('medicineForm').addEventListener('submit', function(e) {
             this.reset();
             syncAllCustomSelects();
             removeMedImage();
+            if (window.expiryPicker) window.expiryPicker.clear();
             onFormChange();
             document.getElementById('scannedCode').value = '';
             document.getElementById('scannedCodeDisplay').textContent = '—';
@@ -1194,6 +1232,19 @@ document.addEventListener('keydown', e => {
 });
 
 initCustomSelects();
+
+// ═══════════════════════════════════════════════════════
+// Flatpickr — branded date picker for Expiry Date
+// ═══════════════════════════════════════════════════════
+if (window.flatpickr) {
+    window.expiryPicker = flatpickr('#expiryDate', {
+        dateFormat: 'Y-m-d',
+        altInput: true,
+        altFormat: 'F j, Y',
+        minDate: new Date(Date.now() + 24*60*60*1000),
+        disableMobile: true,
+    });
+}
 
 window.addEventListener('beforeunload', () => { if (isScanning) stopScanner(); });
 </script>

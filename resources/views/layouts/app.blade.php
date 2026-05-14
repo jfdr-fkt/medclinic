@@ -40,7 +40,7 @@
             }
         }
     </script>
-    <style>
+    <style type="text/tailwindcss">
         body { font-family: 'Inter', sans-serif; }
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
@@ -309,6 +309,7 @@
                             <span class="nav-text">Patients</span>
                         </a>
                     </li>
+                    @if(auth()->user()->can_('medicines.dispense'))
                     <li>
                         <a href="{{ route('medicines.index') }}" title="Medicines"
                            class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold transition-all
@@ -317,6 +318,8 @@
                             <span class="nav-text">Medicines</span>
                         </a>
                     </li>
+                    @endif
+                    @if(auth()->user()->can_('medicines.create'))
                     <li>
                         <a href="{{ route('scan.index') }}" title="Add Medicine"
                            class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold transition-all
@@ -325,6 +328,7 @@
                             <span class="nav-text">Add Medicine</span>
                         </a>
                     </li>
+                    @endif
                 </ul>
             </div>
             <!-- Team -->
@@ -398,8 +402,12 @@
                 <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest px-3 mb-2">Clinical</p>
                 <ul class="space-y-1">
                     <li><a href="{{ route('patients.index') }}"  class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold {{ request()->routeIs('patients.*') ? 'bg-brand-500/20 text-white border border-brand-400/40' : 'text-slate-100 hover:bg-slate-700 hover:text-white' }}"><i class="fa-solid fa-user-injured w-5 text-center text-slate-300"></i> Patients</a></li>
+                    @if(auth()->user()->can_('medicines.dispense'))
                     <li><a href="{{ route('medicines.index') }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold {{ request()->routeIs('medicines.*') ? 'bg-brand-500/20 text-white border border-brand-400/40' : 'text-slate-100 hover:bg-slate-700 hover:text-white' }}"><i class="fa-solid fa-pills w-5 text-center text-slate-300"></i> Medicines</a></li>
+                    @endif
+                    @if(auth()->user()->can_('medicines.create'))
                     <li><a href="{{ route('scan.index') }}"      class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold {{ request()->routeIs('scan.*') ? 'bg-brand-500/20 text-white border border-brand-400/40' : 'text-slate-100 hover:bg-slate-700 hover:text-white' }}"><i class="fa-solid fa-plus w-5 text-center text-slate-300"></i> Add Medicine</a></li>
+                    @endif
                 </ul>
             </div>
             <div>

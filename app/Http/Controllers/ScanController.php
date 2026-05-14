@@ -5,12 +5,14 @@ use App\Models\Inventory;
 use App\Models\Medicine;
 use App\Models\MedicineLocation;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class ScanController extends Controller
 {
     public function index()
     {
-        $locations = MedicineLocation::all();
+        if (!Auth::user()->can_('medicines.create')) abort(403, 'You do not have permission to add medicines.');
+        $locations = MedicineLocation::orderBy('storage_type')->orderBy('cabinet')->orderBy('shelf')->orderBy('level')->get();
         return view('scan.index', compact('locations'));
     }
 
@@ -39,6 +41,8 @@ class ScanController extends Controller
 
     public function storeScan(Request $request)
     {
+        if (!Auth::user()->can_('medicines.create')) abort(403, 'You do not have permission to add medicines.');
+
         $validated = $request->validate([
             'name'             => 'required|string|max:255',
             'generic_name'     => 'nullable|string|max:255',
@@ -50,8 +54,7 @@ class ScanController extends Controller
             'unit'             => 'nullable|string',
             'expiry_date'      => 'required|date|after:today',
             'batch_number'     => 'nullable|string',
-            'location_cabinet' => 'nullable|string',
-            'location_level'   => 'nullable|string',
+            'location_id'      => 'required|exists:medicine_locations,id',
             'notes'            => 'nullable|string',
             'scanned_raw_code' => 'nullable|string',
             'image'            => 'nullable|image|max:4096',
@@ -65,17 +68,7 @@ class ScanController extends Controller
             ], 422);
         }
 
-        // Find or create a location if provided
-        $locationId = null;
-        if (!empty($validated['location_cabinet'])) {
-            $loc = MedicineLocation::firstOrCreate(
-                ['cabinet' => $validated['location_cabinet'], 'shelf' => $validated['location_level'] ?? 'General'],
-                ['level' => '1', 'section' => null, 'notes' => null]
-            );
-            $locationId = $loc->id;
-        } else {
-            $locationId = MedicineLocation::first()?->id;
-        }
+        $locationId = $validated['location_id'];
 
         $isRx = in_array($validated['category'] ?? '', ['prescription', 'controlled']);
 

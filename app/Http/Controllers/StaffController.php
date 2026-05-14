@@ -48,14 +48,23 @@ class StaffController extends Controller
     {
         if (!\Illuminate\Support\Facades\Auth::user()->can_('staff.create')) abort(403, 'Only admins can add staff.');
         $validated = $request->validate([
-            'name'           => 'required|string|max:255',
-            'email'          => 'required|email|unique:users',
-            'password'       => 'required|string|min:6',
-            'role'           => 'required|in:admin,doctor,nurse,assistant',
-            'phone'          => 'nullable|string',
-            'specialization' => 'nullable|string',
+            'name'                    => 'required|string|max:255',
+            'email'                   => 'required|email|unique:users',
+            'password'                => 'required|string|min:6',
+            'role'                    => 'required|in:admin,clinic_head,doctor,pharmacist,nurse,secretary,assistant',
+            'phone'                   => 'nullable|string|max:60',
+            'specialization'          => 'nullable|string|max:120',
+            'date_of_birth'           => 'nullable|date|before:today',
+            'hire_date'               => 'nullable|date',
+            'address'                 => 'nullable|string|max:255',
+            'emergency_contact_name'  => 'nullable|string|max:120',
+            'emergency_contact_phone' => 'nullable|string|max:60',
+            'license_number'          => 'nullable|string|max:80',
+            'bio'                     => 'nullable|string|max:500',
         ]);
-        $validated['password'] = Hash::make($validated['password']);
+        $validated['password']     = Hash::make($validated['password']);
+        $validated['is_active']    = true;
+        $validated['last_seen_at'] = now();
         User::create($validated);
         return back()->with('success', 'Staff member added successfully!');
     }

@@ -88,13 +88,12 @@
                 <input type="text" name="search" value="{{ request('search') }}"
                        placeholder="Search by name, ID, nurse or doctor…"
                        class="block w-full h-12 pl-12 pr-4 border-2 border-gray-200 rounded-xl text-base text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all bg-white">
-                <!-- Preserve sort on search -->
-                @if(request('sort'))<input type="hidden" name="sort" value="{{ request('sort') }}">@endif
-                @if(request('direction'))<input type="hidden" name="direction" value="{{ request('direction') }}">@endif
+                {{-- Sort/direction are preserved by the filter dropdown's <select> elements (selected attribute), so no hidden inputs are needed. --}}
             </div>
 
-            <button type="submit" class="hidden md:flex h-12 w-12 items-center justify-center bg-brand-600 hover:bg-brand-700 text-white rounded-xl transition-colors shadow-sm flex-shrink-0" title="Search">
+            <button type="submit" class="hidden md:inline-flex h-12 px-5 items-center justify-center gap-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl transition-colors shadow-sm flex-shrink-0 text-sm font-semibold" title="Search">
                 <i class="fa-solid fa-magnifying-glass"></i>
+                <span class="hidden lg:inline">Search</span>
             </button>
         </div>
     </form>

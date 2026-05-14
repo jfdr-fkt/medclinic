@@ -42,14 +42,14 @@ class DemoDataSeeder extends Seeder
 
         // Locations
         $locs = [
-            MedicineLocation::create(['cabinet'=>'A','shelf'=>'1','level'=>'Top','section'=>'Left','notes'=>'Emergency meds']),
-            MedicineLocation::create(['cabinet'=>'A','shelf'=>'1','level'=>'Middle','section'=>'Center','notes'=>'Daily prescriptions']),
-            MedicineLocation::create(['cabinet'=>'A','shelf'=>'2','level'=>'Top','section'=>'Right','notes'=>'Pediatric meds']),
-            MedicineLocation::create(['cabinet'=>'B','shelf'=>'1','level'=>'Top','section'=>'Left','notes'=>'Antibiotics']),
-            MedicineLocation::create(['cabinet'=>'B','shelf'=>'1','level'=>'Bottom','section'=>'Center','notes'=>'Pain relief']),
-            MedicineLocation::create(['cabinet'=>'B','shelf'=>'2','level'=>'Middle','section'=>'Right','notes'=>'Vitamins & OTC']),
-            MedicineLocation::create(['cabinet'=>'C','shelf'=>'1','level'=>'Top','section'=>'Left','notes'=>'Refrigerated']),
-            MedicineLocation::create(['cabinet'=>'C','shelf'=>'1','level'=>'Middle','section'=>'Center','notes'=>'Injectables']),
+            MedicineLocation::create(['storage_type'=>'Cabinet','cabinet'=>'A','shelf'=>'1','level'=>'Top','section'=>'Left','notes'=>'Emergency meds']),
+            MedicineLocation::create(['storage_type'=>'Cabinet','cabinet'=>'A','shelf'=>'1','level'=>'Middle','section'=>'Center','notes'=>'Daily prescriptions']),
+            MedicineLocation::create(['storage_type'=>'Cabinet','cabinet'=>'A','shelf'=>'2','level'=>'Top','section'=>'Right','notes'=>'Pediatric meds']),
+            MedicineLocation::create(['storage_type'=>'Cabinet','cabinet'=>'B','shelf'=>'1','level'=>'Top','section'=>'Left','notes'=>'Antibiotics']),
+            MedicineLocation::create(['storage_type'=>'Cabinet','cabinet'=>'B','shelf'=>'1','level'=>'Bottom','section'=>'Center','notes'=>'Pain relief']),
+            MedicineLocation::create(['storage_type'=>'Cabinet','cabinet'=>'B','shelf'=>'2','level'=>'Middle','section'=>'Right','notes'=>'Vitamins & OTC']),
+            MedicineLocation::create(['storage_type'=>'Cabinet','cabinet'=>'C','shelf'=>'1','level'=>'Top','section'=>'Left','notes'=>'Refrigerated']),
+            MedicineLocation::create(['storage_type'=>'Cabinet','cabinet'=>'C','shelf'=>'1','level'=>'Middle','section'=>'Center','notes'=>'Injectables']),
         ];
 
         // Medicines
@@ -87,29 +87,53 @@ class DemoDataSeeder extends Seeder
 
         // Standard healthcare shift patterns
         $shiftPatterns = [
-            'morning'   => ['07:00', '15:00'],   // Day shift
-            'afternoon' => ['15:00', '23:00'],   // Evening shift
-            'night'     => ['23:00', '07:00'],   // Night shift
-            'on_call'   => ['09:00', '17:00'],   // On-call hours
+            'morning'   => ['07:00', '15:00'],
+            'afternoon' => ['15:00', '23:00'],
+            'night'     => ['23:00', '07:00'],
+            'on_call'   => ['09:00', '17:00'],
         ];
 
-        // Generate 7 days of randomized rotating shifts for clinical staff
-        $clinicalStaff = [$doc1, $doc2, $nurse1, $nurse2, $asst];
-        $shiftKeys = ['morning', 'afternoon', 'night', 'on_call'];
+        // Per-role realistic scheduling rules:
+        //   pool     = which shifts this role is eligible for
+        //   weekdays = days of week worked (1=Mon … 7=Sun)
+        //   offRate  = chance per eligible day to be a rest day (0–1)
+        $scheduleRules = [
+            'admin'       => ['pool'=>['morning'],                      'weekdays'=>[1,2,3,4,5],     'offRate'=>0.05],
+            'clinic_head' => ['pool'=>['morning','on_call'],            'weekdays'=>[1,2,3,4,5],     'offRate'=>0.10],
+            'doctor'      => ['pool'=>['morning','afternoon','on_call'],'weekdays'=>[1,2,3,4,5,6,7], 'offRate'=>0.20],
+            'pharmacist'  => ['pool'=>['morning','afternoon'],          'weekdays'=>[1,2,3,4,5,6],   'offRate'=>0.10],
+            'nurse'       => ['pool'=>['morning','afternoon','night'],  'weekdays'=>[1,2,3,4,5,6,7], 'offRate'=>0.20],
+            'secretary'   => ['pool'=>['morning'],                      'weekdays'=>[1,2,3,4,5],     'offRate'=>0.05],
+            'assistant'   => ['pool'=>['morning','afternoon'],          'weekdays'=>[1,2,3,4,5,6],   'offRate'=>0.15],
+        ];
 
-        foreach ($clinicalStaff as $i => $staffMember) {
-            for ($d = 0; $d < 7; $d++) {
-                // Skip ~1 day per week (rest day) randomly
-                if (rand(1, 7) === 1) continue;
+        // Generate 30 days of realistic shifts for ALL staff.
+        // Each role cycles through its own pool so shifts feel like a real rotation,
+        // not random noise. Offset by user id so coworkers don't mirror each other.
+        $allStaff = [$admin, $head, $pharm, $sec, $doc1, $doc2, $nurse1, $nurse2, $asst];
 
-                // Rotate shifts so each staff cycles through patterns differently
-                $shiftKey = $shiftKeys[($i + $d) % count($shiftKeys)];
+        foreach ($allStaff as $staffMember) {
+            $rules = $scheduleRules[$staffMember->role] ?? $scheduleRules['assistant'];
+            $pool  = $rules['pool'];
+            $offset = $staffMember->id; // distinct cycle per user
+
+            for ($d = 0; $d < 30; $d++) {
+                $date = today()->addDays($d);
+                $dow  = (int) $date->isoWeekday(); // 1=Mon … 7=Sun
+
+                // Skip days this role doesn't normally work
+                if (!in_array($dow, $rules['weekdays'])) continue;
+
+                // Random rest day inside the working week
+                if (mt_rand(1, 100) / 100 <= $rules['offRate']) continue;
+
+                $shiftKey = $pool[($offset + $d) % count($pool)];
                 [$start, $end] = $shiftPatterns[$shiftKey];
 
                 Shift::create([
                     'user_id'    => $staffMember->id,
                     'shift_type' => $shiftKey,
-                    'shift_date' => today()->addDays($d),
+                    'shift_date' => $date,
                     'start_time' => $start,
                     'end_time'   => $end,
                     'is_active'  => $d === 0,
