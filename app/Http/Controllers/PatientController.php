@@ -11,6 +11,7 @@ class PatientController extends Controller
 {
     public function index(Request $request)
     {
+        if (!Auth::user()->can_('patients.view')) abort(403, 'You do not have access to patient records.');
         $query = Patient::with(['nurse', 'doctor']);
 
         if ($request->filled('search')) {
@@ -62,6 +63,7 @@ class PatientController extends Controller
 
     public function show(Patient $patient)
     {
+        if (!Auth::user()->can_('patients.view')) abort(403, 'You do not have access to patient records.');
         $patient->load(['nurse', 'doctor']);
         return view('patients.show', compact('patient'));
     }

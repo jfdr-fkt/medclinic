@@ -4,6 +4,17 @@
 
 @section('content')
 @php
+    // Role-aware gradients chosen to look balanced in both light and dark mode.
+    $bannerGradient = match($user->role) {
+        'admin'       => 'from-slate-700 via-slate-800 to-slate-900',
+        'clinic_head' => 'from-purple-600 via-purple-700 to-indigo-800',
+        'doctor'      => 'from-blue-600 via-blue-700 to-indigo-800',
+        'pharmacist'  => 'from-green-600 via-emerald-700 to-teal-800',
+        'nurse'       => 'from-cyan-500 via-teal-600 to-teal-800',
+        'secretary'   => 'from-amber-500 via-orange-500 to-rose-600',
+        'assistant'   => 'from-emerald-400 via-emerald-600 to-teal-700',
+        default       => 'from-brand-500 via-brand-600 to-brand-800',
+    };
     $bannerColor = match($user->role) {
         'admin'     => 'bg-slate-700',
         'doctor'    => 'bg-blue-600',
@@ -12,24 +23,36 @@
         default     => 'bg-brand-600',
     };
     $avatarGrad = match($user->role) {
-        'admin'     => 'from-slate-500 to-slate-700',
-        'doctor'    => 'from-blue-500 to-blue-700',
-        'nurse'     => 'from-cyan-500 to-teal-600',
-        'assistant' => 'from-emerald-400 to-emerald-600',
-        default     => 'from-brand-400 to-brand-700',
+        'admin'       => 'from-slate-500 to-slate-700',
+        'clinic_head' => 'from-purple-500 to-purple-700',
+        'doctor'      => 'from-blue-500 to-blue-700',
+        'pharmacist'  => 'from-green-500 to-emerald-700',
+        'nurse'       => 'from-cyan-500 to-teal-600',
+        'secretary'   => 'from-amber-400 to-rose-500',
+        'assistant'   => 'from-emerald-400 to-emerald-600',
+        default       => 'from-brand-400 to-brand-700',
     };
     $statusKey = $user->statusColor() === 'emerald' ? 'available'
               : ($user->statusColor() === 'red' ? 'busy'
               : ($user->statusColor() === 'amber' ? 'away' : 'offline'));
+
+    // Identity fields (Full Name + Specialization) are HR-controlled.
+    // Only admin and clinic_head can edit them — for themselves or anyone else.
+    $canEditIdentity = in_array($user->role, ['admin', 'clinic_head']);
 @endphp
 
 <div class="space-y-6 max-w-3xl">
 
     <!-- ── Profile header ── -->
     <div class="card overflow-hidden">
-        <div class="h-32 {{ $bannerColor }} relative">
-            <div class="absolute -top-10 -right-10 w-48 h-48 bg-white/5 rounded-full"></div>
-            <div class="absolute bottom-4 right-6 text-white/30 text-xs font-medium uppercase tracking-widest">{{ $user->roleLabel() }} profile</div>
+        <div class="h-36 relative overflow-hidden bg-gradient-to-br {{ $bannerGradient }}">
+            {{-- Soft radial highlight — works as a subtle visual accent in both modes --}}
+            <div class="absolute inset-0 pointer-events-none" style="background-image: radial-gradient(circle at 85% 25%, rgba(255,255,255,.18) 0%, transparent 55%), radial-gradient(circle at 10% 90%, rgba(0,0,0,.15) 0%, transparent 50%);"></div>
+            {{-- Decorative grid pattern, very subtle --}}
+            <div class="absolute inset-0 pointer-events-none opacity-[0.07]" style="background-image: linear-gradient(rgba(255,255,255,.4) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.4) 1px, transparent 1px); background-size: 24px 24px;"></div>
+            <div class="absolute bottom-4 right-6 text-white/60 text-xs font-bold uppercase tracking-widest drop-shadow-sm">
+                <i class="fa-solid fa-id-card-clip mr-1.5"></i>{{ $user->roleLabel() }} profile
+            </div>
         </div>
 
         <div class="px-6 pb-6 -mt-14">
@@ -102,10 +125,24 @@
 
         <form method="POST" action="{{ route('profile.update') }}" class="p-6 space-y-5">
             @csrf @method('PUT')
+            @if(!$canEditIdentity)
+            <div class="rounded-xl bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800/60 px-4 py-3 flex items-start gap-2.5">
+                <i class="fa-solid fa-lock text-amber-600 dark:text-amber-400 text-sm mt-0.5"></i>
+                <p class="text-xs text-amber-800 dark:text-amber-200">
+                    <strong>Full Name</strong> and <strong>Specialization / Job Title</strong> are managed by HR. To request a change, contact an Admin or Clinic Head.
+                </p>
+            </div>
+            @endif
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div>
-                    <label for="pf_name" class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wider">Full Name</label>
-                    <input id="pf_name" type="text" name="name" required value="{{ old('name', $user->name) }}" class="input" placeholder="Your full name">
+                    <label for="pf_name" class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wider flex items-center gap-1.5">
+                        Full Name
+                        @if(!$canEditIdentity)<i class="fa-solid fa-lock text-[10px] text-amber-500" title="Admin-controlled"></i>@endif
+                    </label>
+                    <input id="pf_name" type="text" name="name" required value="{{ old('name', $user->name) }}"
+                           class="input {{ !$canEditIdentity ? 'cursor-not-allowed opacity-70' : '' }}"
+                           placeholder="Your full name"
+                           @if(!$canEditIdentity) readonly @endif>
                 </div>
                 <div>
                     <label for="pf_email" class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wider">Email Address</label>
@@ -116,8 +153,14 @@
                     <input id="pf_phone" type="tel" name="phone" value="{{ old('phone', $user->phone) }}" class="input" placeholder="09XX-XXX-XXXX">
                 </div>
                 <div>
-                    <label for="pf_spec" class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wider">Specialization / Job Title</label>
-                    <input id="pf_spec" type="text" name="specialization" value="{{ old('specialization', $user->specialization) }}" class="input" placeholder="e.g. Cardiology, IT Admin">
+                    <label for="pf_spec" class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wider flex items-center gap-1.5">
+                        Specialization / Job Title
+                        @if(!$canEditIdentity)<i class="fa-solid fa-lock text-[10px] text-amber-500" title="Admin-controlled"></i>@endif
+                    </label>
+                    <input id="pf_spec" type="text" name="specialization" value="{{ old('specialization', $user->specialization) }}"
+                           class="input {{ !$canEditIdentity ? 'cursor-not-allowed opacity-70' : '' }}"
+                           placeholder="e.g. Cardiology, IT Admin"
+                           @if(!$canEditIdentity) readonly @endif>
                 </div>
                 <div class="sm:col-span-2">
                     <label for="pf_bio" class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wider">Bio</label>

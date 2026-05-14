@@ -80,10 +80,27 @@
                     </p>
                 </div>
                 <div>
-                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Medical History / Notes</p>
-                    <p class="text-gray-800 text-sm leading-relaxed bg-gray-50 rounded-xl p-3 border border-gray-100">
-                        {{ $patient->medical_history ?? 'No medical history recorded.' }}
+                    <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1 flex items-center gap-1.5">
+                        Medical History / Notes
+                        @if(!Auth::user()->can_('patients.view_medical'))
+                            <i class="fa-solid fa-lock text-amber-500 text-[10px]" title="Restricted to clinical staff"></i>
+                        @endif
                     </p>
+                    @if(Auth::user()->can_('patients.view_medical'))
+                        <p class="text-gray-800 dark:text-gray-100 text-sm leading-relaxed bg-gray-50 dark:bg-slate-800 rounded-xl p-3 border border-gray-100 dark:border-slate-700">
+                            {{ $patient->medical_history ?? 'No medical history recorded.' }}
+                        </p>
+                    @else
+                        <div class="rounded-xl bg-amber-50 dark:bg-amber-900/25 border-2 border-dashed border-amber-300 dark:border-amber-700 p-4 flex items-start gap-3">
+                            <i class="fa-solid fa-shield-halved text-amber-600 dark:text-amber-400 text-base mt-0.5"></i>
+                            <div>
+                                <p class="text-sm font-bold text-amber-800 dark:text-amber-200">Restricted</p>
+                                <p class="text-xs text-amber-700 dark:text-amber-300 mt-0.5">
+                                    Medical history is available to clinical staff only (Admin, Clinic Head, Doctor, Nurse). Your role can see patient contact and assignment details but not medical records.
+                                </p>
+                            </div>
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>

@@ -42,10 +42,15 @@ class User extends Authenticatable
     {
         $r = $this->role;
         return match($action) {
-            // Patient management
-            'patients.create'  => in_array($r, ['admin','clinic_head','doctor','nurse','secretary']),
-            'patients.delete'  => in_array($r, ['admin','clinic_head','doctor']),
-            'patients.pin_all' => in_array($r, ['admin','clinic_head','doctor']),
+            // Patient records — HIPAA-style minimum-necessary access:
+            // assistant has no clinical relationship with patients, so the tab is hidden entirely.
+            'patients.view'         => in_array($r, ['admin','clinic_head','doctor','nurse','pharmacist','secretary']),
+            // Medical history is sensitive — only clinical staff who actually treat patients.
+            // Pharmacist and secretary see the directory but not the medical history block.
+            'patients.view_medical' => in_array($r, ['admin','clinic_head','doctor','nurse']),
+            'patients.create'       => in_array($r, ['admin','clinic_head','doctor','nurse','secretary']),
+            'patients.delete'       => in_array($r, ['admin','clinic_head','doctor']),
+            'patients.pin_all'      => in_array($r, ['admin','clinic_head','doctor']),
             // Medicine management — pharmacist is the dedicated restocking role
             'medicines.create'    => in_array($r, ['admin','clinic_head','pharmacist']),
             'medicines.delete'    => in_array($r, ['admin','clinic_head']),

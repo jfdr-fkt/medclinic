@@ -26,8 +26,14 @@ class ProfileController extends Controller
             'avatar'         => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
         ]);
 
+        // HR-controlled fields: only admin / clinic_head can change name and specialization.
+        // For everyone else we silently strip those from the payload so a tampered form
+        // can't bypass the UI's readonly attribute.
+        if (!in_array($user->role, ['admin', 'clinic_head'])) {
+            unset($validated['name'], $validated['specialization']);
+        }
+
         if ($request->hasFile('avatar')) {
-            // Delete old avatar if exists
             if ($user->avatar && Storage::disk('public')->exists($user->avatar)) {
                 Storage::disk('public')->delete($user->avatar);
             }

@@ -39,7 +39,8 @@ class StaffController extends Controller
         $query->orderBy($sortField, $sortDir);
 
         $staff  = $query->paginate(15)->withQueryString();
-        $shifts = Shift::with('user')->get();
+        // Just today's shifts, keyed by user_id for O(1) lookup in the view.
+        $shifts = Shift::whereDate('shift_date', today())->get()->keyBy('user_id');
 
         return view('staff.index', compact('staff', 'shifts', 'sortField', 'sortDir'));
     }

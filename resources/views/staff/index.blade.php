@@ -217,7 +217,7 @@
                     @forelse($staff as $member)
                     @php
                         $isOnline = $member->isOnline();
-                        $todayShift = $shifts->where('user_id', $member->id)->where('shift_date', today()->toDateString())->first();
+                        $todayShift = $shifts->get($member->id);
                         $cfg = $roleColors[$member->role] ?? $roleColors['assistant'];
                     @endphp
                     <tr data-href="{{ route('staff.show', $member) }}"

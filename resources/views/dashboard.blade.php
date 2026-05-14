@@ -108,11 +108,11 @@
             </a>
             <a href="{{ route('scan.index') }}" class="flex items-center gap-3 p-3 rounded-xl border-2 border-gray-100 hover:border-purple-300 hover:bg-purple-50/50 transition-all">
                 <div class="w-10 h-10 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center flex-shrink-0">
-                    <i class="fa-solid fa-barcode"></i>
+                    <i class="fa-solid fa-plus"></i>
                 </div>
                 <div class="min-w-0">
-                    <p class="text-sm font-semibold text-gray-800 truncate">Smart Scan</p>
-                    <p class="text-xs text-gray-400">Scan barcode</p>
+                    <p class="text-sm font-semibold text-gray-800 truncate">Add Medicine</p>
+                    <p class="text-xs text-gray-400">Add to inventory</p>
                 </div>
             </a>
             <a href="{{ route('medicines.index') }}" class="flex items-center gap-3 p-3 rounded-xl border-2 border-gray-100 hover:border-emerald-300 hover:bg-emerald-50/50 transition-all">

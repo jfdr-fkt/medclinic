@@ -11,8 +11,44 @@
     border: 2px solid #e5e7eb !important;
     box-shadow: 0 10px 30px rgba(0,0,0,.14) !important;
     font-family: inherit !important;
-    padding: 6px !important;
+    padding: 8px !important;
+    width: 22rem !important;     /* widen so the Sat column isn't clipped */
 }
+.flatpickr-innerContainer, .flatpickr-rContainer, .dayContainer { width: 100% !important; }
+.dayContainer { min-width: 100% !important; max-width: 100% !important; }
+.flatpickr-days { width: 100% !important; }
+
+/* Static month selector — replaces the native <select> dropdown with a clean styled chip */
+.flatpickr-monthDropdown-months {
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    background: #f1f5f9 !important;
+    color: #0f172a !important;
+    border: 1.5px solid #e5e7eb !important;
+    border-radius: .55rem !important;
+    padding: .25rem .6rem !important;
+    font-weight: 700 !important;
+    font-size: .9rem !important;
+    cursor: pointer;
+    transition: background .12s, border-color .12s;
+}
+.flatpickr-monthDropdown-months:hover { background: #ecfdf5 !important; border-color: #14b8a6 !important; }
+.numInputWrapper input.cur-year {
+    background: #f1f5f9 !important;
+    border: 1.5px solid #e5e7eb !important;
+    border-radius: .55rem !important;
+    padding: .25rem .35rem !important;
+    font-weight: 700 !important;
+    font-size: .9rem !important;
+    color: #0f172a !important;
+}
+.dark .flatpickr-monthDropdown-months,
+.dark .numInputWrapper input.cur-year {
+    background: #243050 !important;
+    border-color: #3f4d6b !important;
+    color: #f1f5f9 !important;
+}
+.dark .flatpickr-monthDropdown-months:hover { background: rgba(20,184,166,.15) !important; border-color: #14b8a6 !important; }
 .flatpickr-calendar.arrowTop:before, .flatpickr-calendar.arrowTop:after { border-bottom-color: #e5e7eb !important; }
 .flatpickr-months { padding-top: 4px !important; }
 .flatpickr-month { color: #0f172a !important; height: 38px !important; }
@@ -1243,6 +1279,7 @@ if (window.flatpickr) {
         altFormat: 'F j, Y',
         minDate: new Date(Date.now() + 24*60*60*1000),
         disableMobile: true,
+        monthSelectorType: 'static',  // replaces native <select> popup with styled arrows
     });
 }
 

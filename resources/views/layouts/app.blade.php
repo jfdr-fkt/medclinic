@@ -42,6 +42,14 @@
     </script>
     <style type="text/tailwindcss">
         body { font-family: 'Inter', sans-serif; }
+
+        /* Flash toast slide-in (centered floating banner, auto-dismisses) */
+        @keyframes flashSlideIn {
+            from { opacity: 0; transform: translateY(-12px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .flash-toast { animation: flashSlideIn .35s ease-out; }
+
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
@@ -301,6 +309,7 @@
             <div>
                 <p class="sidebar-section-title text-[11px] font-bold text-slate-400 uppercase tracking-widest px-3 mb-2">Clinical</p>
                 <ul class="space-y-1">
+                    @if(auth()->user()->can_('patients.view'))
                     <li>
                         <a href="{{ route('patients.index') }}" title="Patients"
                            class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold transition-all
@@ -309,6 +318,7 @@
                             <span class="nav-text">Patients</span>
                         </a>
                     </li>
+                    @endif
                     @if(auth()->user()->can_('medicines.dispense'))
                     <li>
                         <a href="{{ route('medicines.index') }}" title="Medicines"
@@ -401,7 +411,9 @@
             <div>
                 <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest px-3 mb-2">Clinical</p>
                 <ul class="space-y-1">
+                    @if(auth()->user()->can_('patients.view'))
                     <li><a href="{{ route('patients.index') }}"  class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold {{ request()->routeIs('patients.*') ? 'bg-brand-500/20 text-white border border-brand-400/40' : 'text-slate-100 hover:bg-slate-700 hover:text-white' }}"><i class="fa-solid fa-user-injured w-5 text-center text-slate-300"></i> Patients</a></li>
+                    @endif
                     @if(auth()->user()->can_('medicines.dispense'))
                     <li><a href="{{ route('medicines.index') }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold {{ request()->routeIs('medicines.*') ? 'bg-brand-500/20 text-white border border-brand-400/40' : 'text-slate-100 hover:bg-slate-700 hover:text-white' }}"><i class="fa-solid fa-pills w-5 text-center text-slate-300"></i> Medicines</a></li>
                     @endif
@@ -517,16 +529,50 @@
             </div>
         </header>
 
-        <!-- Flash messages -->
-        @if(session('success'))
-        <div class="mx-4 md:mx-6 mt-4 p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center gap-3 text-sm text-emerald-800">
-            <i class="fa-solid fa-circle-check text-emerald-500 flex-shrink-0"></i> {{ session('success') }}
+        <!-- Flash messages (centered floating toast, auto-dismisses after 5s) -->
+        @if(session('success') || session('error'))
+        @php $isSuccess = (bool) session('success'); @endphp
+        <div id="flashToastWrap" class="fixed top-20 left-1/2 -translate-x-1/2 z-50 w-full max-w-md px-4 pointer-events-none">
+            <div id="flashToast"
+                 class="flash-toast pointer-events-auto rounded-2xl shadow-xl border-2 px-4 py-3.5 flex items-center gap-3
+                        {{ $isSuccess
+                            ? 'bg-white dark:bg-slate-900 border-emerald-300 dark:border-emerald-700'
+                            : 'bg-white dark:bg-slate-900 border-red-300 dark:border-red-700' }}">
+                <div class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0
+                            {{ $isSuccess ? 'bg-emerald-100 dark:bg-emerald-900/50' : 'bg-red-100 dark:bg-red-900/50' }}">
+                    <i class="fa-solid {{ $isSuccess ? 'fa-circle-check text-emerald-600 dark:text-emerald-400' : 'fa-circle-exclamation text-red-600 dark:text-red-400' }} text-lg"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="font-bold text-sm {{ $isSuccess ? 'text-emerald-800 dark:text-emerald-200' : 'text-red-800 dark:text-red-200' }}">
+                        {{ $isSuccess ? 'Success' : 'Heads up' }}
+                    </p>
+                    <p class="text-xs {{ $isSuccess ? 'text-emerald-700 dark:text-emerald-300' : 'text-red-700 dark:text-red-300' }} truncate">
+                        {{ session('success') ?? session('error') }}
+                    </p>
+                </div>
+                <button type="button" onclick="dismissFlash()"
+                        class="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors flex-shrink-0">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+            <div id="flashToastBar" class="h-1 rounded-b-full -mt-px {{ $isSuccess ? 'bg-emerald-500' : 'bg-red-500' }}" style="width:100%; transition: width 5s linear;"></div>
         </div>
-        @endif
-        @if(session('error'))
-        <div class="mx-4 md:mx-6 mt-4 p-3.5 bg-red-50 border border-red-200 rounded-xl flex items-center gap-3 text-sm text-red-800">
-            <i class="fa-solid fa-circle-exclamation text-red-500 flex-shrink-0"></i> {{ session('error') }}
-        </div>
+        <script>
+            function dismissFlash() {
+                const wrap = document.getElementById('flashToastWrap');
+                if (!wrap) return;
+                wrap.style.transition = 'opacity .35s ease, transform .35s ease';
+                wrap.style.opacity = '0';
+                wrap.style.transform = 'translate(-50%, -12px)';
+                setTimeout(() => wrap.remove(), 350);
+            }
+            // Kick the progress bar so it animates from full → empty over 5s.
+            requestAnimationFrame(() => {
+                const bar = document.getElementById('flashToastBar');
+                if (bar) bar.style.width = '0%';
+            });
+            setTimeout(dismissFlash, 5000);
+        </script>
         @endif
 
         <main class="flex-1 overflow-y-auto p-4 md:p-6">
