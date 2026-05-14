@@ -185,11 +185,14 @@
                 @foreach($onlineStaff->take(5) as $s)
                 @php
                     $roleGrad = match($s->role) {
-                        'admin'     => 'from-slate-500 to-slate-700',
-                        'doctor'    => 'from-blue-500 to-blue-700',
-                        'nurse'     => 'from-cyan-500 to-teal-600',
-                        'assistant' => 'from-emerald-400 to-emerald-600',
-                        default     => 'from-amber-400 to-amber-600',
+                        'admin'       => 'from-slate-500 to-slate-700',
+                        'clinic_head' => 'from-purple-500 to-purple-700',
+                        'doctor'      => 'from-blue-500 to-blue-700',
+                        'pharmacist'  => 'from-green-500 to-emerald-700',
+                        'nurse'       => 'from-cyan-500 to-teal-600',
+                        'secretary'   => 'from-amber-400 to-rose-500',
+                        'assistant'   => 'from-emerald-400 to-emerald-600',
+                        default       => 'from-brand-400 to-brand-700',
                     };
                 @endphp
                 <a href="{{ route('chat.index', ['with' => $s->id]) }}" class="flex items-center gap-3 p-2 rounded-xl hover:bg-white/60 transition-colors">

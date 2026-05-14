@@ -2,10 +2,27 @@
 @php
     $appUser = Auth::user();
     $rootClass = '';
+    $bellCount = 0;
     if ($appUser) {
         if ($appUser->theme === 'dark') $rootClass .= 'dark ';
         $rootClass .= 'fs-' . ($appUser->font_size ?? 'md') . ' ';
         if ($appUser->colorblind_mode) $rootClass .= 'cb-mode';
+
+        // Shared unread count so the sidebar nav, the bell, and any other surface
+        // that needs it all use the same number (computed once per request).
+        $unreadDM = \App\Models\Message::where('receiver_id', $appUser->id)
+            ->where('is_read', false)
+            ->whereNull('group_id')
+            ->count();
+        $unreadGroups = \DB::table('chat_group_members as m')
+            ->where('m.user_id', $appUser->id)
+            ->join('messages', function ($j) use ($appUser) {
+                $j->on('messages.group_id', '=', 'm.group_id')
+                  ->where('messages.sender_id', '!=', $appUser->id)
+                  ->whereColumn('messages.created_at', '>', \DB::raw('COALESCE(m.last_read_at, m.created_at)'));
+            })
+            ->count('messages.id');
+        $bellCount = $unreadDM + $unreadGroups;
     }
 @endphp
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="{{ trim($rootClass) }}">
@@ -243,6 +260,26 @@
         .btn-secondary { @apply inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 text-gray-700 text-sm font-medium rounded-xl hover:bg-gray-50 transition-colors; }
         .btn-danger    { @apply inline-flex items-center gap-2 px-4 py-2.5 bg-red-600 text-white text-sm font-semibold rounded-xl hover:bg-red-700 transition-colors shadow-sm; }
         .input         { @apply block w-full px-3.5 py-2.5 border-2 border-gray-200 rounded-xl text-sm text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all bg-white; }
+
+        /* Native <select> styling — strip the OS arrow and replace with a centered chevron
+           so the dropdown matches every other input. Adds breathing room so the arrow
+           never overlaps the text. Works for select.input AND any plain <select>. */
+        select.input, select.add-input {
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20' fill='none'%3E%3Cpath d='M5 7.5L10 12.5L15 7.5' stroke='%236b7280' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0.75rem center;
+            background-size: 1.1rem;
+            padding-right: 2.5rem !important;
+            cursor: pointer;
+        }
+        .dark select.input, .dark select.add-input {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20' fill='none'%3E%3Cpath d='M5 7.5L10 12.5L15 7.5' stroke='%2394a3b8' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") !important;
+        }
+        select.input:focus, select.add-input:focus {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20' fill='none'%3E%3Cpath d='M5 7.5L10 12.5L15 7.5' stroke='%230d9488' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+        }
         .label         { @apply block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wide; }
         .th { @apply px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider; }
         .td { @apply px-5 py-4 text-sm text-gray-700; }
@@ -355,10 +392,17 @@
                     </li>
                     <li>
                         <a href="{{ route('chat.index') }}" title="Staff Chat"
-                           class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold transition-all
+                           class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold transition-all relative
                                {{ request()->routeIs('chat.*') ? 'bg-brand-500/20 text-white border border-brand-400/40 shadow-sm' : 'text-slate-100 hover:bg-slate-700 hover:text-white' }}">
                             <i class="fa-solid fa-comments w-5 text-center {{ request()->routeIs('chat.*') ? 'text-brand-300' : 'text-slate-300' }}"></i>
                             <span class="nav-text">Staff Chat</span>
+                            @if(isset($bellCount) && $bellCount > 0)
+                            <span id="navChatBadge" class="ml-auto min-w-[20px] h-5 px-1.5 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center leading-none">
+                                {{ $bellCount > 9 ? '9+' : $bellCount }}
+                            </span>
+                            @else
+                            <span id="navChatBadge" class="hidden ml-auto min-w-[20px] h-5 px-1.5 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center leading-none"></span>
+                            @endif
                         </a>
                     </li>
                 </ul>
@@ -480,13 +524,22 @@
                     </div>
                 </div>
 
-                <!-- Notifications -->
-                <a href="{{ route('chat.index') }}" class="relative p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-xl transition-colors">
+                <!-- Notifications bell — unread DMs + group msgs + low-stock alerts -->
+                @auth
+                @php $hasAlert = $bellCount > 0 || (isset($lowStockMedicines) && $lowStockMedicines->count() > 0); @endphp
+                <a href="{{ route('chat.index') }}"
+                   class="relative p-2 text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-slate-800 rounded-xl transition-colors"
+                   title="{{ $bellCount > 0 ? $bellCount.' unread message'.($bellCount === 1 ? '' : 's') : 'No new messages' }}">
                     <i class="fa-solid fa-bell text-base"></i>
-                    @if(isset($lowStockMedicines) && $lowStockMedicines->count() > 0)
-                    <span class="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white"></span>
+                    @if($bellCount > 0)
+                    <span id="bellBadge" class="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center ring-2 ring-white dark:ring-slate-900 leading-none">
+                        {{ $bellCount > 9 ? '9+' : $bellCount }}
+                    </span>
+                    @elseif($hasAlert)
+                    <span class="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white dark:ring-slate-900"></span>
                     @endif
                 </a>
+                @endauth
 
                 <span class="hidden md:inline text-sm text-gray-400">{{ date('M j, Y') }}</span>
 

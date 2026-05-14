@@ -86,7 +86,7 @@
             <div class="relative flex-1">
                 <i class="fa-solid fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-base pointer-events-none"></i>
                 <input type="text" name="search" value="{{ request('search') }}"
-                       placeholder="Search by name, ID, nurse or doctor…"
+                       placeholder="Search by name, ID, nurse or doctor"
                        class="block w-full h-12 pl-12 pr-4 border-2 border-gray-200 rounded-xl text-base text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all bg-white">
                 {{-- Sort/direction are preserved by the filter dropdown's <select> elements (selected attribute), so no hidden inputs are needed. --}}
             </div>
@@ -265,7 +265,7 @@
                 </div>
                 <div>
                     <label class="label">Address</label>
-                    <textarea name="address" rows="2" class="input resize-none" placeholder="Street, Barangay, City, Province, Zip…">{{ old('address') }}</textarea>
+                    <textarea name="address" rows="2" class="input resize-none" placeholder="Street, Barangay, City, Province, Zip">{{ old('address') }}</textarea>
                 </div>
             </div>
 
@@ -301,7 +301,7 @@
                 <p class="text-xs font-bold text-amber-700 uppercase tracking-wider flex items-center gap-2">
                     <i class="fa-solid fa-notes-medical"></i> Medical Notes
                 </p>
-                <textarea name="medical_history" rows="6" class="input resize-y" placeholder="Allergies, conditions, medications, family history, special instructions…">{{ old('medical_history') }}</textarea>
+                <textarea name="medical_history" rows="6" class="input resize-y" placeholder="Allergies, conditions, medications, family history, special instructions">{{ old('medical_history') }}</textarea>
             </div>
 
             <!-- Buttons (colored, no icons, separated) -->
@@ -332,7 +332,7 @@
         <div class="px-6 py-5 space-y-3">
             <label class="label">Pick a staff member</label>
             <select id="pinSomeoneUser" class="input">
-                <option value="">Select…</option>
+                <option value="">Select</option>
                 @foreach(\App\Models\User::orderBy('name')->get() as $u)
                 <option value="{{ $u->id }}">{{ $u->name }} ({{ $u->roleLabel() }})</option>
                 @endforeach

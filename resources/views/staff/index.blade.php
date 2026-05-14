@@ -30,29 +30,47 @@
 
 .staff-table thead th {
     padding: 0.85rem 1.1rem;
-    font-size: 0.7rem;
-    font-weight: 800;
+    font-size: 0.75rem;
+    font-weight: 700;
     text-transform: uppercase;
     letter-spacing: .05em;
-    color: #64748b;
-    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    color: #475569;
+    background: #f8fafc;
     border-bottom: 2px solid #e2e8f0;
+    text-align: center;
+    border-right: 1px solid #e2e8f0;
 }
+.staff-table thead th:last-child { border-right: none; }
+.staff-table thead th:first-child { text-align: center; }
 .dark .staff-table thead th {
-    background: linear-gradient(135deg, #0f1a2e 0%, #1a2438 100%) !important;
-    color: #94a3b8 !important;
+    background: #0f1a2e !important;
+    color: #cbd5e1 !important;
     border-bottom-color: #2d3a52 !important;
+    border-right-color: #1f2c45 !important;
 }
-.staff-table tbody td { padding: 0.95rem 1.1rem; vertical-align: middle; }
+
+.staff-table tbody td {
+    padding: 0.9rem 1.1rem;
+    vertical-align: middle;
+    border-right: 1px solid #f1f5f9;
+}
+.staff-table tbody td:last-child { border-right: none; }
+.dark .staff-table tbody td { border-right-color: #1f2c45; }
+
 .staff-table tbody tr {
-    transition: background-color .12s, transform .12s;
+    transition: background-color .12s;
     border-bottom: 1px solid #f1f5f9;
     cursor: pointer;
 }
 .dark .staff-table tbody tr { border-bottom-color:#1f2c45; }
-.staff-table tbody tr:hover { background: linear-gradient(90deg, rgba(13,148,136,.05), rgba(99,102,241,.04)); }
-.dark .staff-table tbody tr:hover { background: linear-gradient(90deg, rgba(20,184,166,.10), rgba(99,102,241,.08)) !important; }
+.staff-table tbody tr:hover { background: #f8fafc; }
+.dark .staff-table tbody tr:hover { background: #1a2438 !important; }
 .staff-table tbody tr:last-child { border-bottom: none; }
+
+/* Inline meta — same size & weight as the main text so vision-impaired staff
+   aren't squinting at a tiny secondary line. Sits beside the main label, not below. */
+.staff-meta { color: #64748b; font-weight: 500; }
+.dark .staff-meta { color: #94a3b8; }
 
 .shift-chip {
     display: inline-flex; align-items: center; gap: .35rem;
@@ -163,7 +181,7 @@
                         <p class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1.5"><i class="fa-solid fa-arrow-down-wide-short"></i> Sort by</p>
                         <div class="grid grid-cols-2 gap-2">
                             <select name="sort" class="input">
-                                @foreach(['name'=>'Name','role'=>'Role','last_seen_at'=>'Last Seen'] as $f=>$label)
+                                @foreach(['name'=>'Name','role'=>'Role (A–Z)','last_seen_at'=>'Last Seen'] as $f=>$label)
                                 <option value="{{ $f }}" {{ $sortField===$f ? 'selected' : '' }}>{{ $label }}</option>
                                 @endforeach
                             </select>
@@ -187,7 +205,7 @@
             <div class="relative flex-1">
                 <i class="fa-solid fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-base pointer-events-none"></i>
                 <input type="text" name="search" value="{{ request('search') }}"
-                       placeholder="Search by name, email, specialization…"
+                       placeholder="Search by name, email, specialization"
                        class="block w-full h-12 pl-12 pr-4 border-2 border-gray-200 dark:border-slate-600 rounded-xl text-base text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all bg-white dark:bg-slate-800">
                 {{-- Sort/direction are preserved by the dropdown's <select> selected attributes — no hidden inputs needed (they used to override the new selection). --}}
             </div>
@@ -205,12 +223,12 @@
             <table class="min-w-full staff-table">
                 <thead>
                     <tr>
-                        <th class="text-left">Staff Member</th>
-                        <th class="text-center">Role</th>
-                        <th class="text-center">Contact</th>
-                        <th class="text-center">Today's Shift</th>
-                        <th class="text-center">Status</th>
-                        <th class="text-center" style="width: 260px;">Actions</th>
+                        <th>Staff Member</th>
+                        <th>Role</th>
+                        <th>Contact</th>
+                        <th>Today's Shift</th>
+                        <th>Status</th>
+                        <th style="width: 260px;">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -227,8 +245,8 @@
                             <div class="flex items-center gap-3">
                                 <x-avatar :user="$member" size="lg" :gradient="$cfg['grad']" />
                                 <div class="min-w-0">
-                                    <p class="font-semibold text-gray-900 dark:text-white group-hover:text-brand-700 dark:group-hover:text-brand-300 transition-colors truncate">{{ $member->name }}</p>
-                                    <p class="text-xs text-gray-400 dark:text-gray-500 truncate">{{ $member->specialization ?? '—' }}</p>
+                                    <p class="font-semibold text-sm text-gray-900 dark:text-white group-hover:text-brand-700 dark:group-hover:text-brand-300 transition-colors truncate">{{ $member->name }}</p>
+                                    <p class="text-sm staff-meta truncate">{{ $member->specialization ?? '—' }}</p>
                                 </div>
                             </div>
                         </td>
@@ -237,38 +255,43 @@
                                 <i class="fa-solid {{ $cfg['icon'] }} text-xs"></i> {{ $cfg['label'] }}
                             </span>
                         </td>
-                        <td class="text-center">
-                            <p class="text-sm text-gray-700 dark:text-gray-200 truncate">{{ $member->email }}</p>
-                            <p class="text-xs text-gray-400 dark:text-gray-500">{{ $member->phone ?? 'No phone' }}</p>
+                        <td>
+                            <div class="text-sm text-gray-700 dark:text-gray-200 text-center">
+                                <p class="truncate">{{ $member->email }}</p>
+                                <p class="staff-meta">{{ $member->phone ?? '—' }}</p>
+                            </div>
                         </td>
-                        <td class="text-center">
+                        <td>
                             @if($todayShift)
-                                <span class="shift-chip shift-{{ $todayShift->shift_type }}">
-                                    <i class="fa-solid {{ match($todayShift->shift_type) {
-                                        'morning' => 'fa-sun',
-                                        'afternoon' => 'fa-cloud-sun',
-                                        'night' => 'fa-moon',
-                                        'on_call' => 'fa-phone',
-                                        default => 'fa-clock',
-                                    } }} text-[10px]"></i>
-                                    {{ ucfirst(str_replace('_', ' ', $todayShift->shift_type)) }}
-                                </span>
-                                <p class="text-[11px] text-gray-500 dark:text-gray-400 mt-1">
-                                    {{ \Carbon\Carbon::parse($todayShift->start_time)->format('g:i A') }} —
-                                    {{ \Carbon\Carbon::parse($todayShift->end_time)->format('g:i A') }}
-                                </p>
+                                <div class="flex items-center justify-center gap-2">
+                                    <span class="shift-chip shift-{{ $todayShift->shift_type }}">
+                                        <i class="fa-solid {{ match($todayShift->shift_type) {
+                                            'morning'   => 'fa-sun',
+                                            'afternoon' => 'fa-cloud-sun',
+                                            'night'     => 'fa-moon',
+                                            'on_call'   => 'fa-phone',
+                                            default     => 'fa-clock',
+                                        } }} text-[10px]"></i>
+                                        {{ ucfirst(str_replace('_', ' ', $todayShift->shift_type)) }}
+                                    </span>
+                                    <span class="text-sm staff-meta whitespace-nowrap">
+                                        {{ \Carbon\Carbon::parse($todayShift->start_time)->format('g:i A') }} – {{ \Carbon\Carbon::parse($todayShift->end_time)->format('g:i A') }}
+                                    </span>
+                                </div>
                             @else
-                                <span class="text-xs text-gray-300 dark:text-gray-600 italic">Rest day</span>
+                                <p class="text-sm staff-meta italic text-center">Rest day</p>
                             @endif
                         </td>
-                        <td class="text-center">
-                            <span class="inline-flex items-center gap-1.5 text-sm font-semibold {{ $isOnline ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-400 dark:text-gray-500' }}">
-                                <span class="w-2 h-2 rounded-full {{ $isOnline ? 'bg-emerald-400 animate-pulse' : 'bg-gray-300 dark:bg-slate-600' }}"></span>
-                                {{ $isOnline ? 'Online' : 'Offline' }}
-                            </span>
-                            @if(!$isOnline && $member->last_seen_at)
-                            <p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{{ $member->last_seen_at->diffForHumans() }}</p>
-                            @endif
+                        <td>
+                            <div class="flex items-center justify-center gap-2 flex-wrap">
+                                <span class="inline-flex items-center gap-1.5 text-sm font-semibold {{ $isOnline ? 'text-emerald-700 dark:text-emerald-300' : 'text-gray-500 dark:text-gray-400' }}">
+                                    <span class="w-2 h-2 rounded-full {{ $isOnline ? 'bg-emerald-500 animate-pulse' : 'bg-gray-300 dark:bg-slate-600' }}"></span>
+                                    {{ $isOnline ? 'Online' : 'Offline' }}
+                                </span>
+                                @if(!$isOnline && $member->last_seen_at)
+                                <span class="text-sm staff-meta">· {{ $member->last_seen_at->diffForHumans(null, true) }} ago</span>
+                                @endif
+                            </div>
                         </td>
                         <td>
                             <div class="flex items-center gap-3 row-action w-full">
@@ -466,7 +489,7 @@
                     </div>
                     <div>
                         <label class="label">Bio / Notes <span class="font-normal normal-case text-gray-400">(optional)</span></label>
-                        <textarea name="bio" rows="2" class="input resize-y" placeholder="Short bio, certifications, special skills…"></textarea>
+                        <textarea name="bio" rows="2" class="input resize-y" placeholder="Short bio, certifications, special skills"></textarea>
                     </div>
                 </div>
             </div>

@@ -362,7 +362,7 @@ select.add-input:focus {
             <div class="relative flex-1">
                 <i class="fa-solid fa-barcode absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg pointer-events-none"></i>
                 <input type="text" id="manualCode"
-                       placeholder="Type barcode number, or paste JSON / pipe-separated text…"
+                       placeholder="Type barcode number, or paste JSON / pipe-separated text"
                        class="add-input pl-11"
                        style="font-family:ui-monospace,monospace; letter-spacing:.04em;"
                        onkeydown="if(event.key==='Enter'){processManualCode();}">
@@ -580,7 +580,7 @@ select.add-input:focus {
                     <div>
                         <label class="add-label">Dosage Form <span class="text-red-500">*</span></label>
                         <select name="dosage_form" id="formSelect" required class="add-input" onchange="onFormChange()">
-                            <option value="">Select a form…</option>
+                            <option value="">Select a form</option>
                             <option value="tablet">🔵 Tablet</option>
                             <option value="capsule">💊 Capsule</option>
                             <option value="syrup">🧴 Syrup / Liquid</option>
@@ -603,7 +603,7 @@ select.add-input:focus {
                 <div id="otherNoteRow" class="hidden">
                     <label class="add-label">Describe the form <span class="text-red-500">*</span></label>
                     <input type="text" name="form_other_note" id="formOtherNote" class="add-input"
-                           placeholder="e.g. Suppository, Inhaler, Lozenge, Transdermal Patch…">
+                           placeholder="e.g. Suppository, Inhaler, Lozenge, Transdermal Patch">
                 </div>
 
             </div>
@@ -646,7 +646,7 @@ select.add-input:focus {
                             </div>
                         @else
                         <select name="location_id" required class="add-input">
-                            <option value="">Select where to store this medicine…</option>
+                            <option value="">Select where to store this medicine</option>
                             @foreach($locations as $loc)
                                 <option value="{{ $loc->id }}">{{ $loc->full_location }}</option>
                             @endforeach
@@ -659,7 +659,7 @@ select.add-input:focus {
                     </div>
                     <div>
                         <label class="add-label">Expiry Date <span class="text-red-500">*</span></label>
-                        <input type="text" name="expiry_date" id="expiryDate" required class="add-input" placeholder="Pick a date…" autocomplete="off">
+                        <input type="text" name="expiry_date" id="expiryDate" required class="add-input" placeholder="Pick a date" autocomplete="off">
                     </div>
                 </div>
             </div>
@@ -678,7 +678,7 @@ select.add-input:focus {
             </div>
             <div class="form-section-body">
                 <textarea name="notes" rows="6" class="add-input resize-y"
-                          placeholder="Indications, contraindications, side effects, dosage instructions, special storage requirements, interactions to watch out for…"
+                          placeholder="Indications, contraindications, side effects, dosage instructions, special storage requirements, interactions to watch out for"
                           style="resize:vertical; min-height:120px;"></textarea>
             </div>
         </div>

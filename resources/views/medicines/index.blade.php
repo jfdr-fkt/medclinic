@@ -193,7 +193,7 @@
             <div class="relative flex-1">
                 <i class="fa-solid fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-base pointer-events-none"></i>
                 <input type="text" name="search" value="{{ request('search') }}"
-                       placeholder="Search by name, generic name, or barcode…"
+                       placeholder="Search by name, generic name, or barcode"
                        class="block w-full h-12 pl-12 pr-4 border-2 border-gray-200 rounded-xl text-base text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all bg-white">
                 {{-- Sort/direction live in the filter dropdown <select>s; no hidden inputs needed. --}}
             </div>
@@ -418,7 +418,7 @@
                     <div>
                         <label class="label">Form</label>
                         <select name="form" id="modalFormSelect" class="input" onchange="onModalFormChange()">
-                            <option value="">Select…</option>
+                            <option value="">Select</option>
                             <option value="tablet">Tablet</option>
                             <option value="capsule">Capsule</option>
                             <option value="syrup">Syrup</option>
@@ -429,7 +429,7 @@
                     </div>
                     <div id="modalOtherNoteRow" class="hidden">
                         <label class="label">Describe Form <span class="text-red-500">*</span></label>
-                        <input type="text" name="form_other_note" id="modalFormOtherNote" class="input" placeholder="e.g. Suppository, Inhaler…">
+                        <input type="text" name="form_other_note" id="modalFormOtherNote" class="input" placeholder="e.g. Suppository, Inhaler">
                     </div>
                     <div>
                         <label class="label">Barcode</label>
@@ -456,7 +456,7 @@
                     <div class="col-span-2">
                         <label class="label">Storage Location <span class="text-red-500">*</span></label>
                         <select name="location_id" required class="input">
-                            <option value="">Select location…</option>
+                            <option value="">Select location</option>
                             @foreach($locations as $loc)
                             <option value="{{ $loc->id }}">{{ $loc->full_location }}</option>
                             @endforeach
@@ -475,7 +475,7 @@
 
             <div class="border-l-4 border-amber-400 bg-amber-50/30 rounded-r-xl p-4 space-y-3">
                 <p class="text-xs font-bold text-amber-700 uppercase tracking-wider flex items-center gap-2"><i class="fa-solid fa-circle-info"></i> Description</p>
-                <textarea name="description" rows="2" class="input resize-none" placeholder="Indications, side effects, special instructions…"></textarea>
+                <textarea name="description" rows="2" class="input resize-none" placeholder="Indications, side effects, special instructions"></textarea>
             </div>
 
             <div class="flex justify-between items-center pt-3 border-t border-gray-100">
@@ -507,7 +507,7 @@
             </div>
             <div>
                 <label class="label">Notes</label>
-                <input type="text" name="notes" class="input" placeholder="Patient name or reason…">
+                <input type="text" name="notes" class="input" placeholder="Patient name or reason">
             </div>
             <div class="flex justify-between gap-3 pt-2 border-t border-gray-100">
                 <button type="button" onclick="closeDispenseModal()" class="btn-secondary"><i class="fa-solid fa-xmark"></i> Cancel</button>

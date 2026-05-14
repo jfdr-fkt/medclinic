@@ -69,11 +69,34 @@
     backdrop-filter: blur(6px);
     -webkit-backdrop-filter: blur(6px);
     box-shadow: 0 1px 0 rgba(0,0,0,0.04), 0 -1px 0 rgba(0,0,0,0.04);
+    cursor: pointer;
+    user-select: none;
 }
 .dark .conv-section-header {
     box-shadow: 0 1px 0 rgba(0,0,0,0.6), 0 -1px 0 rgba(255,255,255,0.04);
 }
+.conv-section-chevron {
+    transition: transform .15s ease;
+    flex-shrink: 0;
+}
+.conv-section.is-collapsed .conv-section-chevron { transform: rotate(-90deg); }
+.conv-section.is-collapsed .conv-rows { display: none; }
 .conv-section.is-hidden { display: none; }
+
+/* Order toggle buttons */
+.conv-order-btn {
+    color: #6b7280;
+}
+.dark .conv-order-btn { color: #94a3b8; }
+.conv-order-btn.is-active {
+    background: #fff;
+    color: #0d9488;
+    box-shadow: 0 1px 2px rgba(0,0,0,.06);
+}
+.dark .conv-order-btn.is-active {
+    background: #1a2438;
+    color: #14b8a6;
+}
 
 /* Message bubble subtle entry animation */
 @keyframes msgIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
@@ -97,12 +120,12 @@
             </button>
         </div>
 
-        <!-- ── Conversation search ── -->
-        <div class="px-3 pt-3 pb-2 border-b border-gray-100 dark:border-slate-700">
+        <!-- ── Conversation search + order toggle ── -->
+        <div class="px-3 pt-3 pb-2 border-b border-gray-100 dark:border-slate-700 space-y-2">
             <div class="relative">
                 <i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 text-xs pointer-events-none"></i>
                 <input type="text" id="convSearch" autocomplete="off"
-                       placeholder="Search people or groups…"
+                       placeholder="Search people or groups"
                        class="w-full h-9 pl-8 pr-8 text-xs rounded-lg bg-gray-100 dark:bg-slate-800 border-2 border-transparent focus:bg-white dark:focus:bg-slate-900 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 outline-none text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 transition-all">
                 <button type="button" id="convSearchClear" onclick="clearConvSearch()"
                         class="hidden absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6 rounded-md text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-slate-700 flex items-center justify-center transition-colors"
@@ -110,19 +133,32 @@
                     <i class="fa-solid fa-xmark text-[10px]"></i>
                 </button>
             </div>
-            <p id="convSearchEmpty" class="hidden mt-3 text-center text-xs text-gray-400 dark:text-gray-500 italic">No matches found</p>
+            <div class="flex items-center gap-1 bg-gray-100 dark:bg-slate-800 rounded-lg p-1">
+                <button type="button" data-order="hierarchy" onclick="setConvOrder('hierarchy')"
+                        class="conv-order-btn flex-1 text-[11px] font-bold py-1.5 rounded-md transition-colors">
+                    <i class="fa-solid fa-layer-group mr-1"></i> By Role
+                </button>
+                <button type="button" data-order="alpha" onclick="setConvOrder('alpha')"
+                        class="conv-order-btn flex-1 text-[11px] font-bold py-1.5 rounded-md transition-colors">
+                    <i class="fa-solid fa-arrow-down-a-z mr-1"></i> A–Z
+                </button>
+            </div>
+            <p id="convSearchEmpty" class="hidden mt-2 text-center text-xs text-gray-400 dark:text-gray-500 italic">No matches found</p>
         </div>
 
         <div class="flex-1 overflow-y-auto py-2" id="convScroll">
 
             <!-- ── Groups ── -->
             @if($groups->count() > 0)
-            <div class="mb-4 conv-section" data-section="groups">
-                <div class="conv-section-header flex items-center gap-2 px-4 py-2.5 bg-indigo-100/80 dark:bg-indigo-900/40 border-y-2 border-indigo-300 dark:border-indigo-700/70">
+            <div class="mb-4 conv-section" data-section="groups" data-sort-key="0_groups">
+                <div class="conv-section-header flex items-center gap-2 px-4 py-2.5 bg-indigo-100/80 dark:bg-indigo-900/40 border-y-2 border-indigo-300 dark:border-indigo-700/70"
+                     onclick="toggleSection(this.parentElement)">
+                    <i class="fa-solid fa-chevron-down conv-section-chevron text-indigo-700 dark:text-indigo-300 text-[10px]"></i>
                     <i class="fa-solid fa-users-rectangle text-indigo-700 dark:text-indigo-300 text-xs"></i>
                     <p class="text-[11px] font-extrabold text-indigo-800 dark:text-indigo-200 uppercase tracking-wider">Group Chats</p>
                     <span class="ml-auto text-[11px] text-indigo-800 dark:text-indigo-200 bg-white dark:bg-slate-900/70 px-2 rounded-md font-bold border border-indigo-200 dark:border-indigo-800">{{ $groups->count() }}</span>
                 </div>
+                <div class="conv-rows">
                 @foreach($groups as $g)
                 <a href="{{ route('chat.index', ['group' => $g->id]) }}"
                    data-group-id="{{ $g->id }}"
@@ -145,18 +181,23 @@
                     @endif
                 </a>
                 @endforeach
+                </div>
             </div>
             @endif
 
             <!-- ── Direct messages by role ── -->
             @foreach($roleConfig as $role => $cfg)
                 @if(isset($users[$role]) && $users[$role]->count() > 0)
-                <div class="mb-4 conv-section" data-section="{{ $role }}">
-                    <div class="conv-section-header flex items-center gap-2 px-4 py-2.5 border-y-2 {{ $cfg['bg'] }} {{ $cfg['darkBg'] }} {{ $cfg['border'] }} {{ $cfg['darkBorder'] }}" style="filter: saturate(1.1);">
+                <div class="mb-4 conv-section" data-section="{{ $role }}" data-sort-key="1_{{ strtolower($cfg['label']) }}">
+                    <div class="conv-section-header flex items-center gap-2 px-4 py-2.5 border-y-2 {{ $cfg['bg'] }} {{ $cfg['darkBg'] }} {{ $cfg['border'] }} {{ $cfg['darkBorder'] }}"
+                         style="filter: saturate(1.1);"
+                         onclick="toggleSection(this.parentElement)">
+                        <i class="fa-solid fa-chevron-down conv-section-chevron {{ $cfg['text'] }} {{ $cfg['darkText'] }} text-[10px]"></i>
                         <i class="fa-solid {{ $cfg['icon'] }} {{ $cfg['text'] }} {{ $cfg['darkText'] }} text-xs"></i>
                         <p class="text-[11px] font-extrabold {{ $cfg['text'] }} {{ $cfg['darkText'] }} uppercase tracking-wider">{{ $cfg['label'] }}</p>
                         <span class="ml-auto text-[11px] {{ $cfg['text'] }} {{ $cfg['darkText'] }} bg-white dark:bg-slate-900/70 px-2 rounded-md font-bold border {{ $cfg['border'] }} {{ $cfg['darkBorder'] }}">{{ $users[$role]->count() }}</span>
                     </div>
+                    <div class="conv-rows">
                     @foreach($users[$role] as $u)
                     <a href="{{ route('chat.index', ['with' => $u->id]) }}"
                        data-user-id="{{ $u->id }}"
@@ -186,6 +227,7 @@
                         @endif
                     </a>
                     @endforeach
+                    </div>
                 </div>
                 @endif
             @endforeach
@@ -311,7 +353,7 @@
             <div class="flex items-end gap-3">
                 <label class="chat-input-pill flex-1 flex items-center gap-2 px-4 py-3.5">
                     <i class="fa-solid fa-comment-dots text-gray-400 dark:text-gray-500 text-sm"></i>
-                    <input type="text" id="messageInput" placeholder="Type a message…" autofocus
+                    <input type="text" id="messageInput" placeholder="Type a message" autofocus
                            class="flex-1 bg-transparent text-sm text-gray-800 dark:text-gray-100 outline-none placeholder-gray-400 dark:placeholder-gray-500"
                            onkeydown="if(event.key==='Enter'&&!event.shiftKey){sendMessage();event.preventDefault();}">
                 </label>
@@ -319,9 +361,6 @@
                     <i class="fa-solid fa-paper-plane text-base"></i>
                 </button>
             </div>
-            <p class="text-[11px] text-gray-400 dark:text-gray-500 mt-2 ml-1">
-                <kbd class="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 font-mono text-[10px]">Enter</kbd> to send
-            </p>
         </div>
 
         @else
@@ -482,6 +521,146 @@ document.getElementById('convSearch')?.addEventListener('input', applyConvSearch
 document.getElementById('convSearch')?.addEventListener('keydown', e => {
     if (e.key === 'Escape') clearConvSearch();
 });
+
+// ═══════════════════════════════════════════════════════
+// Conversation section collapse + order toggle
+// ═══════════════════════════════════════════════════════
+const COLLAPSE_KEY = 'chat_collapsed_sections';
+const ORDER_KEY    = 'chat_section_order';
+
+function getCollapsedSet() {
+    try { return new Set(JSON.parse(localStorage.getItem(COLLAPSE_KEY) || '[]')); }
+    catch (_) { return new Set(); }
+}
+function saveCollapsedSet(set) {
+    localStorage.setItem(COLLAPSE_KEY, JSON.stringify([...set]));
+}
+
+function toggleSection(sectionEl) {
+    const key = sectionEl.dataset.section;
+    if (!key) return;
+    const set = getCollapsedSet();
+    if (sectionEl.classList.toggle('is-collapsed')) set.add(key);
+    else set.delete(key);
+    saveCollapsedSet(set);
+}
+
+// Apply persisted collapse state on load
+(function restoreCollapseState() {
+    const set = getCollapsedSet();
+    document.querySelectorAll('.conv-section').forEach(s => {
+        if (set.has(s.dataset.section)) s.classList.add('is-collapsed');
+    });
+})();
+
+function setConvOrder(mode) {
+    localStorage.setItem(ORDER_KEY, mode);
+    document.querySelectorAll('.conv-order-btn').forEach(btn => {
+        btn.classList.toggle('is-active', btn.dataset.order === mode);
+    });
+    const scroll = document.getElementById('convScroll');
+    if (!scroll) return;
+    const sections = Array.from(scroll.querySelectorAll('.conv-section'));
+
+    if (mode === 'alpha') {
+        // Sort role sections alphabetically by their visible label; keep Groups pinned on top.
+        sections.sort((a, b) => {
+            const aGroup = a.dataset.section === 'groups';
+            const bGroup = b.dataset.section === 'groups';
+            if (aGroup && !bGroup) return -1;
+            if (!aGroup && bGroup) return 1;
+            const aLabel = a.querySelector('.conv-section-header p')?.textContent.trim().toLowerCase() || '';
+            const bLabel = b.querySelector('.conv-section-header p')?.textContent.trim().toLowerCase() || '';
+            return aLabel.localeCompare(bLabel);
+        });
+        // Sort people inside each section alphabetically by name
+        sections.forEach(s => {
+            const rowsContainer = s.querySelector('.conv-rows');
+            if (!rowsContainer) return;
+            const rows = Array.from(rowsContainer.children);
+            rows.sort((a, b) => {
+                const aName = a.querySelector('.text-sm.font-semibold')?.textContent.trim().toLowerCase() || '';
+                const bName = b.querySelector('.text-sm.font-semibold')?.textContent.trim().toLowerCase() || '';
+                return aName.localeCompare(bName);
+            });
+            rows.forEach(r => rowsContainer.appendChild(r));
+        });
+    } else {
+        // Hierarchy mode — restore via data-sort-key (rendered order from server)
+        sections.sort((a, b) => (a.dataset.sortKey || '').localeCompare(b.dataset.sortKey || ''));
+    }
+    sections.forEach(s => scroll.appendChild(s));
+}
+
+// Restore order preference on load
+(function restoreOrder() {
+    const mode = localStorage.getItem(ORDER_KEY) || 'hierarchy';
+    setConvOrder(mode);
+})();
+
+// ═══════════════════════════════════════════════════════
+// Section collapse + role order toggle (persisted in localStorage)
+// ═══════════════════════════════════════════════════════
+const CONV_COLLAPSE_KEY = 'clinicms.chat.collapsedSections';
+const CONV_ORDER_KEY    = 'clinicms.chat.order';
+
+function getCollapsedSet() {
+    try { return new Set(JSON.parse(localStorage.getItem(CONV_COLLAPSE_KEY) || '[]')); }
+    catch (e) { return new Set(); }
+}
+function saveCollapsedSet(set) {
+    localStorage.setItem(CONV_COLLAPSE_KEY, JSON.stringify([...set]));
+}
+
+function toggleSection(sectionEl) {
+    const key = sectionEl.dataset.section;
+    const collapsed = getCollapsedSet();
+    if (sectionEl.classList.toggle('is-collapsed')) {
+        collapsed.add(key);
+    } else {
+        collapsed.delete(key);
+    }
+    saveCollapsedSet(collapsed);
+}
+
+// Re-order role sections in DOM. Groups stay pinned at top.
+function setConvOrder(mode) {
+    localStorage.setItem(CONV_ORDER_KEY, mode);
+    document.querySelectorAll('.conv-order-btn').forEach(btn => {
+        btn.classList.toggle('is-active', btn.dataset.order === mode);
+    });
+
+    const scroll = document.getElementById('convScroll');
+    if (!scroll) return;
+    const sections = Array.from(scroll.querySelectorAll('.conv-section'));
+    if (mode === 'alpha') {
+        // Alphabetical by section label; groups still first.
+        sections.sort((a, b) => {
+            // Pinned groups
+            const ag = a.dataset.section === 'groups' ? -1 : 0;
+            const bg = b.dataset.section === 'groups' ? -1 : 0;
+            if (ag !== bg) return ag - bg;
+            // Compare by label text inside the header
+            const al = a.querySelector('.conv-section-header p')?.textContent.trim().toLowerCase() || '';
+            const bl = b.querySelector('.conv-section-header p')?.textContent.trim().toLowerCase() || '';
+            return al.localeCompare(bl);
+        });
+    } else {
+        // Original DOM order is the hierarchical order — use the data-sort-key fallback.
+        sections.sort((a, b) => (a.dataset.sortKey || '').localeCompare(b.dataset.sortKey || ''));
+    }
+    sections.forEach(s => scroll.appendChild(s));
+}
+
+// Restore state on load
+(function restoreConvUiState() {
+    const collapsed = getCollapsedSet();
+    document.querySelectorAll('.conv-section').forEach(section => {
+        if (collapsed.has(section.dataset.section)) section.classList.add('is-collapsed');
+    });
+    const order = localStorage.getItem(CONV_ORDER_KEY) || 'hierarchy';
+    setConvOrder(order);
+})();
 
 function escHtml(str) {
     const div = document.createElement('div');

@@ -106,7 +106,7 @@
                         @csrf
                         <input type="number" name="quantity" min="1" max="{{ $qty }}" placeholder="Qty" required
                                class="input w-24">
-                        <input type="text" name="notes" placeholder="Notes (patient name, reason…)"
+                        <input type="text" name="notes" placeholder="Notes (patient name, reason)"
                                class="input flex-1">
                         <button type="submit" class="btn-primary flex-shrink-0">
                             <i class="fa-solid fa-hand-holding-medical"></i> Dispense

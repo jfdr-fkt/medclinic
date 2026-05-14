@@ -36,7 +36,13 @@ class StaffController extends Controller
 
         $sortField = in_array($request->get('sort'), ['name', 'role', 'last_seen_at']) ? $request->get('sort') : 'name';
         $sortDir   = $request->get('direction') === 'desc' ? 'desc' : 'asc';
-        $query->orderBy($sortField, $sortDir);
+        // MySQL ENUM columns sort by declaration order by default. Cast to CHAR so "sort by Role"
+        // produces an actual alphabetical ordering (Admin → Assistant → Clinic Head → …).
+        if ($sortField === 'role') {
+            $query->orderByRaw('CAST(role AS CHAR) ' . $sortDir)->orderBy('name');
+        } else {
+            $query->orderBy($sortField, $sortDir);
+        }
 
         $staff  = $query->paginate(15)->withQueryString();
         // Just today's shifts, keyed by user_id for O(1) lookup in the view.

@@ -43,55 +43,62 @@
 
 <div class="space-y-6 max-w-3xl">
 
-    <!-- ── Profile header ── -->
+    <!-- ── Profile header (centered) ── -->
     <div class="card overflow-hidden">
         <div class="h-36 relative overflow-hidden bg-gradient-to-br {{ $bannerGradient }}">
             {{-- Soft radial highlight — works as a subtle visual accent in both modes --}}
-            <div class="absolute inset-0 pointer-events-none" style="background-image: radial-gradient(circle at 85% 25%, rgba(255,255,255,.18) 0%, transparent 55%), radial-gradient(circle at 10% 90%, rgba(0,0,0,.15) 0%, transparent 50%);"></div>
-            {{-- Decorative grid pattern, very subtle --}}
+            <div class="absolute inset-0 pointer-events-none" style="background-image: radial-gradient(circle at 50% 30%, rgba(255,255,255,.20) 0%, transparent 60%), radial-gradient(circle at 10% 90%, rgba(0,0,0,.15) 0%, transparent 50%);"></div>
+            {{-- Subtle grid pattern --}}
             <div class="absolute inset-0 pointer-events-none opacity-[0.07]" style="background-image: linear-gradient(rgba(255,255,255,.4) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.4) 1px, transparent 1px); background-size: 24px 24px;"></div>
-            <div class="absolute bottom-4 right-6 text-white/60 text-xs font-bold uppercase tracking-widest drop-shadow-sm">
-                <i class="fa-solid fa-id-card-clip mr-1.5"></i>{{ $user->roleLabel() }} profile
-            </div>
         </div>
 
         <div class="px-6 pb-6 -mt-14">
-            <div class="flex items-end gap-4 flex-wrap">
-                <div class="relative flex-shrink-0">
+            <div class="flex flex-col items-center text-center gap-3">
+                <div class="relative">
                     @if($user->avatarUrl())
                     <img src="{{ $user->avatarUrl() }}" alt="{{ $user->name }}"
-                         class="h-28 w-28 rounded-2xl object-cover ring-4 ring-white shadow-lg">
+                         class="h-28 w-28 rounded-2xl object-cover ring-4 ring-white dark:ring-slate-900 shadow-lg">
                     @else
-                    <div class="h-28 w-28 rounded-2xl bg-gradient-to-br {{ $avatarGrad }} flex items-center justify-center text-white text-4xl font-bold ring-4 ring-white shadow-lg">
+                    <div class="h-28 w-28 rounded-2xl bg-gradient-to-br {{ $avatarGrad }} flex items-center justify-center text-white text-4xl font-bold ring-4 ring-white dark:ring-slate-900 shadow-lg">
                         {{ strtoupper(substr($user->name, 0, 2)) }}
                     </div>
                     @endif
                     <button type="button" onclick="document.getElementById('avatarInput').click()"
-                            class="absolute -bottom-1 -right-1 w-9 h-9 bg-brand-600 hover:bg-brand-700 text-white rounded-full flex items-center justify-center shadow-md ring-2 ring-white transition-colors"
+                            class="absolute -bottom-1 -right-1 w-9 h-9 bg-brand-600 hover:bg-brand-700 text-white rounded-full flex items-center justify-center shadow-md ring-2 ring-white dark:ring-slate-900 transition-colors"
                             title="Change avatar">
                         <i class="fa-solid fa-camera text-sm"></i>
                     </button>
                 </div>
-                <div class="pb-2 flex-1 min-w-0">
-                    <h2 class="text-2xl font-extrabold text-gray-900 dark:text-white truncate">{{ $user->name }}</h2>
-                    <div class="flex items-center gap-2 mt-1 flex-wrap">
-                        <span class="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider {{ $bannerColor }} text-white px-2 py-1 rounded-md">
+                <div>
+                    <h2 class="text-2xl font-extrabold text-gray-900 dark:text-white">{{ $user->name }}</h2>
+                    <div class="flex items-center justify-center gap-2 mt-2 flex-wrap">
+                        <span class="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider {{ $bannerColor }} text-white px-2.5 py-1 rounded-md">
+                            <i class="fa-solid {{ match($user->role) {
+                                'admin' => 'fa-user-shield',
+                                'clinic_head' => 'fa-user-tie',
+                                'doctor' => 'fa-user-doctor',
+                                'pharmacist' => 'fa-prescription-bottle-medical',
+                                'nurse' => 'fa-user-nurse',
+                                'secretary' => 'fa-id-badge',
+                                'assistant' => 'fa-user',
+                                default => 'fa-user',
+                            } }} text-[10px]"></i>
                             {{ $user->roleLabel() }}
                         </span>
                         @if($user->specialization)
-                        <span class="text-sm text-gray-500">{{ $user->specialization }}</span>
+                        <span class="text-sm text-gray-500 dark:text-gray-400">{{ $user->specialization }}</span>
                         @endif
                     </div>
-                    <p class="text-xs text-gray-500 mt-1.5 flex items-center gap-1.5">
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-2 flex items-center justify-center gap-1.5">
                         <span class="status-dot {{ $statusKey }}"></span>
                         Status: <span class="font-medium text-gray-700 dark:text-gray-300">{{ $user->statusLabel() }}</span>
                     </p>
                 </div>
                 @if($user->avatarUrl())
-                <form method="POST" action="{{ route('profile.avatar.remove') }}" class="pb-2"
+                <form method="POST" action="{{ route('profile.avatar.remove') }}"
                       onsubmit="return confirm('Remove your avatar?')">
                     @csrf @method('DELETE')
-                    <button type="submit" class="inline-flex items-center gap-2 text-sm text-red-600 hover:text-red-700 font-medium px-3 py-1.5 rounded-lg hover:bg-red-50">
+                    <button type="submit" class="inline-flex items-center gap-2 text-sm text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 font-medium px-3 py-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
                         <i class="fa-solid fa-trash"></i> Remove avatar
                     </button>
                 </form>
@@ -129,7 +136,7 @@
             <div class="rounded-xl bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800/60 px-4 py-3 flex items-start gap-2.5">
                 <i class="fa-solid fa-lock text-amber-600 dark:text-amber-400 text-sm mt-0.5"></i>
                 <p class="text-xs text-amber-800 dark:text-amber-200">
-                    <strong>Full Name</strong> and <strong>Specialization / Job Title</strong> are managed by HR. To request a change, contact an Admin or Clinic Head.
+                    <strong>Full Name</strong> and <strong>Specialization / Job Title</strong> can only be changed by an Admin or Clinic Head. Contact them to update these fields.
                 </p>
             </div>
             @endif
@@ -164,7 +171,7 @@
                 </div>
                 <div class="sm:col-span-2">
                     <label for="pf_bio" class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wider">Bio</label>
-                    <textarea id="pf_bio" name="bio" rows="3" class="input resize-y" placeholder="A short bio about yourself…">{{ old('bio', $user->bio) }}</textarea>
+                    <textarea id="pf_bio" name="bio" rows="3" class="input resize-y" placeholder="A short bio about yourself">{{ old('bio', $user->bio) }}</textarea>
                 </div>
             </div>
             <div class="flex justify-end pt-4 border-t border-gray-100 dark:border-slate-700">
