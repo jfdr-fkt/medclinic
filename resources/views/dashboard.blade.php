@@ -194,6 +194,13 @@
                         'assistant'   => 'from-emerald-400 to-emerald-600',
                         default       => 'from-brand-400 to-brand-700',
                     };
+                    // Reflect Available/Busy/Away with the right dot colour instead of a
+                    // hard-coded green so Busy/Away staff aren't mistaken for "free to chat".
+                    $statusDot = match($s->statusColor()) {
+                        'red'   => 'bg-red-500',
+                        'amber' => 'bg-amber-500',
+                        default => 'bg-emerald-400',
+                    };
                 @endphp
                 <a href="{{ route('chat.index', ['with' => $s->id]) }}" class="flex items-center gap-3 p-2 rounded-xl hover:bg-white/60 transition-colors">
                     <div class="relative">
@@ -204,11 +211,11 @@
                             {{ strtoupper(substr($s->name, 0, 2)) }}
                         </div>
                         @endif
-                        <span class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-400 rounded-full ring-2 ring-white"></span>
+                        <span class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 {{ $statusDot }} rounded-full ring-2 ring-white"></span>
                     </div>
                     <div class="min-w-0 flex-1">
                         <p class="text-sm font-semibold text-gray-800 truncate">{{ $s->name }}</p>
-                        <p class="text-xs text-gray-400 capitalize">{{ $s->role }}</p>
+                        <p class="text-xs text-gray-400">{{ $s->roleLabel() }}</p>
                     </div>
                     <i class="fa-solid fa-message text-gray-300 text-xs"></i>
                 </a>

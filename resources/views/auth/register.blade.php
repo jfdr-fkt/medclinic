@@ -19,6 +19,37 @@
         .input-plain { display:block; width:100%; padding:.75rem 1rem; border:1.5px solid #e5e7eb; border-radius:.75rem; font-size:.875rem; outline:none; transition:.15s; background:white; }
         .input-plain:focus { border-color:#0d9488; box-shadow:0 0 0 3px rgba(13,148,136,.12); }
         .hero-bg { background-image:url('https://images.unsplash.com/photo-1538108149393-fbbd81895907?auto=format&fit=crop&w=1200&q=80'); background-size:cover; background-position:center; }
+
+        /* ── Custom select (same look as the app's cs-select) ── */
+        .cs-wrapper { position: relative; }
+        .cs-trigger {
+            display: flex !important;
+            align-items: center;
+            justify-content: space-between;
+            gap: .5rem;
+            cursor: pointer;
+            text-align: left;
+            user-select: none;
+            padding-right: .875rem !important;
+        }
+        .cs-trigger .cs-value { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .cs-trigger .cs-chevron {
+            flex-shrink: 0; width: 1.125rem; height: 1.125rem;
+            color: #6b7280; transition: transform .2s, color .2s;
+        }
+        .cs-wrapper.open .cs-chevron { transform: rotate(180deg); color: #0d9488; }
+        .cs-wrapper.open .cs-trigger { border-color: #0d9488; box-shadow: 0 0 0 3px rgba(13,148,136,.18); }
+        .cs-panel {
+            position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 50;
+            background: #fff; border: 1.5px solid #e5e7eb; border-radius: .9rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,.14);
+            overflow: hidden; max-height: 16rem; overflow-y: auto;
+            animation: csDropIn .15s ease;
+        }
+        @keyframes csDropIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+        .cs-option { padding: .55rem .9rem; cursor: pointer; font-size: .875rem; color: #111827; transition: background .1s; }
+        .cs-option:hover { background: #f3f4f6; }
+        .cs-option.selected { background: #ecfdf5; color: #065f46; font-weight: 700; }
     </style>
 </head>
 <body class="min-h-screen flex bg-slate-50">
@@ -77,7 +108,7 @@
                     <div class="grid grid-cols-2 gap-3">
                         <div>
                             <label class="block text-sm font-semibold text-gray-700 mb-1.5">Role</label>
-                            <select name="role" required class="input-plain">
+                            <select name="role" required class="input-plain cs-select">
                                 <option value="nurse"     {{ old('role')==='nurse'?'selected':'' }}>Nurse</option>
                                 <option value="doctor"    {{ old('role')==='doctor'?'selected':'' }}>Doctor</option>
                                 <option value="assistant" {{ old('role')==='assistant'?'selected':'' }}>Assistant</option>
@@ -118,5 +149,76 @@
             </div>
         </div>
     </div>
+
+    <script>
+    // Custom select — wraps any <select.cs-select> with a styled trigger + rounded panel.
+    (function () {
+        const CHEVRON = '<svg class="cs-chevron" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="none"><path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+        function init(native) {
+            if (native.dataset.csInited) return;
+            native.dataset.csInited = '1';
+
+            const wrapper = document.createElement('div');
+            wrapper.className = 'cs-wrapper';
+            native.parentNode.insertBefore(wrapper, native);
+            wrapper.appendChild(native);
+            native.style.cssText = 'position:absolute;opacity:0;width:1px;height:1px;pointer-events:none;';
+
+            const trigger = document.createElement('button');
+            trigger.type = 'button';
+            trigger.className = (native.className.replace('cs-select', '').trim() + ' cs-trigger').replace(/\s+/g, ' ');
+            trigger.innerHTML = '<span class="cs-value"></span>' + CHEVRON;
+            wrapper.appendChild(trigger);
+
+            const panel = document.createElement('div');
+            panel.className = 'cs-panel hidden';
+            Array.from(native.options).forEach(opt => {
+                const item = document.createElement('div');
+                item.className = 'cs-option';
+                item.dataset.value = opt.value;
+                item.textContent = opt.textContent;
+                item.addEventListener('click', e => {
+                    e.stopPropagation();
+                    native.value = opt.value;
+                    native.dispatchEvent(new Event('change', { bubbles: true }));
+                    close(wrapper);
+                });
+                panel.appendChild(item);
+            });
+            wrapper.appendChild(panel);
+
+            update(wrapper);
+            native.addEventListener('change', () => update(wrapper));
+            trigger.addEventListener('click', e => {
+                e.stopPropagation();
+                wrapper.classList.contains('open') ? close(wrapper) : open(wrapper);
+            });
+        }
+
+        function update(wrapper) {
+            const sel = wrapper.querySelector('select');
+            const span = wrapper.querySelector('.cs-value');
+            const opt = sel.options[sel.selectedIndex];
+            span.textContent = opt ? opt.textContent : '';
+            wrapper.querySelectorAll('.cs-option').forEach(item => {
+                item.classList.toggle('selected', opt && item.dataset.value === sel.value);
+            });
+        }
+        function open(w) {
+            document.querySelectorAll('.cs-wrapper.open').forEach(o => { if (o !== w) close(o); });
+            w.classList.add('open');
+            w.querySelector('.cs-panel').classList.remove('hidden');
+        }
+        function close(w) {
+            w.classList.remove('open');
+            w.querySelector('.cs-panel')?.classList.add('hidden');
+        }
+        document.addEventListener('click', () => document.querySelectorAll('.cs-wrapper.open').forEach(close));
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') document.querySelectorAll('.cs-wrapper.open').forEach(close); });
+
+        document.querySelectorAll('select.cs-select').forEach(init);
+    })();
+    </script>
 </body>
 </html>

@@ -28,7 +28,11 @@ class DashboardController extends Controller
                   ->where('expiration_date', '>=', now())
             )->take(5)->get();
 
+        // Match the same online definition the staff table uses: recent activity AND not
+        // explicitly set to offline. Otherwise users who just logged out still show as online
+        // for the next five minutes.
         $onlineStaff = User::where('last_seen_at', '>=', now()->subMinutes(5))
+            ->where('status', '!=', 'offline')
             ->where('id', '!=', Auth::id())
             ->get();
 

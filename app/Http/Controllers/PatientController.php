@@ -1,6 +1,7 @@
 <?php
 namespace App\Http\Controllers;
 
+use App\Models\ActivityLog;
 use App\Models\Patient;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -11,8 +12,20 @@ class PatientController extends Controller
 {
     public function index(Request $request)
     {
-        if (!Auth::user()->can_('patients.view')) abort(403, 'You do not have access to patient records.');
+        $user = Auth::user();
+        if (!$user->can_('patients.view')) abort(403, 'You do not have access to patient records.');
+
         $query = Patient::with(['nurse', 'doctor']);
+
+        // Clinical scope: doctors and nurses only see patients THEY are personally assigned to.
+        // Oversight roles (admin / clinic_head) see the full directory — every view of an
+        // unassigned record gets audited downstream in show().
+        if (!$user->can_('patients.view_all')) {
+            $query->where(function ($q) use ($user) {
+                $q->where('assigned_doctor_id', $user->id)
+                  ->orWhere('assigned_nurse_id', $user->id);
+            });
+        }
 
         if ($request->filled('search')) {
             $query->search($request->search);
@@ -39,7 +52,8 @@ class PatientController extends Controller
 
     public function store(Request $request)
     {
-        if (!Auth::user()->can_('patients.create')) abort(403, 'Not authorized to add patients.');
+        $user = Auth::user();
+        if (!$user->can_('patients.create')) abort(403, 'Not authorized to add patients.');
         $validated = $request->validate([
             'name'                => 'required|string|max:255',
             'date_of_birth'       => 'nullable|date',
@@ -50,7 +64,6 @@ class PatientController extends Controller
             'assigned_doctor_id'  => 'nullable|exists:users,id',
         ]);
 
-        // Auto-generate a unique random patient ID
         do {
             $candidate = 'P-' . now()->year . '-' . str_pad((string) random_int(1, 9999), 4, '0', STR_PAD_LEFT);
         } while (Patient::where('patient_id', $candidate)->exists());
@@ -58,18 +71,52 @@ class PatientController extends Controller
         $validated['last_visit'] = now();
 
         $patient = Patient::create($validated);
+
+        ActivityLog::create([
+            'user_id'     => $user->id,
+            'action'      => 'patient.create',
+            'entity_type' => Patient::class,
+            'entity_id'   => $patient->id,
+            'details'     => "Created record for {$patient->name} ({$patient->patient_id})",
+        ]);
+
         return redirect()->route('patients.index')->with('success', "Patient added — ID assigned: {$patient->patient_id}");
     }
 
     public function show(Patient $patient)
     {
-        if (!Auth::user()->can_('patients.view')) abort(403, 'You do not have access to patient records.');
+        $user = Auth::user();
+        if (!$user->can_('patients.view')) abort(403, 'You do not have access to patient records.');
+
+        // Clinical staff (doctor / nurse) can only open records they are personally assigned to.
+        // Oversight roles (admin / clinic_head) can open any record but every cross-team open
+        // is audit-logged below.
+        $isAssigned = $patient->assigned_doctor_id === $user->id
+                   || $patient->assigned_nurse_id  === $user->id;
+        if (!$user->can_('patients.view_all') && !$isAssigned) {
+            abort(403, 'This patient is not assigned to you.');
+        }
+
         $patient->load(['nurse', 'doctor']);
+
+        // Audit trail: oversight role opening someone they're not clinically assigned to.
+        // HIPAA / PH Data Privacy Act pattern of "minimum necessary access + full audit trail".
+        if ($user->can_('patients.view_all') && !$isAssigned) {
+            ActivityLog::create([
+                'user_id'     => $user->id,
+                'action'      => 'patient.view',
+                'entity_type' => Patient::class,
+                'entity_id'   => $patient->id,
+                'details'     => "Viewed record of {$patient->name} ({$patient->patient_id})",
+            ]);
+        }
+
         return view('patients.show', compact('patient'));
     }
 
     public function update(Request $request, Patient $patient)
     {
+        $user = Auth::user();
         $validated = $request->validate([
             'name'                => 'required|string|max:255',
             'date_of_birth'       => 'nullable|date',
@@ -80,12 +127,31 @@ class PatientController extends Controller
             'assigned_doctor_id'  => 'nullable|exists:users,id',
         ]);
         $patient->update($validated);
+
+        ActivityLog::create([
+            'user_id'     => $user->id,
+            'action'      => 'patient.update',
+            'entity_type' => Patient::class,
+            'entity_id'   => $patient->id,
+            'details'     => "Updated record for {$patient->name} ({$patient->patient_id})",
+        ]);
+
         return back()->with('success', 'Patient updated!');
     }
 
     public function destroy(Patient $patient)
     {
-        if (!Auth::user()->can_('patients.delete')) abort(403, 'Only admins and doctors can delete patient records.');
+        $user = Auth::user();
+        if (!$user->can_('patients.delete')) abort(403, 'Only admins and doctors can delete patient records.');
+
+        ActivityLog::create([
+            'user_id'     => $user->id,
+            'action'      => 'patient.delete',
+            'entity_type' => Patient::class,
+            'entity_id'   => $patient->id,
+            'details'     => "Deleted record for {$patient->name} ({$patient->patient_id})",
+        ]);
+
         $patient->delete();
         return redirect()->route('patients.index')->with('success', 'Patient record deleted.');
     }
@@ -96,7 +162,6 @@ class PatientController extends Controller
         $target = $request->input('target', 'self');
 
         if ($target === 'all') {
-            // Only doctor or admin
             if (!in_array($user->role, ['admin', 'doctor'])) {
                 return response()->json(['success' => false, 'error' => 'Not authorized'], 403);
             }
@@ -109,7 +174,6 @@ class PatientController extends Controller
             $result = $user->pinnedPatients()->toggle($patient->id);
             $msg = !empty($result['attached']) ? 'Patient pinned to your dashboard!' : 'Patient unpinned.';
         } else {
-            // target is a user ID
             $targetUser = User::findOrFail($target);
             $result = $targetUser->pinnedPatients()->syncWithoutDetaching([$patient->id]);
             $msg = "Pinned for {$targetUser->name}.";

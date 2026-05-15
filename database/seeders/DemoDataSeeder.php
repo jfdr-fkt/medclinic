@@ -15,16 +15,27 @@ class DemoDataSeeder extends Seeder
 {
     public function run(): void
     {
-        // Staff
-        $admin  = User::create(['name'=>'Sarah Chen','email'=>'admin@clinic.com','password'=>Hash::make('password'),'role'=>'admin','phone'=>'0917-123-4567','specialization'=>'IT & Operations Admin','last_seen_at'=>now(),'is_active'=>true]);
-        $head   = User::create(['name'=>'Dr. Elena Ramos','email'=>'clinichead@clinic.com','password'=>Hash::make('password'),'role'=>'clinic_head','phone'=>'0917-900-0001','specialization'=>'General Medicine','last_seen_at'=>now()->subMinutes(3),'is_active'=>true]);
-        $pharm  = User::create(['name'=>'Carlo Reyes','email'=>'pharmacist@clinic.com','password'=>Hash::make('password'),'role'=>'pharmacist','phone'=>'0917-900-0002','specialization'=>'Clinical Pharmacist','last_seen_at'=>now()->subMinutes(5),'is_active'=>true]);
-        $sec    = User::create(['name'=>'Bianca Torres','email'=>'secretary@clinic.com','password'=>Hash::make('password'),'role'=>'secretary','phone'=>'0917-900-0003','specialization'=>'Patient Coordination','last_seen_at'=>now()->subMinutes(12),'is_active'=>true]);
-        $doc1   = User::create(['name'=>'Dr. James Wilson','email'=>'doctor@clinic.com','password'=>Hash::make('password'),'role'=>'doctor','phone'=>'0918-234-5678','specialization'=>'Cardiology','last_seen_at'=>now()->subMinutes(2),'is_active'=>true]);
-        $doc2   = User::create(['name'=>'Dr. Maria Santos','email'=>'doctor2@clinic.com','password'=>Hash::make('password'),'role'=>'doctor','phone'=>'0919-345-6789','specialization'=>'Pediatrics','last_seen_at'=>now()->subMinutes(10),'is_active'=>true]);
-        $nurse1 = User::create(['name'=>'Nurse Joy Reyes','email'=>'nurse@clinic.com','password'=>Hash::make('password'),'role'=>'nurse','phone'=>'0920-456-7890','last_seen_at'=>now()->subMinutes(1),'is_active'=>true]);
-        $nurse2 = User::create(['name'=>'Nurse Mark Lim','email'=>'nurse2@clinic.com','password'=>Hash::make('password'),'role'=>'nurse','phone'=>'0921-567-8901','last_seen_at'=>now()->subMinutes(8),'is_active'=>true]);
-        $asst   = User::create(['name'=>'Anna Cruz','email'=>'assistant@clinic.com','password'=>Hash::make('password'),'role'=>'assistant','phone'=>'0922-678-9012','last_seen_at'=>now()->subMinutes(15),'is_active'=>true]);
+        // Staff — 2 of every role so the team feels realistic during the demo.
+        $admin1  = User::create(['name'=>'Sarah Chen','email'=>'admin@clinic.com','password'=>Hash::make('password'),'role'=>'admin','phone'=>'0917-123-4567','specialization'=>'IT & Operations Admin','last_seen_at'=>now(),'is_active'=>true]);
+        $admin2  = User::create(['name'=>'David Park','email'=>'admin2@clinic.com','password'=>Hash::make('password'),'role'=>'admin','phone'=>'0917-123-4568','specialization'=>'Systems Administrator','last_seen_at'=>now()->subMinutes(4),'is_active'=>true]);
+
+        $head1   = User::create(['name'=>'Dr. Elena Ramos','email'=>'clinichead@clinic.com','password'=>Hash::make('password'),'role'=>'clinic_head','phone'=>'0917-900-0001','specialization'=>'General Medicine','last_seen_at'=>now()->subMinutes(3),'is_active'=>true]);
+        $head2   = User::create(['name'=>'Dr. Robert Garcia','email'=>'clinichead2@clinic.com','password'=>Hash::make('password'),'role'=>'clinic_head','phone'=>'0917-900-0011','specialization'=>'Internal Medicine','last_seen_at'=>now()->subMinutes(6),'is_active'=>true]);
+
+        $doc1    = User::create(['name'=>'Dr. James Wilson','email'=>'doctor@clinic.com','password'=>Hash::make('password'),'role'=>'doctor','phone'=>'0918-234-5678','specialization'=>'Cardiology','last_seen_at'=>now()->subMinutes(2),'is_active'=>true]);
+        $doc2    = User::create(['name'=>'Dr. Maria Santos','email'=>'doctor2@clinic.com','password'=>Hash::make('password'),'role'=>'doctor','phone'=>'0919-345-6789','specialization'=>'Pediatrics','last_seen_at'=>now()->subMinutes(10),'is_active'=>true]);
+
+        $pharm1  = User::create(['name'=>'Carlo Reyes','email'=>'pharmacist@clinic.com','password'=>Hash::make('password'),'role'=>'pharmacist','phone'=>'0917-900-0002','specialization'=>'Clinical Pharmacist','last_seen_at'=>now()->subMinutes(5),'is_active'=>true]);
+        $pharm2  = User::create(['name'=>'Sofia Tan','email'=>'pharmacist2@clinic.com','password'=>Hash::make('password'),'role'=>'pharmacist','phone'=>'0917-900-0022','specialization'=>'Inventory Pharmacist','last_seen_at'=>now()->subMinutes(11),'is_active'=>true]);
+
+        $nurse1  = User::create(['name'=>'Nurse Joy Reyes','email'=>'nurse@clinic.com','password'=>Hash::make('password'),'role'=>'nurse','phone'=>'0920-456-7890','last_seen_at'=>now()->subMinutes(1),'is_active'=>true]);
+        $nurse2  = User::create(['name'=>'Nurse Mark Lim','email'=>'nurse2@clinic.com','password'=>Hash::make('password'),'role'=>'nurse','phone'=>'0921-567-8901','last_seen_at'=>now()->subMinutes(8),'is_active'=>true]);
+
+        $sec1    = User::create(['name'=>'Bianca Torres','email'=>'secretary@clinic.com','password'=>Hash::make('password'),'role'=>'secretary','phone'=>'0917-900-0003','specialization'=>'Patient Coordination','last_seen_at'=>now()->subMinutes(12),'is_active'=>true]);
+        $sec2    = User::create(['name'=>'Mike Aquino','email'=>'secretary2@clinic.com','password'=>Hash::make('password'),'role'=>'secretary','phone'=>'0917-900-0033','specialization'=>'Front Desk','last_seen_at'=>now()->subMinutes(14),'is_active'=>true]);
+
+        $asst1   = User::create(['name'=>'Anna Cruz','email'=>'assistant@clinic.com','password'=>Hash::make('password'),'role'=>'assistant','phone'=>'0922-678-9012','last_seen_at'=>now()->subMinutes(15),'is_active'=>true]);
+        $asst2   = User::create(['name'=>'Leo Garcia','email'=>'assistant2@clinic.com','password'=>Hash::make('password'),'role'=>'assistant','phone'=>'0922-678-9013','last_seen_at'=>now()->subMinutes(20),'is_active'=>true]);
 
         // Patients
         $pats = [
@@ -108,23 +119,17 @@ class DemoDataSeeder extends Seeder
         ];
 
         // Generate 30 days of realistic shifts for ALL staff.
-        // Each role cycles through its own pool so shifts feel like a real rotation,
-        // not random noise. Offset by user id so coworkers don't mirror each other.
-        $allStaff = [$admin, $head, $pharm, $sec, $doc1, $doc2, $nurse1, $nurse2, $asst];
+        $allStaff = [$admin1, $admin2, $head1, $head2, $doc1, $doc2, $pharm1, $pharm2, $nurse1, $nurse2, $sec1, $sec2, $asst1, $asst2];
 
         foreach ($allStaff as $staffMember) {
             $rules = $scheduleRules[$staffMember->role] ?? $scheduleRules['assistant'];
             $pool  = $rules['pool'];
-            $offset = $staffMember->id; // distinct cycle per user
+            $offset = $staffMember->id;
 
             for ($d = 0; $d < 30; $d++) {
                 $date = today()->addDays($d);
-                $dow  = (int) $date->isoWeekday(); // 1=Mon … 7=Sun
-
-                // Skip days this role doesn't normally work
+                $dow  = (int) $date->isoWeekday();
                 if (!in_array($dow, $rules['weekdays'])) continue;
-
-                // Random rest day inside the working week
                 if (mt_rand(1, 100) / 100 <= $rules['offRate']) continue;
 
                 $shiftKey = $pool[($offset + $d) % count($pool)];
@@ -145,7 +150,7 @@ class DemoDataSeeder extends Seeder
         Message::create(['sender_id'=>$nurse1->id,'receiver_id'=>$doc1->id,'body'=>'Good morning Dr. Wilson! Patient Juan Dela Cruz is ready for his check-up.','is_read'=>true]);
         Message::create(['sender_id'=>$doc1->id,'receiver_id'=>$nurse1->id,'body'=>'Good morning Nurse Joy! Ill be there in 5 minutes. Please prepare his chart.','is_read'=>true]);
         Message::create(['sender_id'=>$nurse1->id,'receiver_id'=>$doc1->id,'body'=>'Noted! Also, Amoxicillin stock is getting low — only 8 units left.','is_read'=>false]);
-        Message::create(['sender_id'=>$admin->id,'receiver_id'=>$nurse1->id,'body'=>'Hi Joy, just a reminder — please update the inventory after every dispense. Thanks!','is_read'=>true]);
-        Message::create(['sender_id'=>$nurse1->id,'receiver_id'=>$admin->id,'body'=>'Yes po Dr. Chen! Will do right away.','is_read'=>true]);
+        Message::create(['sender_id'=>$admin1->id,'receiver_id'=>$nurse1->id,'body'=>'Hi Joy, just a reminder — please update the inventory after every dispense. Thanks!','is_read'=>true]);
+        Message::create(['sender_id'=>$nurse1->id,'receiver_id'=>$admin1->id,'body'=>'Yes po Dr. Chen! Will do right away.','is_read'=>true]);
     }
 }

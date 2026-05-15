@@ -1,9 +1,11 @@
 <?php
 namespace App\Http\Controllers;
 
+use App\Models\ActivityLog;
 use App\Models\Shift;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
 class StaffController extends Controller
@@ -90,10 +92,22 @@ class StaffController extends Controller
             unset($validated[$k]);
         }
 
-        $validated['password']     = Hash::make($validated['password']);
-        $validated['is_active']    = true;
-        $validated['last_seen_at'] = now();
-        User::create($validated);
+        $validated['password']             = Hash::make($validated['password']);
+        $validated['is_active']            = true;
+        $validated['last_seen_at']         = now();
+        // Admin/clinic-head handed out a temporary password — force the new staff member
+        // to pick their own on first login.
+        $validated['must_change_password'] = true;
+        $newStaff = User::create($validated);
+
+        ActivityLog::create([
+            'user_id'     => Auth::id(),
+            'action'      => 'staff.create',
+            'entity_type' => User::class,
+            'entity_id'   => $newStaff->id,
+            'details'     => "Added staff {$newStaff->name} ({$newStaff->roleLabel()})",
+        ]);
+
         return back()->with('success', 'Staff member added successfully!');
     }
 
@@ -129,10 +143,19 @@ class StaffController extends Controller
             'end_time'   => 'required',
         ]);
 
-        Shift::updateOrCreate(
+        $shift = Shift::updateOrCreate(
             ['user_id' => $request->user_id, 'shift_date' => $request->shift_date],
             $request->only('shift_type', 'start_time', 'end_time')
         );
+
+        $target = User::find($request->user_id);
+        ActivityLog::create([
+            'user_id'     => Auth::id(),
+            'action'      => 'staff.shift.assign',
+            'entity_type' => Shift::class,
+            'entity_id'   => $shift->id,
+            'details'     => "Assigned {$request->shift_type} shift to {$target?->name} on {$request->shift_date}",
+        ]);
 
         return back()->with('success', 'Shift assigned!');
     }

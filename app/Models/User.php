@@ -12,17 +12,18 @@ class User extends Authenticatable
         'date_of_birth', 'hire_date', 'address',
         'emergency_contact_name', 'emergency_contact_phone',
         'emergency_contact_2_name', 'emergency_contact_2_phone',
-        'license_number',
+        'license_number', 'must_change_password',
     ];
 
     protected function casts(): array
     {
         return [
-            'last_seen_at'    => 'datetime',
-            'date_of_birth'   => 'date',
-            'hire_date'       => 'date',
-            'is_active'       => 'boolean',
-            'colorblind_mode' => 'boolean',
+            'last_seen_at'         => 'datetime',
+            'date_of_birth'        => 'date',
+            'hire_date'            => 'date',
+            'is_active'            => 'boolean',
+            'colorblind_mode'      => 'boolean',
+            'must_change_password' => 'boolean',
         ];
     }
 
@@ -44,15 +45,18 @@ class User extends Authenticatable
     {
         $r = $this->role;
         return match($action) {
-            // Patient records — HIPAA-style minimum-necessary access:
-            // assistant has no clinical relationship with patients, so the tab is hidden entirely.
-            'patients.view'         => in_array($r, ['admin','clinic_head','doctor','nurse','pharmacist','secretary']),
-            // Medical history is sensitive — only clinical staff who actually treat patients.
-            // Pharmacist and secretary see the directory but not the medical history block.
+            // Patient records — HIPAA / PH Data Privacy Act minimum-necessary access.
+            // Only roles with a direct clinical relationship can see the directory tab. Doctors
+            // and nurses are further restricted in PatientController to ONLY see patients they
+            // are personally assigned to. Admin + clinic_head see everything (audit-logged).
+            // Pharmacist, secretary and assistant lose the Patients tab entirely.
+            'patients.view'         => in_array($r, ['admin','clinic_head','doctor','nurse']),
             'patients.view_medical' => in_array($r, ['admin','clinic_head','doctor','nurse']),
-            'patients.create'       => in_array($r, ['admin','clinic_head','doctor','nurse','secretary']),
+            'patients.create'       => in_array($r, ['admin','clinic_head','doctor','nurse']),
             'patients.delete'       => in_array($r, ['admin','clinic_head','doctor']),
             'patients.pin_all'      => in_array($r, ['admin','clinic_head','doctor']),
+            // Oversight roles see every patient; clinical roles see only their assigned ones.
+            'patients.view_all'     => in_array($r, ['admin','clinic_head']),
             // Medicine management — pharmacist is the dedicated restocking role
             'medicines.create'    => in_array($r, ['admin','clinic_head','pharmacist']),
             'medicines.delete'    => in_array($r, ['admin','clinic_head']),
@@ -61,6 +65,9 @@ class User extends Authenticatable
             // Staff management
             'staff.create'        => $r === 'admin',
             'staff.shifts.manage' => in_array($r, ['admin','clinic_head']),
+            // Audit log — admin sees who accessed which patient records.
+            // Required by HIPAA / PH Data Privacy Act: "minimum necessary access" + audit trail.
+            'audit.view'          => $r === 'admin',
             default => false,
         };
     }

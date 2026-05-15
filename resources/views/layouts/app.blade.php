@@ -462,6 +462,22 @@
                     </li>
                 </ul>
             </div>
+            @if(auth()->user()->can_('audit.view'))
+            <!-- Oversight (admin only) -->
+            <div>
+                <p class="sidebar-section-title text-[11px] font-bold text-slate-400 uppercase tracking-widest px-3 mb-2">Oversight</p>
+                <ul class="space-y-1">
+                    <li>
+                        <a href="{{ route('audit.index') }}" title="Audit Log"
+                           class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold transition-all
+                               {{ request()->routeIs('audit.*') ? 'bg-brand-500/20 text-white border border-brand-400/40 shadow-sm' : 'text-slate-100 hover:bg-slate-700 hover:text-white' }}">
+                            <i class="fa-solid fa-shield-halved w-5 text-center {{ request()->routeIs('audit.*') ? 'text-brand-300' : 'text-slate-300' }}"></i>
+                            <span class="nav-text">Audit Log</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            @endif
         </nav>
 
         <!-- User footer -->
@@ -528,6 +544,14 @@
                     <li><a href="{{ route('chat.index') }}"  class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold {{ request()->routeIs('chat.*') ? 'bg-brand-500/20 text-white border border-brand-400/40' : 'text-slate-100 hover:bg-slate-700 hover:text-white' }}"><i class="fa-solid fa-comments w-5 text-center text-slate-300"></i> Staff Chat</a></li>
                 </ul>
             </div>
+            @if(auth()->user()->can_('audit.view'))
+            <div>
+                <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest px-3 mb-2">Oversight</p>
+                <ul class="space-y-1">
+                    <li><a href="{{ route('audit.index') }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold {{ request()->routeIs('audit.*') ? 'bg-brand-500/20 text-white border border-brand-400/40' : 'text-slate-100 hover:bg-slate-700 hover:text-white' }}"><i class="fa-solid fa-shield-halved w-5 text-center text-slate-300"></i> Audit Log</a></li>
+                </ul>
+            </div>
+            @endif
         </nav>
         <div class="border-t border-slate-800 p-4">
             <a href="{{ route('profile.edit') }}" class="flex items-center gap-3 p-2 rounded-xl hover:bg-slate-800">
@@ -642,28 +666,31 @@
         @php $isSuccess = (bool) session('success'); @endphp
         <div id="flashToastWrap" class="fixed top-20 left-1/2 -translate-x-1/2 z-50 w-full max-w-md px-4 pointer-events-none">
             <div id="flashToast"
-                 class="flash-toast pointer-events-auto rounded-2xl shadow-xl border-2 px-4 py-3.5 flex items-center gap-3
+                 class="flash-toast pointer-events-auto rounded-2xl shadow-xl border-2 overflow-hidden relative
                         {{ $isSuccess
                             ? 'bg-white dark:bg-slate-900 border-emerald-300 dark:border-emerald-700'
                             : 'bg-white dark:bg-slate-900 border-red-300 dark:border-red-700' }}">
-                <div class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0
-                            {{ $isSuccess ? 'bg-emerald-100 dark:bg-emerald-900/50' : 'bg-red-100 dark:bg-red-900/50' }}">
-                    <i class="fa-solid {{ $isSuccess ? 'fa-circle-check text-emerald-600 dark:text-emerald-400' : 'fa-circle-exclamation text-red-600 dark:text-red-400' }} text-lg"></i>
+                <div class="px-4 py-3.5 flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0
+                                {{ $isSuccess ? 'bg-emerald-100 dark:bg-emerald-900/50' : 'bg-red-100 dark:bg-red-900/50' }}">
+                        <i class="fa-solid {{ $isSuccess ? 'fa-circle-check text-emerald-600 dark:text-emerald-400' : 'fa-circle-exclamation text-red-600 dark:text-red-400' }} text-lg"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="font-bold text-sm {{ $isSuccess ? 'text-emerald-800 dark:text-emerald-200' : 'text-red-800 dark:text-red-200' }}">
+                            {{ $isSuccess ? 'Success' : 'Heads up' }}
+                        </p>
+                        <p class="text-xs {{ $isSuccess ? 'text-emerald-700 dark:text-emerald-300' : 'text-red-700 dark:text-red-300' }} truncate">
+                            {{ session('success') ?? session('error') }}
+                        </p>
+                    </div>
+                    <button type="button" onclick="dismissFlash()"
+                            class="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors flex-shrink-0">
+                        <i class="fa-solid fa-xmark text-sm"></i>
+                    </button>
                 </div>
-                <div class="flex-1 min-w-0">
-                    <p class="font-bold text-sm {{ $isSuccess ? 'text-emerald-800 dark:text-emerald-200' : 'text-red-800 dark:text-red-200' }}">
-                        {{ $isSuccess ? 'Success' : 'Heads up' }}
-                    </p>
-                    <p class="text-xs {{ $isSuccess ? 'text-emerald-700 dark:text-emerald-300' : 'text-red-700 dark:text-red-300' }} truncate">
-                        {{ session('success') ?? session('error') }}
-                    </p>
-                </div>
-                <button type="button" onclick="dismissFlash()"
-                        class="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors flex-shrink-0">
-                    <i class="fa-solid fa-xmark text-sm"></i>
-                </button>
+                {{-- Progress bar sits flush against the bottom inner edge of the toast so it follows the rounded corners. --}}
+                <div id="flashToastBar" class="absolute bottom-0 left-0 right-0 h-1 {{ $isSuccess ? 'bg-emerald-500' : 'bg-red-500' }}" style="width:100%; transition: width 5s linear; transform-origin: left;"></div>
             </div>
-            <div id="flashToastBar" class="h-1 rounded-b-full -mt-px {{ $isSuccess ? 'bg-emerald-500' : 'bg-red-500' }}" style="width:100%; transition: width 5s linear;"></div>
         </div>
         <script>
             function dismissFlash() {

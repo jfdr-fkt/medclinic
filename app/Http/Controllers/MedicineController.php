@@ -1,6 +1,7 @@
 <?php
 namespace App\Http\Controllers;
 
+use App\Models\ActivityLog;
 use App\Models\DispenseLog;
 use App\Models\Inventory;
 use App\Models\Medicine;
@@ -12,15 +13,18 @@ class MedicineController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Medicine::with(['location', 'latestInventory']);
-
-        // Active query excludes expired medicines (latest inventory still valid)
-        $activeFilter = function ($q) {
-            $q->where(function ($sub) {
-                $sub->whereNull('expiration_date')
-                    ->orWhere('expiration_date', '>=', now());
-            });
+        // Common predicates used across the active vs archive split.
+        //   active     = no manual archive AND latest expiration is in the future (or unknown)
+        //   expired    = no manual archive AND latest expiration is in the past
+        //   archivedXX = archived_at is set, scoped by archive_location_type
+        $isActive = function ($q) {
+            $q->whereNull('archived_at')->whereDoesntHave('latestInventory', fn($s) => $s->where('expiration_date', '<', now()));
         };
+        $isExpiredOnly = function ($q) {
+            $q->whereNull('archived_at')->whereHas('latestInventory', fn($s) => $s->where('expiration_date', '<', now()));
+        };
+
+        $query = Medicine::with(['location', 'latestInventory', 'archivedBy']);
 
         if ($request->filled('search')) {
             $query->where(function ($q) use ($request) {
@@ -36,27 +40,46 @@ class MedicineController extends Controller
         if ($request->filled('location_id')) {
             $query->where('location_id', $request->location_id);
         }
-        // Filter card view (drives which subset to show)
+
+        // Top-level filter card: all | critical | low | expiring | archive
         $view = $request->get('view', 'all');
+        // Sub-tab within archive view: expired | manual_med_room | manual_storage
+        $archiveTab = $request->get('archive_tab', 'expired');
+
         switch ($view) {
             case 'critical':
+                $isActive($query);
                 $query->whereHas('inventories', fn($q) => $q->where('quantity', '<=', 5)->where('quantity', '>', 0));
                 break;
             case 'low':
+                $isActive($query);
                 $query->whereHas('inventories', fn($q) =>
                     $q->whereColumn('quantity', '<=', 'min_stock_level')->where('quantity', '>', 5)
                 );
                 break;
             case 'expiring':
+                $isActive($query);
                 $query->whereHas('inventories', fn($q) =>
                     $q->where('expiration_date', '<=', now()->addDays(30))
                       ->where('expiration_date', '>=', now())
                 );
                 break;
+            case 'archive':
+                // Archive view splits into three sub-tabs.
+                if ($archiveTab === 'manual_med_room') {
+                    $query->whereNotNull('archived_at')->where('archive_location_type', 'med_room');
+                } elseif ($archiveTab === 'manual_storage') {
+                    $query->whereNotNull('archived_at')->where('archive_location_type', 'storage');
+                } else {
+                    $archiveTab = 'expired';
+                    $isExpiredOnly($query);
+                }
+                break;
+            default:
+                $isActive($query);
         }
 
-        // Sort
-        $sortField = in_array($request->get('sort'), ['name', 'updated_at', 'stock', 'expiry']) ? $request->get('sort') : 'name';
+        $sortField = in_array($request->get('sort'), ['name', 'updated_at', 'stock', 'expiry', 'archived_at']) ? $request->get('sort') : 'name';
         $sortDir   = $request->get('direction') === 'desc' ? 'desc' : 'asc';
 
         if ($sortField === 'stock') {
@@ -73,24 +96,11 @@ class MedicineController extends Controller
             $query->orderBy($sortField, $sortDir);
         }
 
-        // If user clicked "Expired Archive" card, show only expired in the main list
-        if ($view === 'expired') {
-            $medicines = (clone $query)
-                ->whereHas('latestInventory', fn($q) => $q->where('expiration_date', '<', now()))
-                ->paginate(15)->withQueryString();
-            $expiredMedicines = collect();
-        } else {
-            // Active medicines (non-expired only)
-            $medicines = (clone $query)
-                ->whereDoesntHave('latestInventory', fn($q) => $q->where('expiration_date', '<', now()))
-                ->paginate(15)->withQueryString();
-            $expiredMedicines = collect(); // archive collapsed; users access it via the Expired card
-        }
-
+        $medicines = $query->paginate(15)->withQueryString();
         $locations = MedicineLocation::all();
 
-        // Stats — only count non-expired medicines (expired is a separate stat)
-        $activeBase = Medicine::whereDoesntHave('latestInventory', fn($q) => $q->where('expiration_date', '<', now()));
+        // Stat counts (active-only — archive has its own count surfaced separately)
+        $activeBase = Medicine::query()->tap($isActive);
 
         $totalMedicines = (clone $activeBase)->count();
         $criticalStock  = (clone $activeBase)->whereHas('inventories', fn($q) =>
@@ -103,12 +113,17 @@ class MedicineController extends Controller
             $q->where('expiration_date', '<=', now()->addDays(30))
               ->where('expiration_date', '>=', now())
         )->count();
-        $expiredCount = Medicine::whereHas('latestInventory', fn($q) => $q->where('expiration_date', '<', now()))->count();
+        // One Archive count = expired + all manually-archived (regardless of location).
+        $archiveExpiredCount      = Medicine::query()->tap($isExpiredOnly)->count();
+        $archiveManualMedCount    = Medicine::whereNotNull('archived_at')->where('archive_location_type', 'med_room')->count();
+        $archiveManualStoreCount  = Medicine::whereNotNull('archived_at')->where('archive_location_type', 'storage')->count();
+        $archiveTotal = $archiveExpiredCount + $archiveManualMedCount + $archiveManualStoreCount;
 
         return view('medicines.index', compact(
-            'medicines', 'expiredMedicines', 'locations',
-            'totalMedicines', 'criticalStock', 'lowStock', 'expiringSoon', 'expiredCount',
-            'sortField', 'sortDir'
+            'medicines', 'locations',
+            'totalMedicines', 'criticalStock', 'lowStock', 'expiringSoon',
+            'archiveTotal', 'archiveExpiredCount', 'archiveManualMedCount', 'archiveManualStoreCount',
+            'sortField', 'sortDir', 'view', 'archiveTab'
         ));
     }
 
@@ -172,6 +187,14 @@ class MedicineController extends Controller
             'batch_number'    => $validated['batch_number'] ?? null,
         ]);
 
+        ActivityLog::create([
+            'user_id'     => Auth::id(),
+            'action'      => 'medicine.create',
+            'entity_type' => Medicine::class,
+            'entity_id'   => $medicine->id,
+            'details'     => "Added medicine {$medicine->name} (qty {$validated['quantity']}, batch {$validated['batch_number']})",
+        ]);
+
         if ($request->wantsJson()) {
             return response()->json(['success' => true, 'medicine' => $medicine->load('location', 'latestInventory')]);
         }
@@ -201,14 +224,80 @@ class MedicineController extends Controller
             'dosage'       => 'nullable|string',
         ]);
         $medicine->update($validated);
+
+        ActivityLog::create([
+            'user_id'     => Auth::id(),
+            'action'      => 'medicine.update',
+            'entity_type' => Medicine::class,
+            'entity_id'   => $medicine->id,
+            'details'     => "Updated medicine {$medicine->name}",
+        ]);
+
         return back()->with('success', 'Medicine updated!');
     }
 
     public function destroy(Medicine $medicine)
     {
         if (!Auth::user()->can_('medicines.delete')) abort(403, 'Only admins can delete medicine records.');
+
+        ActivityLog::create([
+            'user_id'     => Auth::id(),
+            'action'      => 'medicine.delete',
+            'entity_type' => Medicine::class,
+            'entity_id'   => $medicine->id,
+            'details'     => "Removed medicine {$medicine->name}",
+        ]);
+
         $medicine->delete();
         return redirect()->route('medicines.index')->with('success', 'Medicine removed.');
+    }
+
+    public function archive(Request $request, Medicine $medicine)
+    {
+        if (!Auth::user()->can_('medicines.delete')) abort(403, 'Only admins and clinic heads can archive medicines.');
+        $validated = $request->validate([
+            'reason'                 => 'required|string|max:255',
+            'archive_location_type'  => 'required|in:med_room,storage',
+        ]);
+
+        $medicine->update([
+            'archived_at'            => now(),
+            'archived_by'            => Auth::id(),
+            'archive_reason'         => $validated['reason'],
+            'archive_location_type'  => $validated['archive_location_type'],
+        ]);
+
+        ActivityLog::create([
+            'user_id'     => Auth::id(),
+            'action'      => 'medicine.archive',
+            'entity_type' => Medicine::class,
+            'entity_id'   => $medicine->id,
+            'details'     => "Archived {$medicine->name} ({$validated['archive_location_type']}) — {$validated['reason']}",
+        ]);
+
+        return back()->with('success', "{$medicine->name} archived.");
+    }
+
+    public function unarchive(Medicine $medicine)
+    {
+        if (!Auth::user()->can_('medicines.delete')) abort(403, 'Only admins and clinic heads can unarchive medicines.');
+
+        $medicine->update([
+            'archived_at'            => null,
+            'archived_by'            => null,
+            'archive_reason'         => null,
+            'archive_location_type'  => 'med_room',
+        ]);
+
+        ActivityLog::create([
+            'user_id'     => Auth::id(),
+            'action'      => 'medicine.unarchive',
+            'entity_type' => Medicine::class,
+            'entity_id'   => $medicine->id,
+            'details'     => "Restored {$medicine->name} to active inventory",
+        ]);
+
+        return back()->with('success', "{$medicine->name} restored to active inventory.");
     }
 
     public function dispense(Request $request, Medicine $medicine)
@@ -218,6 +307,13 @@ class MedicineController extends Controller
             'patient_id' => 'nullable|exists:patients,id',
             'notes'      => 'nullable|string',
         ]);
+
+        if ($medicine->isArchivedManually()) {
+            return back()->withErrors(['quantity' => 'This medicine is archived and cannot be dispensed. Restore it first.']);
+        }
+        if ($medicine->isExpired()) {
+            return back()->withErrors(['quantity' => 'This medicine is expired and cannot be dispensed.']);
+        }
 
         $inventory = $medicine->latestInventory;
         if (!$inventory || $inventory->quantity < $request->quantity) {
@@ -232,6 +328,14 @@ class MedicineController extends Controller
             'dispensed_by'   => Auth::id(),
             'quantity'       => $request->quantity,
             'notes'          => $request->notes,
+        ]);
+
+        ActivityLog::create([
+            'user_id'     => Auth::id(),
+            'action'      => 'medicine.dispense',
+            'entity_type' => Medicine::class,
+            'entity_id'   => $medicine->id,
+            'details'     => "Dispensed {$request->quantity} unit(s) of {$medicine->name}" . ($request->notes ? " — {$request->notes}" : ''),
         ]);
 
         return back()->with('success', "{$request->quantity} unit(s) of {$medicine->name} dispensed.");

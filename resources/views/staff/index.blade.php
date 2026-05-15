@@ -91,8 +91,8 @@
 .dark .staff-card { background:#1a2438 !important; border-color:#2d3a52 !important; }
 
 .staff-table thead th {
-    padding: 0.85rem 1.1rem;
-    font-size: 0.75rem;
+    padding: 0.95rem 1.5rem;
+    font-size: 0.78rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: .05em;
@@ -112,7 +112,7 @@
 }
 
 .staff-table tbody td {
-    padding: 0.9rem 1.1rem;
+    padding: 1rem 1.5rem;
     vertical-align: middle;
     border-right: 1px solid #f1f5f9;
 }
@@ -286,19 +286,35 @@
                 <thead>
                     <tr>
                         <th>Staff Member</th>
-                        <th style="width: 130px;">Role</th>
-                        <th style="width: 200px;">Contact</th>
-                        <th style="width: 230px;">Today's Shift</th>
-                        <th style="width: 250px;">Status</th>
-                        <th style="width: 325px;">Actions</th>
+                        <th>Role</th>
+                        <th>Contact</th>
+                        <th>Today's Shift</th>
+                        <th>Status</th>
+                        <th style="min-width: 280px;">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($staff as $member)
                     @php
-                        $isOnline = $member->isOnline();
+                        $isOnline   = $member->isOnline();
                         $todayShift = $shifts->get($member->id);
-                        $cfg = $roleColors[$member->role] ?? $roleColors['assistant'];
+                        $cfg        = $roleColors[$member->role] ?? $roleColors['assistant'];
+                        // Show the actual status (Available/Busy/Away/Offline) instead of a binary online/offline.
+                        // statusColor() returns gray for offline, amber for away, red for busy, emerald otherwise.
+                        $statusLabel = $member->statusLabel();
+                        $statusHue   = $member->statusColor();
+                        $statusDotClass = match($statusHue) {
+                            'red'     => 'bg-red-500 animate-pulse',
+                            'amber'   => 'bg-amber-500',
+                            'emerald' => 'bg-emerald-500 animate-pulse',
+                            default   => 'bg-gray-300 dark:bg-slate-600',
+                        };
+                        $statusTextClass = match($statusHue) {
+                            'red'     => 'text-red-700 dark:text-red-300',
+                            'amber'   => 'text-amber-700 dark:text-amber-300',
+                            'emerald' => 'text-emerald-700 dark:text-emerald-300',
+                            default   => 'text-gray-500 dark:text-gray-400',
+                        };
                     @endphp
                     <tr data-href="{{ route('staff.show', $member) }}"
                         onclick="if(!event.target.closest('.row-action')) window.location=this.dataset.href"
@@ -346,9 +362,9 @@
                         </td>
                         <td>
                             <div class="flex items-center justify-center gap-2 whitespace-nowrap">
-                                <span class="inline-flex items-center gap-1.5 text-sm font-semibold {{ $isOnline ? 'text-emerald-700 dark:text-emerald-300' : 'text-gray-500 dark:text-gray-400' }}">
-                                    <span class="w-2 h-2 rounded-full {{ $isOnline ? 'bg-emerald-500 animate-pulse' : 'bg-gray-300 dark:bg-slate-600' }}"></span>
-                                    {{ $isOnline ? 'Online' : 'Offline' }}
+                                <span class="inline-flex items-center gap-1.5 text-sm font-semibold {{ $statusTextClass }}">
+                                    <span class="w-2 h-2 rounded-full {{ $statusDotClass }}"></span>
+                                    {{ $statusLabel }}
                                 </span>
                                 @if(!$isOnline && $member->last_seen_at)
                                 <span class="text-sm staff-meta">· {{ $member->last_seen_at->diffForHumans(null, true) }} ago</span>
@@ -431,9 +447,12 @@
 </div>
 
 <!-- ── Add Staff Modal ── -->
+{{-- The outer container clips with rounded-2xl + overflow-hidden, then a flex column
+     stacks a sticky header on top of an overflow-y-auto scroll area — so the rounded
+     corners stay clean even at the top/bottom of the scroll. --}}
 <div id="addStaffModal" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-    <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[92vh] overflow-y-auto border-2 border-gray-100 dark:border-slate-700">
-        <div class="bg-gradient-to-r from-brand-600 to-brand-700 px-6 py-5 text-white flex items-center justify-between">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[92vh] flex flex-col overflow-hidden border-2 border-gray-100 dark:border-slate-700">
+        <div class="bg-gradient-to-r from-brand-600 to-brand-700 px-6 py-5 text-white flex items-center justify-between flex-shrink-0">
             <div class="flex items-center gap-3">
                 <div class="w-11 h-11 rounded-2xl bg-white/15 flex items-center justify-center backdrop-blur-sm">
                     <i class="fa-solid fa-user-plus text-xl"></i>
@@ -445,7 +464,7 @@
             </button>
         </div>
 
-        <form method="POST" action="{{ route('staff.store') }}" class="px-6 py-5 space-y-5">
+        <form method="POST" action="{{ route('staff.store') }}" class="px-6 py-5 space-y-5 overflow-y-auto flex-1">
             @csrf
 
             {{-- Section: Account & Identity --}}
@@ -459,12 +478,12 @@
                 <div class="p-4 space-y-3">
                     <div>
                         <label class="label">Full Name <span class="text-red-500">*</span></label>
-                        <input type="text" name="name" required class="input" placeholder="e.g. Dr. Jane Mendoza">
+                        <input type="text" name="name" required class="input">
                     </div>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                             <label class="label">Email <span class="text-red-500">*</span></label>
-                            <input type="email" name="email" required class="input" placeholder="jane@clinic.com">
+                            <input type="email" name="email" required class="input">
                         </div>
                         <div>
                             <label class="label">Temporary Password <span class="text-red-500">*</span></label>
@@ -503,7 +522,7 @@
                 <div class="p-4 space-y-3">
                     <div>
                         <label class="label">Phone</label>
-                        <input type="tel" name="phone" class="input" placeholder="0917-xxx-xxxx">
+                        <input type="tel" name="phone" class="input">
                     </div>
                     <div>
                         <label class="label">Address</label>
@@ -534,12 +553,12 @@
                         </div>
                         <div>
                             <label class="label">License No.</label>
-                            <input type="text" name="license_number" class="input" placeholder="e.g. PRC-12345">
+                            <input type="text" name="license_number" class="input">
                         </div>
                     </div>
                     <div>
                         <label class="label">Specialization</label>
-                        <input type="text" name="specialization" class="input" placeholder="e.g. Cardiology, Pediatrics, Clinical Pharmacist">
+                        <input type="text" name="specialization" class="input">
                     </div>
                 </div>
             </div>
@@ -556,21 +575,21 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                             <label class="label">Primary Contact Name</label>
-                            <input type="text" name="emergency_contact_name" class="input" placeholder="e.g. Maria Mendoza (sister)">
+                            <input type="text" name="emergency_contact_name" class="input">
                         </div>
                         <div>
                             <label class="label">Primary Contact Phone</label>
-                            <input type="tel" name="emergency_contact_phone" class="input" placeholder="0917-xxx-xxxx">
+                            <input type="tel" name="emergency_contact_phone" class="input">
                         </div>
                     </div>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                             <label class="label">Secondary Contact Name</label>
-                            <input type="text" name="emergency_contact_2_name" class="input" placeholder="e.g. Carlos Mendoza (father)">
+                            <input type="text" name="emergency_contact_2_name" class="input">
                         </div>
                         <div>
                             <label class="label">Secondary Contact Phone</label>
-                            <input type="tel" name="emergency_contact_2_phone" class="input" placeholder="0918-yyy-yyyy">
+                            <input type="tel" name="emergency_contact_2_phone" class="input">
                         </div>
                     </div>
                 </div>

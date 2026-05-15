@@ -102,26 +102,38 @@
                     </p>
                 </form>
 
-                <!-- Demo accounts -->
-                <div class="border-t border-gray-100 px-8 py-5 bg-gray-50/50">
+                <!-- Demo accounts — 2 per role for testing role-vs-role flows -->
+                <div class="border-t border-gray-100 px-8 py-5 bg-gray-50/50 max-h-[26rem] overflow-y-auto">
                     <p class="text-xs text-gray-400 font-medium uppercase tracking-wider mb-3 text-center">Demo Accounts — password: <span class="font-bold text-gray-600">password</span></p>
-                    <div class="grid grid-cols-3 gap-2">
-                        @foreach([
-                            ['admin@clinic.com',        'Admin',        'fa-user-shield',                  'text-brand-600'],
-                            ['clinichead@clinic.com',   'Clinic Head',  'fa-user-tie',                     'text-purple-600'],
-                            ['doctor@clinic.com',       'Doctor',       'fa-user-doctor',                  'text-blue-600'],
-                            ['pharmacist@clinic.com',   'Pharmacist',   'fa-prescription-bottle-medical',  'text-green-600'],
-                            ['nurse@clinic.com',        'Nurse',        'fa-user-nurse',                   'text-pink-600'],
-                            ['secretary@clinic.com',    'Secretary',    'fa-id-badge',                     'text-rose-600'],
-                            ['assistant@clinic.com',    'Assistant',    'fa-user',                         'text-amber-600'],
-                        ] as [$email, $label, $icon, $iconColor])
-                        <button onclick="fillLogin('{{ $email }}')" class="text-left px-3 py-2 bg-white border border-gray-200 rounded-lg hover:border-brand-400 hover:shadow-sm transition-all">
-                            <div class="flex items-center gap-2 mb-0.5">
+                    @php
+                        // Each row in the table renders as one role with both demo users side-by-side
+                        // so you can quickly switch between "doctor1 view" vs "doctor2 view".
+                        $demoRoles = [
+                            ['Admin',       'fa-user-shield',                 'text-slate-600',  ['admin@clinic.com',       'admin2@clinic.com']],
+                            ['Clinic Head', 'fa-user-tie',                    'text-purple-600', ['clinichead@clinic.com',  'clinichead2@clinic.com']],
+                            ['Doctor',      'fa-user-doctor',                 'text-blue-600',   ['doctor@clinic.com',      'doctor2@clinic.com']],
+                            ['Pharmacist',  'fa-prescription-bottle-medical', 'text-green-600',  ['pharmacist@clinic.com',  'pharmacist2@clinic.com']],
+                            ['Nurse',       'fa-user-nurse',                  'text-pink-600',   ['nurse@clinic.com',       'nurse2@clinic.com']],
+                            ['Secretary',   'fa-id-badge',                    'text-rose-600',   ['secretary@clinic.com',   'secretary2@clinic.com']],
+                            ['Assistant',   'fa-user',                        'text-amber-600',  ['assistant@clinic.com',   'assistant2@clinic.com']],
+                        ];
+                    @endphp
+                    <div class="space-y-2">
+                        @foreach($demoRoles as [$label, $icon, $iconColor, $emails])
+                        <div class="flex items-center gap-2">
+                            <div class="flex items-center gap-1.5 w-28 flex-shrink-0">
                                 <i class="fa-solid {{ $icon }} {{ $iconColor }} text-xs"></i>
-                                <span class="text-xs font-semibold text-gray-800">{{ $label }}</span>
+                                <span class="text-xs font-semibold text-gray-700">{{ $label }}</span>
                             </div>
-                            <span class="text-xs text-gray-400 truncate block">{{ $email }}</span>
-                        </button>
+                            <div class="grid grid-cols-2 gap-2 flex-1 min-w-0">
+                                @foreach($emails as $i => $email)
+                                <button type="button" onclick="fillLogin('{{ $email }}')"
+                                        class="px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg hover:border-brand-400 hover:shadow-sm transition-all text-left min-w-0">
+                                    <span class="text-[11px] font-mono text-gray-500 truncate block">{{ $email }}</span>
+                                </button>
+                                @endforeach
+                            </div>
+                        </div>
                         @endforeach
                     </div>
                 </div>

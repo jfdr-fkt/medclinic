@@ -11,6 +11,235 @@
         100% { background-color: transparent;            box-shadow: inset 0 0 0 0px rgba(16,185,129,0); }
     }
     .rowHighlight { animation: highlightFadeInOut 3s ease-in-out 1 forwards; }
+
+    /* ── Stat filter cards — larger, accessible, dark/light parity ── */
+    .stat-card {
+        display: flex; flex-direction: column; gap: .35rem;
+        padding: 1.25rem 1.1rem;
+        border-radius: 1rem;
+        border: 2px solid transparent;
+        transition: transform .12s, box-shadow .12s, border-color .12s;
+        cursor: pointer;
+    }
+    .stat-card:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(0,0,0,.08); }
+    .stat-card .stat-icon {
+        width: 2.5rem; height: 2.5rem; border-radius: .85rem;
+        display: inline-flex; align-items: center; justify-content: center;
+        color: #fff; font-size: 0.95rem;
+        flex-shrink: 0;
+    }
+    .stat-card .stat-number {
+        font-size: 2.25rem;
+        line-height: 1.1;
+        font-weight: 800;
+        letter-spacing: -.02em;
+    }
+    .stat-card .stat-label {
+        font-size: 0.8rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+    }
+    .stat-card.active {
+        border-width: 2.5px;
+        box-shadow: 0 6px 18px rgba(0,0,0,.08);
+    }
+    /* Per-hue tinting */
+    .stat-all      { background: #ecfdf5; border-color: #a7f3d0; color: #065f46; }
+    .stat-all      .stat-icon { background: #10b981; }
+    .stat-all.active { border-color: #059669; }
+    .stat-crit     { background: #fef2f2; border-color: #fecaca; color: #991b1b; }
+    .stat-crit     .stat-icon { background: #ef4444; }
+    .stat-crit.active { border-color: #dc2626; }
+    .stat-low      { background: #fffbeb; border-color: #fde68a; color: #92400e; }
+    .stat-low      .stat-icon { background: #f59e0b; }
+    .stat-low.active { border-color: #d97706; }
+    .stat-exp      { background: #fff7ed; border-color: #fed7aa; color: #9a3412; }
+    .stat-exp      .stat-icon { background: #f97316; }
+    .stat-exp.active { border-color: #ea580c; }
+    .stat-arch     { background: #f1f5f9; border-color: #cbd5e1; color: #334155; }
+    .stat-arch     .stat-icon { background: #64748b; }
+    .stat-arch.active { border-color: #475569; }
+
+    /* Dark mode: keep colored tint but darker surface */
+    .dark .stat-all      { background: rgba(16,185,129,.12); border-color: rgba(16,185,129,.35); color: #6ee7b7; }
+    .dark .stat-crit     { background: rgba(239,68,68,.12);  border-color: rgba(239,68,68,.35);  color: #fca5a5; }
+    .dark .stat-low      { background: rgba(245,158,11,.12); border-color: rgba(245,158,11,.35); color: #fcd34d; }
+    .dark .stat-exp      { background: rgba(249,115,22,.12); border-color: rgba(249,115,22,.35); color: #fdba74; }
+    .dark .stat-arch     { background: rgba(100,116,139,.15);border-color: rgba(100,116,139,.4); color: #cbd5e1; }
+    .dark .stat-all.active   { border-color: #34d399 !important; box-shadow: 0 6px 18px rgba(0,0,0,.4); }
+    .dark .stat-crit.active  { border-color: #f87171 !important; box-shadow: 0 6px 18px rgba(0,0,0,.4); }
+    .dark .stat-low.active   { border-color: #fbbf24 !important; box-shadow: 0 6px 18px rgba(0,0,0,.4); }
+    .dark .stat-exp.active   { border-color: #fb923c !important; box-shadow: 0 6px 18px rgba(0,0,0,.4); }
+    .dark .stat-arch.active  { border-color: #94a3b8 !important; box-shadow: 0 6px 18px rgba(0,0,0,.4); }
+
+    /* ── Medicine table — same breathing-room pattern as staff/patient ── */
+    .medicine-card {
+        background: #fff;
+        border: 2px solid #e5e7eb;
+        border-radius: 1.25rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,.05);
+    }
+    .dark .medicine-card { background:#1a2438 !important; border-color:#2d3a52 !important; }
+
+    .medicine-table thead th {
+        padding: 0.95rem 1.5rem;
+        font-size: 0.78rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .05em;
+        color: #475569;
+        background: #f8fafc;
+        border-bottom: 2px solid #e2e8f0;
+        text-align: center;
+        border-right: 1px solid #e2e8f0;
+    }
+    .medicine-table thead th:last-child { border-right: none; }
+    .dark .medicine-table thead th {
+        background: #0f1a2e !important;
+        color: #cbd5e1 !important;
+        border-bottom-color: #2d3a52 !important;
+        border-right-color: #1f2c45 !important;
+    }
+    .medicine-table tbody td {
+        padding: 1rem 1.5rem;
+        vertical-align: middle;
+        border-right: 1px solid #f1f5f9;
+    }
+    .medicine-table tbody td:last-child { border-right: none; }
+    .dark .medicine-table tbody td { border-right-color: #1f2c45; }
+    .medicine-table tbody tr {
+        transition: background-color .12s;
+        border-bottom: 1px solid #f1f5f9;
+        cursor: pointer;
+    }
+    .dark .medicine-table tbody tr { border-bottom-color:#1f2c45; }
+    .medicine-table tbody tr:hover { background: #ecfdf5; }
+    .dark .medicine-table tbody tr:hover { background: #1a2438 !important; }
+    .medicine-table tbody tr:last-child { border-bottom: none; }
+    .med-meta { color:#64748b; font-weight:500; }
+    .dark .med-meta { color:#94a3b8; }
+
+    .stock-num {
+        font-size: 1.15rem;
+        font-weight: 800;
+        letter-spacing: -.02em;
+    }
+
+    /* Big readable status pill — colored by category */
+    .status-pill {
+        display: inline-flex; align-items: center; gap: .4rem;
+        padding: .35rem .8rem;
+        border-radius: 9999px;
+        font-size: .78rem;
+        font-weight: 700;
+        border: 1.5px solid transparent;
+        letter-spacing: .02em;
+        white-space: nowrap;
+    }
+    .pill-good { background:#d1fae5; color:#065f46; border-color:#a7f3d0; }
+    .pill-low  { background:#fef3c7; color:#92400e; border-color:#fde68a; }
+    .pill-crit { background:#fee2e2; color:#991b1b; border-color:#fecaca; }
+    .pill-out  { background:#fecaca; color:#7f1d1d; border-color:#fca5a5; }
+    .pill-exp  { background:#fed7aa; color:#7c2d12; border-color:#fdba74; }
+    .pill-arch { background:#e2e8f0; color:#334155; border-color:#cbd5e1; }
+    .dark .pill-good { background: rgba(16,185,129,.18) !important; color:#6ee7b7 !important; border-color: rgba(16,185,129,.4) !important; }
+    .dark .pill-low  { background: rgba(245,158,11,.18) !important; color:#fcd34d !important; border-color: rgba(245,158,11,.4) !important; }
+    .dark .pill-crit { background: rgba(239,68,68,.18) !important; color:#fca5a5 !important; border-color: rgba(239,68,68,.4) !important; }
+    .dark .pill-out  { background: rgba(239,68,68,.28) !important; color:#fca5a5 !important; border-color: rgba(239,68,68,.5) !important; }
+    .dark .pill-exp  { background: rgba(249,115,22,.18) !important; color:#fdba74 !important; border-color: rgba(249,115,22,.4) !important; }
+    .dark .pill-arch { background: rgba(100,116,139,.22) !important; color:#cbd5e1 !important; border-color: rgba(100,116,139,.45) !important; }
+
+    .badge-rx-lg  { display: inline-flex; align-items: center; gap: .35rem; padding: .3rem .7rem; border-radius: 9999px; font-size: .72rem; font-weight: 700; background: #fee2e2; color: #b91c1c; border: 1.5px solid #fecaca; }
+    .badge-otc-lg { display: inline-flex; align-items: center; gap: .35rem; padding: .3rem .7rem; border-radius: 9999px; font-size: .72rem; font-weight: 700; background: #d1fae5; color: #065f46; border: 1.5px solid #a7f3d0; }
+    .dark .badge-rx-lg  { background: rgba(239,68,68,.2) !important; color:#fca5a5 !important; border-color: rgba(239,68,68,.4) !important; }
+    .dark .badge-otc-lg { background: rgba(16,185,129,.2) !important; color:#6ee7b7 !important; border-color: rgba(16,185,129,.4) !important; }
+
+    .btn-row-dispense {
+        display:inline-flex; align-items:center; justify-content:center; gap:.5rem;
+        padding: 0.625rem 0.75rem;
+        border-radius: 0.75rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+        flex: 1;
+        background: #10b981; color: #fff;
+        transition: background .12s, box-shadow .12s;
+        box-shadow: 0 2px 6px rgba(16,185,129,.35);
+    }
+    .btn-row-dispense:hover { background: #059669; box-shadow: 0 4px 10px rgba(16,185,129,.45); }
+    .btn-row-archive {
+        display:inline-flex; align-items:center; justify-content:center; gap:.5rem;
+        padding: 0.625rem 0.75rem;
+        border-radius: 0.75rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+        flex: 1;
+        background: #f1f5f9; color: #334155;
+        transition: background .12s;
+    }
+    .btn-row-archive:hover { background: #e2e8f0; }
+    .dark .btn-row-archive { background: rgba(100,116,139,.22); color:#cbd5e1; }
+    .dark .btn-row-archive:hover { background: rgba(100,116,139,.35); }
+    .btn-row-unarchive {
+        display:inline-flex; align-items:center; justify-content:center; gap:.5rem;
+        padding: 0.625rem 0.75rem;
+        border-radius: 0.75rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+        flex: 1;
+        background: #fef3c7; color: #92400e;
+        transition: background .12s;
+    }
+    .btn-row-unarchive:hover { background: #fde68a; }
+    .dark .btn-row-unarchive { background: rgba(245,158,11,.2); color:#fcd34d; }
+    .dark .btn-row-unarchive:hover { background: rgba(245,158,11,.3); }
+    .btn-row-delete {
+        display:inline-flex; align-items:center; justify-content:center; gap:.5rem;
+        padding: 0.625rem 0.75rem;
+        border-radius: 0.75rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+        flex: 1;
+        background:#fee2e2; color:#b91c1c;
+        transition:background .12s;
+    }
+    .btn-row-delete:hover { background:#fecaca; }
+    .dark .btn-row-delete       { background: rgba(239,68,68,.18); color:#fca5a5; }
+    .dark .btn-row-delete:hover { background: rgba(239,68,68,.28); }
+
+    /* Archive sub-tabs */
+    .archive-tabs {
+        display: flex; gap: .5rem;
+        padding: 0 0 .9rem 0;
+        border-bottom: 2px solid #e2e8f0;
+        margin-bottom: 0;
+    }
+    .dark .archive-tabs { border-bottom-color: #2d3a52; }
+    .archive-tab {
+        display: inline-flex; align-items: center; gap: .5rem;
+        padding: .55rem 1rem;
+        border-radius: .75rem;
+        font-size: .82rem;
+        font-weight: 700;
+        background: transparent;
+        color: #64748b;
+        border: 2px solid transparent;
+        cursor: pointer;
+        transition: background .12s, color .12s, border-color .12s;
+    }
+    .archive-tab:hover { background: #f1f5f9; color: #334155; }
+    .archive-tab.active { background: #fff; color: #0d9488; border-color: #5eead4; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+    .dark .archive-tab { color: #94a3b8; }
+    .dark .archive-tab:hover { background: #243049; color: #cbd5e1; }
+    .dark .archive-tab.active { background: #1a2438 !important; color: #5eead4 !important; border-color: #14b8a6 !important; }
+    .archive-tab .count-chip {
+        font-size: .68rem; font-weight: 800;
+        padding: .1rem .45rem; border-radius: 9999px;
+        background: #e2e8f0; color: #475569;
+    }
+    .archive-tab.active .count-chip { background: #ccfbf1; color: #0f766e; }
+    .dark .archive-tab .count-chip { background:#2d3a52; color:#cbd5e1; }
+    .dark .archive-tab.active .count-chip { background: rgba(20,184,166,.25) !important; color: #5eead4 !important; }
 </style>
 @endpush
 
@@ -23,17 +252,17 @@
         $canDeleteMed = $me->can_('medicines.delete');
         $canLocations = $me->can_('medicines.locations');
     @endphp
-    <!-- Header with combined action -->
+
+    <!-- Header -->
     <div class="flex items-center justify-between flex-wrap gap-3">
         <div>
-            <h1 class="text-2xl font-bold text-gray-900">Medicines & Inventory</h1>
-            <p class="text-sm text-gray-500 mt-0.5">Track stock, locations, and expiry dates</p>
+            <h1 class="text-2xl font-extrabold text-gray-900 dark:text-white">Medicines & Inventory</h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Track stock, locations, and expiry dates</p>
         </div>
         <div class="flex items-center gap-2 flex-wrap">
-            @if(auth()->user()->can_('medicines.locations'))
+            @if($canLocations)
             <a href="{{ route('medicines.locations.index') }}"
-               class="inline-flex items-center gap-2 px-3 py-2.5 bg-amber-100 text-amber-700 hover:bg-amber-200 text-sm font-semibold rounded-xl transition-colors"
-               title="Manage storage locations">
+               class="inline-flex items-center gap-2 px-3 py-2.5 bg-amber-100 text-amber-700 hover:bg-amber-200 text-sm font-semibold rounded-xl transition-colors">
                 <i class="fa-solid fa-location-dot"></i> Locations
             </a>
             @endif
@@ -43,118 +272,74 @@
             </a>
             @endif
         </div>
-        @if($canAddMed)
-        <div class="hidden">
-            <div id="addMedicineMenu" class="hidden">
-                <button type="button" onclick="openAddModal();" class="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3">
-                    <i class="fa-solid fa-keyboard text-brand-500 w-4"></i>
-                    <div>
-                        <p class="font-semibold">Manual Entry</p>
-                        <p class="text-xs text-gray-400">Type details by hand</p>
-                    </div>
-                </button>
-                <a href="{{ route('scan.index') }}" class="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3">
-                    <i class="fa-solid fa-barcode text-purple-500 w-4"></i>
-                    <div>
-                        <p class="font-semibold">Smart Scan</p>
-                        <p class="text-xs text-gray-400">Scan barcode/QR</p>
-                    </div>
-                </a>
-                <div class="border-t border-gray-100 my-1"></div>
-                <button type="button" onclick="openLocationModal();" class="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3">
-                    <i class="fa-solid fa-location-dot text-amber-500 w-4"></i>
-                    <div>
-                        <p class="font-semibold">Add Location</p>
-                        <p class="text-xs text-gray-400">New cabinet/shelf</p>
-                    </div>
-                </button>
-            </div>
-        </div>
-        @endif
     </div>
 
-    <!-- Clickable filter cards -->
+    <!-- Filter stat cards -->
     @php
-        $activeFilter = request('view') ?: 'all';
-        $cardLink = function($view) {
-            return request()->fullUrlWithQuery(['view' => $view, 'expiring' => null, 'low_stock' => null, 'status' => null]);
-        };
+        $activeFilter = $view ?? 'all';
+        $cardLink = fn($v) => request()->fullUrlWithQuery(['view' => $v, 'archive_tab' => null]);
     @endphp
-    <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <a href="{{ $cardLink('all') }}"
-           class="rounded-2xl p-5 bg-gradient-to-br from-green-50 to-green-100/50 border-2 {{ $activeFilter==='all' ? 'border-green-600 ring-2 ring-green-200' : 'border-green-200 hover:border-green-400' }} transition-all">
-            <div class="flex items-center justify-between mb-3">
-                <div class="w-10 h-10 rounded-xl bg-green-500 flex items-center justify-center shadow-md shadow-green-200">
-                    <i class="fa-solid fa-pills text-white text-sm"></i>
-                </div>
-                @if($activeFilter==='all')<i class="fa-solid fa-circle-check text-green-600"></i>@endif
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+        <a href="{{ $cardLink('all') }}" class="stat-card stat-all {{ $activeFilter==='all' ? 'active' : '' }}">
+            <div class="flex items-center justify-between">
+                <span class="stat-icon"><i class="fa-solid fa-pills"></i></span>
+                @if($activeFilter==='all')<i class="fa-solid fa-circle-check"></i>@endif
             </div>
-            <p class="text-3xl font-extrabold text-green-900">{{ $totalMedicines }}</p>
-            <p class="text-xs font-semibold text-green-700/70 mt-1">Total Active</p>
+            <p class="stat-number">{{ $totalMedicines }}</p>
+            <p class="stat-label">Active</p>
         </a>
-        <a href="{{ $cardLink('critical') }}"
-           class="rounded-2xl p-5 bg-gradient-to-br from-red-50 to-red-100/50 border-2 {{ $activeFilter==='critical' ? 'border-red-600 ring-2 ring-red-200' : 'border-red-200 hover:border-red-400' }} transition-all">
-            <div class="flex items-center justify-between mb-3">
-                <div class="w-10 h-10 rounded-xl bg-red-500 flex items-center justify-center shadow-md shadow-red-200">
-                    <i class="fa-solid fa-triangle-exclamation text-white text-sm"></i>
-                </div>
-                @if($activeFilter==='critical')<i class="fa-solid fa-circle-check text-red-600"></i>@endif
+        <a href="{{ $cardLink('critical') }}" class="stat-card stat-crit {{ $activeFilter==='critical' ? 'active' : '' }}">
+            <div class="flex items-center justify-between">
+                <span class="stat-icon"><i class="fa-solid fa-triangle-exclamation"></i></span>
+                @if($activeFilter==='critical')<i class="fa-solid fa-circle-check"></i>@endif
             </div>
-            <p class="text-3xl font-extrabold text-red-900">{{ $criticalStock }}</p>
-            <p class="text-xs font-semibold text-red-700/70 mt-1">Critical (≤5)</p>
+            <p class="stat-number">{{ $criticalStock }}</p>
+            <p class="stat-label">Critical (≤5)</p>
         </a>
-        <a href="{{ $cardLink('low') }}"
-           class="rounded-2xl p-5 bg-gradient-to-br from-amber-50 to-amber-100/50 border-2 {{ $activeFilter==='low' ? 'border-amber-600 ring-2 ring-amber-200' : 'border-amber-200 hover:border-amber-400' }} transition-all">
-            <div class="flex items-center justify-between mb-3">
-                <div class="w-10 h-10 rounded-xl bg-amber-500 flex items-center justify-center shadow-md shadow-amber-200">
-                    <i class="fa-solid fa-circle-exclamation text-white text-sm"></i>
-                </div>
-                @if($activeFilter==='low')<i class="fa-solid fa-circle-check text-amber-600"></i>@endif
+        <a href="{{ $cardLink('low') }}" class="stat-card stat-low {{ $activeFilter==='low' ? 'active' : '' }}">
+            <div class="flex items-center justify-between">
+                <span class="stat-icon"><i class="fa-solid fa-circle-exclamation"></i></span>
+                @if($activeFilter==='low')<i class="fa-solid fa-circle-check"></i>@endif
             </div>
-            <p class="text-3xl font-extrabold text-amber-900">{{ $lowStock }}</p>
-            <p class="text-xs font-semibold text-amber-700/70 mt-1">Low Stock</p>
+            <p class="stat-number">{{ $lowStock }}</p>
+            <p class="stat-label">Low Stock</p>
         </a>
-        <a href="{{ $cardLink('expiring') }}"
-           class="rounded-2xl p-5 bg-gradient-to-br from-orange-50 to-orange-100/50 border-2 {{ $activeFilter==='expiring' ? 'border-orange-600 ring-2 ring-orange-200' : 'border-orange-200 hover:border-orange-400' }} transition-all">
-            <div class="flex items-center justify-between mb-3">
-                <div class="w-10 h-10 rounded-xl bg-orange-500 flex items-center justify-center shadow-md shadow-orange-200">
-                    <i class="fa-solid fa-calendar-xmark text-white text-sm"></i>
-                </div>
-                @if($activeFilter==='expiring')<i class="fa-solid fa-circle-check text-orange-600"></i>@endif
+        <a href="{{ $cardLink('expiring') }}" class="stat-card stat-exp {{ $activeFilter==='expiring' ? 'active' : '' }}">
+            <div class="flex items-center justify-between">
+                <span class="stat-icon"><i class="fa-solid fa-calendar-xmark"></i></span>
+                @if($activeFilter==='expiring')<i class="fa-solid fa-circle-check"></i>@endif
             </div>
-            <p class="text-3xl font-extrabold text-orange-900">{{ $expiringSoon }}</p>
-            <p class="text-xs font-semibold text-orange-700/70 mt-1">Expiring ≤30d</p>
+            <p class="stat-number">{{ $expiringSoon }}</p>
+            <p class="stat-label">Expiring ≤30d</p>
         </a>
-        <a href="{{ $cardLink('expired') }}"
-           class="rounded-2xl p-5 bg-gradient-to-br from-gray-50 to-gray-200/50 border-2 {{ $activeFilter==='expired' ? 'border-gray-700 ring-2 ring-gray-300' : 'border-gray-300 hover:border-gray-500' }} transition-all">
-            <div class="flex items-center justify-between mb-3">
-                <div class="w-10 h-10 rounded-xl bg-gray-600 flex items-center justify-center shadow-md shadow-gray-300">
-                    <i class="fa-solid fa-box-archive text-white text-sm"></i>
-                </div>
-                @if($activeFilter==='expired')<i class="fa-solid fa-circle-check text-gray-700"></i>@endif
+        <a href="{{ $cardLink('archive') }}" class="stat-card stat-arch {{ $activeFilter==='archive' ? 'active' : '' }}">
+            <div class="flex items-center justify-between">
+                <span class="stat-icon"><i class="fa-solid fa-box-archive"></i></span>
+                @if($activeFilter==='archive')<i class="fa-solid fa-circle-check"></i>@endif
             </div>
-            <p class="text-3xl font-extrabold text-gray-700">{{ $expiredCount }}</p>
-            <p class="text-xs font-semibold text-gray-600 mt-1">Expired Archive</p>
+            <p class="stat-number">{{ $archiveTotal }}</p>
+            <p class="stat-label">Archive</p>
         </a>
     </div>
 
-    <!-- Search + filter (sort merged into filter popover) -->
-    <form method="GET" action="{{ route('medicines.index') }}" class="card p-3">
-        @if(request('view'))<input type="hidden" name="view" value="{{ request('view') }}">@endif
+    <!-- Search + filter -->
+    <form method="GET" action="{{ route('medicines.index') }}" class="medicine-card p-3">
+        @if($activeFilter !== 'all')<input type="hidden" name="view" value="{{ $activeFilter }}">@endif
+        @if($activeFilter === 'archive')<input type="hidden" name="archive_tab" value="{{ $archiveTab }}">@endif
         @php $hasFilters = request('type') || request('location_id') || request('sort') || request('direction'); @endphp
         <div class="flex items-center gap-2">
             <div class="relative">
                 <button type="button" onclick="toggleDropdown('medicineFilterMenu')"
-                        class="h-12 px-4 bg-white border-2 border-gray-200 rounded-xl hover:border-brand-400 transition-colors flex items-center gap-2 text-sm text-gray-600 font-medium {{ $hasFilters ? 'border-brand-500 text-brand-700' : '' }}">
+                        class="h-12 px-4 bg-white dark:bg-slate-800 border-2 border-gray-200 dark:border-slate-600 rounded-xl hover:border-brand-400 dark:hover:border-brand-500 transition-colors flex items-center gap-2 text-sm text-gray-600 dark:text-gray-200 font-medium {{ $hasFilters ? 'border-brand-500 text-brand-700 dark:text-brand-300' : '' }}">
                     <i class="fa-solid fa-sliders text-sm"></i>
                     <span class="hidden sm:inline">Filter & Sort</span>
                     @if($hasFilters)
                     <span class="bg-brand-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">!</span>
                     @endif
                 </button>
-                <div id="medicineFilterMenu" class="hidden absolute left-0 top-full mt-2 w-80 bg-white border border-gray-100 rounded-xl shadow-xl p-4 space-y-4 z-30">
+                <div id="medicineFilterMenu" class="hidden absolute left-0 top-full mt-2 w-80 bg-white dark:bg-slate-800 border-2 border-gray-100 dark:border-slate-700 rounded-2xl shadow-xl p-4 space-y-4 z-30">
                     <div>
-                        <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-1.5"><i class="fa-solid fa-filter"></i> Filter by</p>
+                        <p class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1.5"><i class="fa-solid fa-filter"></i> Filter by</p>
                         <div class="space-y-2">
                             <select name="type" class="input cs-select">
                                 <option value="">All Types</option>
@@ -169,11 +354,17 @@
                             </select>
                         </div>
                     </div>
-                    <div class="pt-2 border-t border-gray-100">
-                        <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-1.5"><i class="fa-solid fa-arrow-down-wide-short"></i> Sort by</p>
+                    <div class="pt-2 border-t border-gray-100 dark:border-slate-700">
+                        <p class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1.5"><i class="fa-solid fa-arrow-down-wide-short"></i> Sort by</p>
                         <div class="grid grid-cols-2 gap-2">
                             <select name="sort" class="input cs-select">
-                                @foreach(['name'=>'Name','stock'=>'Stock','expiry'=>'Expiry','updated_at'=>'Last Updated'] as $f=>$label)
+                                @foreach([
+                                    'name'        => 'Name',
+                                    'stock'       => 'Stock',
+                                    'expiry'      => 'Expiry',
+                                    'updated_at'  => 'Last Updated',
+                                    'archived_at' => 'Archived On',
+                                ] as $f=>$label)
                                 <option value="{{ $f }}" {{ $sortField===$f ? 'selected' : '' }}>{{ $label }}</option>
                                 @endforeach
                             </select>
@@ -183,9 +374,13 @@
                             </select>
                         </div>
                     </div>
-                    <div class="flex gap-2 pt-2 border-t border-gray-100">
-                        <button type="submit" class="btn-primary flex-1 justify-center text-xs py-2">Apply</button>
-                        <a href="{{ route('medicines.index') }}" class="btn-secondary flex-1 justify-center text-xs py-2">Reset</a>
+                    <div class="flex gap-2 pt-3 border-t border-gray-100 dark:border-slate-700">
+                        <a href="{{ route('medicines.index') }}" class="inline-flex flex-1 items-center justify-center gap-2 px-4 py-2.5 rounded-xl border-2 border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-slate-700 text-sm font-semibold transition-colors">
+                            <i class="fa-solid fa-rotate-left"></i> Reset
+                        </a>
+                        <button type="submit" class="inline-flex flex-1 items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-sm font-bold transition-colors shadow-sm">
+                            <i class="fa-solid fa-check"></i> Apply
+                        </button>
                     </div>
                 </div>
             </div>
@@ -194,139 +389,177 @@
                 <i class="fa-solid fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-base pointer-events-none"></i>
                 <input type="text" name="search" value="{{ request('search') }}"
                        placeholder="Search by name, generic name, or barcode"
-                       class="block w-full h-12 pl-12 pr-4 border-2 border-gray-200 rounded-xl text-base text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all bg-white">
-                {{-- Sort/direction live in the filter dropdown <select>s; no hidden inputs needed. --}}
+                       class="block w-full h-12 pl-12 pr-4 border-2 border-gray-200 dark:border-slate-600 rounded-xl text-base text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all bg-white dark:bg-slate-800">
             </div>
 
-            <button type="submit" class="hidden md:inline-flex h-12 px-5 items-center justify-center gap-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl transition-colors shadow-sm flex-shrink-0 text-sm font-semibold" title="Search">
+            <button type="submit" class="hidden md:inline-flex h-12 px-5 items-center justify-center gap-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl transition-colors shadow-sm flex-shrink-0 text-sm font-semibold">
                 <i class="fa-solid fa-magnifying-glass"></i>
                 <span class="hidden lg:inline">Search</span>
             </button>
         </div>
-
-        @if(request('view') && request('view') !== 'all')
-        <div class="mt-3 flex items-center gap-2 text-xs">
-            <span class="text-gray-400">Card filter:</span>
-            <span class="inline-flex items-center gap-1 bg-brand-100 text-brand-700 px-2.5 py-1 rounded-full font-semibold">
-                {{ ucfirst(request('view')) }}
-                <a href="{{ $cardLink('all') }}" class="hover:text-brand-900"><i class="fa-solid fa-xmark"></i></a>
-            </span>
-        </div>
-        @endif
     </form>
 
-    <!-- Inventory table (label changes with filter) -->
+    <!-- Archive sub-tabs (only when on the Archive view) -->
+    @if($activeFilter === 'archive')
     @php
-        $tableHeader = match($activeFilter) {
-            'critical' => ['icon'=>'fa-triangle-exclamation','color'=>'red',    'title'=>'Critical Stock'],
-            'low'      => ['icon'=>'fa-circle-exclamation', 'color'=>'amber',   'title'=>'Low Stock'],
-            'expiring' => ['icon'=>'fa-calendar-xmark',     'color'=>'orange',  'title'=>'Expiring Soon'],
-            'expired'  => ['icon'=>'fa-box-archive',        'color'=>'gray',    'title'=>'Expired Archive'],
-            default    => ['icon'=>'fa-circle-check',       'color'=>'green',   'title'=>'Active Inventory'],
-        };
+        $tabLink = fn($t) => request()->fullUrlWithQuery(['view' => 'archive', 'archive_tab' => $t]);
     @endphp
-    <div class="card overflow-hidden">
-        <div class="px-5 py-3 border-b border-gray-100 bg-gradient-to-r from-{{ $tableHeader['color'] }}-50 to-{{ $tableHeader['color'] }}-100/40">
-            <h3 class="font-bold text-gray-800 text-sm flex items-center gap-2">
-                <i class="fa-solid {{ $tableHeader['icon'] }} text-{{ $tableHeader['color'] }}-500"></i> {{ $tableHeader['title'] }}
-                <span class="text-xs text-gray-500 font-normal">({{ $medicines->total() }} items)</span>
-            </h3>
+    <div class="medicine-card px-5 pt-4">
+        <div class="archive-tabs">
+            <a href="{{ $tabLink('expired') }}" class="archive-tab {{ $archiveTab === 'expired' ? 'active' : '' }}">
+                <i class="fa-solid fa-calendar-xmark"></i> Expired
+                <span class="count-chip">{{ $archiveExpiredCount }}</span>
+            </a>
+            <a href="{{ $tabLink('manual_med_room') }}" class="archive-tab {{ $archiveTab === 'manual_med_room' ? 'active' : '' }}">
+                <i class="fa-solid fa-flask"></i> Med Room
+                <span class="count-chip">{{ $archiveManualMedCount }}</span>
+            </a>
+            <a href="{{ $tabLink('manual_storage') }}" class="archive-tab {{ $archiveTab === 'manual_storage' ? 'active' : '' }}">
+                <i class="fa-solid fa-warehouse"></i> Storage Room
+                <span class="count-chip">{{ $archiveManualStoreCount }}</span>
+            </a>
         </div>
+    </div>
+    @endif
+
+    <!-- Medicine table -->
+    <div class="medicine-card overflow-hidden">
         <div class="overflow-x-auto">
-            <table class="min-w-full">
+            <table class="min-w-full medicine-table">
                 <thead>
-                    <tr class="bg-gradient-to-r from-gray-50 to-slate-50 border-b-2 border-gray-200 divide-x divide-gray-200">
-                        <th class="th">Medicine</th>
-                        <th class="th text-center">Type</th>
-                        <th class="th text-center">Stock</th>
-                        <th class="th text-center">Location</th>
-                        <th class="th text-center">Expiry</th>
-                        <th class="th text-center">Status</th>
-                        <th class="th text-center" style="width: 280px;">Actions</th>
+                    <tr>
+                        <th class="!text-left">Medicine</th>
+                        <th>Type</th>
+                        <th>Stock</th>
+                        <th>Location</th>
+                        <th>{{ $activeFilter === 'archive' && $archiveTab !== 'expired' ? 'Archived' : 'Expiry' }}</th>
+                        <th>Status</th>
+                        <th style="min-width: 280px;">Actions</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-100">
+                <tbody>
                     @forelse($medicines as $m)
                     @php
                         $qty = $m->latestInventory?->quantity ?? 0;
                         $min = $m->latestInventory?->min_stock_level ?? 10;
-                        $exp = $m->latestInventory?->expiration_date;
-                        $daysLeft = $exp ? now()->diffInDays($exp, false) : null;
-                        $rowBg = $qty <= 0 ? 'bg-red-50/60 hover:bg-red-100/60'
-                            : ($qty <= 5 ? 'bg-red-50/40 hover:bg-red-100/50'
-                            : ($qty <= $min ? 'bg-amber-50/40 hover:bg-amber-100/50'
-                            : 'hover:bg-green-50/40'));
+                        $exp = $m->latestInventory?->expiration_date
+                                ? \Carbon\Carbon::parse($m->latestInventory->expiration_date)
+                                : null;
+                        $isExpired      = $exp && $exp->lt(now()->startOfDay());
+                        $isArchivedMan  = $m->archived_at !== null;
+                        // Calendar-day diff (no negatives, no fractional hours flipping the count).
+                        $daysToExp = $exp ? now()->startOfDay()->diffInDays($exp->startOfDay(), false) : null;
+
+                        // Pick the row's status pill — archive states win over stock states.
+                        if ($isArchivedMan) {
+                            $pill = ['arch', 'fa-box-archive', $m->archive_location_type === 'storage' ? 'ARCHIVED · STORAGE' : 'ARCHIVED · MED ROOM'];
+                        } elseif ($isExpired) {
+                            $pill = ['exp', 'fa-calendar-xmark', 'EXPIRED'];
+                        } elseif ($qty <= 0) {
+                            $pill = ['out', 'fa-circle-xmark', 'OUT OF STOCK'];
+                        } elseif ($qty <= 5) {
+                            $pill = ['crit', 'fa-triangle-exclamation', 'CRITICAL'];
+                        } elseif ($qty <= $min) {
+                            $pill = ['low', 'fa-circle-exclamation', 'LOW STOCK'];
+                        } else {
+                            $pill = ['good', 'fa-check-circle', 'IN STOCK'];
+                        }
                     @endphp
                     <tr data-href="{{ route('medicines.show', $m) }}"
                         data-medicine-id="{{ $m->id }}"
                         onclick="if(!event.target.closest('.row-action')) window.location=this.dataset.href"
-                        class="transition-colors group cursor-pointer divide-x divide-gray-100 {{ $rowBg }}">
-                        <td class="td">
+                        class="group">
+                        <td>
                             <div class="flex items-center gap-3">
                                 @if($m->image_path)
-                                    <img src="{{ $m->imageUrl() }}" alt="{{ $m->name }}"
-                                         class="w-10 h-10 rounded-xl object-cover border-2 border-gray-200 dark:border-slate-600 flex-shrink-0">
+                                <img src="{{ $m->imageUrl() }}" alt="{{ $m->name }}"
+                                     class="w-11 h-11 rounded-xl object-cover border-2 border-gray-200 dark:border-slate-600 flex-shrink-0">
                                 @else
-                                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-100 to-emerald-200 dark:from-emerald-900/40 dark:to-emerald-800/40 flex items-center justify-center flex-shrink-0">
-                                        <i class="fa-solid fa-pills text-emerald-600 text-sm"></i>
-                                    </div>
+                                <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-emerald-100 to-emerald-200 dark:from-emerald-900/40 dark:to-emerald-800/40 flex items-center justify-center flex-shrink-0">
+                                    <i class="fa-solid fa-pills text-emerald-600 dark:text-emerald-300 text-base"></i>
+                                </div>
                                 @endif
                                 <div class="min-w-0">
-                                    <p class="font-semibold text-gray-900 dark:text-white group-hover:text-green-700 truncate">{{ $m->name }}</p>
-                                    <p class="text-xs text-gray-400 truncate">{{ $m->generic_name ?? '—' }}</p>
+                                    <p class="font-semibold text-sm text-gray-900 dark:text-white group-hover:text-emerald-700 dark:group-hover:text-emerald-300 transition-colors truncate">{{ $m->name }}</p>
+                                    <p class="text-sm med-meta truncate">{{ $m->generic_name ?? '—' }}</p>
                                 </div>
                             </div>
                         </td>
-                        <td class="td text-center">
+                        <td class="text-center">
                             @if($m->type === 'prescription')
-                                <span class="badge-rx"><i class="fa-solid fa-prescription-bottle text-[10px]"></i> Rx</span>
+                                <span class="badge-rx-lg"><i class="fa-solid fa-prescription-bottle text-[10px]"></i> Rx</span>
                             @else
-                                <span class="badge-otc"><i class="fa-solid fa-capsules text-[10px]"></i> OTC</span>
+                                <span class="badge-otc-lg"><i class="fa-solid fa-capsules text-[10px]"></i> OTC</span>
                             @endif
                         </td>
-                        <td class="td text-center">
-                            <p class="font-extrabold text-base {{ $qty <= 5 ? 'text-red-600' : ($qty <= $min ? 'text-amber-600' : 'text-gray-900') }}">{{ $qty }}</p>
-                            <p class="text-xs text-gray-400">min {{ $min }}</p>
+                        <td class="text-center">
+                            <p class="stock-num {{ $isArchivedMan || $isExpired ? 'text-gray-400 dark:text-gray-500 line-through' : ($qty <= 5 ? 'text-red-600 dark:text-red-300' : ($qty <= $min ? 'text-amber-600 dark:text-amber-300' : 'text-gray-900 dark:text-gray-100')) }}">{{ $qty }}</p>
+                            <p class="text-sm med-meta">min {{ $min }}</p>
                         </td>
-                        <td class="td text-center">
-                            <p class="text-xs text-gray-600">{{ $m->location?->full_location ?? '—' }}</p>
+                        <td class="text-center">
+                            <p class="text-sm text-gray-700 dark:text-gray-200">{{ $m->location?->full_location ?? '—' }}</p>
                         </td>
-                        <td class="td text-center">
-                            @if($exp)
-                                <p class="text-xs {{ $daysLeft <= 30 ? 'text-orange-600 font-semibold' : 'text-gray-600' }}">{{ $exp->format('M j, Y') }}</p>
-                                @if($daysLeft <= 30)
-                                <p class="text-xs text-orange-500">{{ $daysLeft }}d left</p>
+                        <td class="text-center">
+                            @if($isArchivedMan && $activeFilter === 'archive' && $archiveTab !== 'expired')
+                                <p class="text-sm font-semibold text-gray-800 dark:text-gray-100">{{ $m->archived_at->format('M j, Y') }}</p>
+                                <p class="text-sm med-meta">{{ $m->archived_at->diffForHumans() }}</p>
+                            @elseif($exp)
+                                <p class="text-sm font-semibold {{ $isExpired ? 'text-orange-600 dark:text-orange-300' : ($daysToExp <= 30 ? 'text-orange-600 dark:text-orange-300' : 'text-gray-800 dark:text-gray-100') }}">{{ $exp->format('M j, Y') }}</p>
+                                @if($isExpired)
+                                    <p class="text-sm med-meta">Expired {{ now()->startOfDay()->diffInDays($exp->startOfDay()) }}d ago</p>
+                                @elseif($daysToExp <= 30)
+                                    <p class="text-sm med-meta">{{ $daysToExp }}d left</p>
+                                @else
+                                    <p class="text-sm med-meta">{{ $exp->diffForHumans() }}</p>
                                 @endif
                             @else
-                                <span class="text-gray-300 text-xs">—</span>
+                                <span class="text-sm med-meta italic">—</span>
                             @endif
                         </td>
-                        <td class="td text-center">
-                            @if($qty <= 0)
-                                <span class="badge-crit"><i class="fa-solid fa-circle-xmark"></i> Out</span>
-                            @elseif($qty <= 5)
-                                <span class="badge-crit"><i class="fa-solid fa-triangle-exclamation"></i> Critical</span>
-                            @elseif($qty <= $min)
-                                <span class="badge-low"><i class="fa-solid fa-circle-exclamation"></i> Low</span>
-                            @else
-                                <span class="badge-ok"><i class="fa-solid fa-check"></i> Good</span>
+                        <td class="text-center">
+                            <span class="status-pill pill-{{ $pill[0] }}">
+                                <i class="fa-solid {{ $pill[1] }} text-xs"></i> {{ $pill[2] }}
+                            </span>
+                            @if($isArchivedMan && $m->archive_reason)
+                            <p class="text-xs med-meta mt-1 italic truncate max-w-[14rem] mx-auto" title="{{ $m->archive_reason }}">{{ $m->archive_reason }}</p>
                             @endif
                         </td>
-                        <td class="td px-2">
-                            <div class="flex items-center justify-stretch gap-3 row-action w-full">
-                                <button type="button"
-                                        onclick="event.stopPropagation(); openDispenseModal({{ $m->id }}, '{{ addslashes($m->name) }}', {{ $qty }})"
-                                        class="row-action inline-flex flex-1 items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-semibold bg-emerald-500 text-white hover:bg-emerald-600 transition-colors shadow-sm justify-center"
-                                        title="Dispense">
-                                    <i class="fa-solid fa-hand-holding-medical"></i> Dispense
-                                </button>
+                        <td>
+                            <div class="flex items-center gap-3 row-action w-full">
+                                @if($isArchivedMan)
+                                    {{-- Archived: no dispense; offer restore + delete --}}
+                                    @if($canDeleteMed)
+                                    <form method="POST" action="{{ route('medicines.unarchive', $m) }}" class="inline row-action flex-1" onclick="event.stopPropagation()">
+                                        @csrf
+                                        <button type="submit" onclick="event.stopPropagation()" class="row-action btn-row-unarchive w-full" title="Restore to active inventory">
+                                            <i class="fa-solid fa-rotate-left"></i> Restore
+                                        </button>
+                                    </form>
+                                    @endif
+                                @elseif($isExpired)
+                                    {{-- Expired (auto): no dispense; offer delete --}}
+                                    <span class="text-xs med-meta italic flex-1 text-center">Cannot dispense</span>
+                                @else
+                                    {{-- Active: dispense + archive --}}
+                                    <button type="button"
+                                            onclick="event.stopPropagation(); openDispenseModal({{ $m->id }}, '{{ addslashes($m->name) }}', {{ $qty }})"
+                                            class="row-action btn-row-dispense" title="Dispense">
+                                        <i class="fa-solid fa-hand-holding-medical"></i> Dispense
+                                    </button>
+                                    @if($canDeleteMed)
+                                    <button type="button"
+                                            onclick="event.stopPropagation(); openArchiveModal({{ $m->id }}, '{{ addslashes($m->name) }}')"
+                                            class="row-action btn-row-archive" title="Archive">
+                                        <i class="fa-solid fa-box-archive"></i> Archive
+                                    </button>
+                                    @endif
+                                @endif
                                 @if($canDeleteMed)
                                 <form method="POST" action="{{ route('medicines.destroy', $m) }}" class="inline row-action flex-1"
                                       onsubmit="event.stopPropagation(); return confirm('Delete {{ addslashes($m->name) }}?')"
                                       onclick="event.stopPropagation()">
                                     @csrf @method('DELETE')
-                                    <button type="submit" onclick="event.stopPropagation()"
-                                            class="row-action inline-flex w-full items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-semibold bg-red-100 text-red-700 hover:bg-red-200 transition-colors justify-center">
+                                    <button type="submit" onclick="event.stopPropagation()" class="row-action btn-row-delete w-full">
                                         <i class="fa-solid fa-trash"></i> Delete
                                     </button>
                                 </form>
@@ -337,10 +570,10 @@
                     @empty
                     <tr>
                         <td colspan="7" class="py-16 text-center">
-                            <div class="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
-                                <i class="fa-solid fa-pills text-gray-400 text-2xl"></i>
+                            <div class="w-16 h-16 bg-emerald-50 dark:bg-slate-800 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                                <i class="fa-solid fa-pills text-emerald-400 dark:text-gray-500 text-2xl"></i>
                             </div>
-                            <p class="text-gray-500 font-medium">No medicines match your filters</p>
+                            <p class="text-gray-500 dark:text-gray-400 font-medium">No medicines match your filters</p>
                         </td>
                     </tr>
                     @endforelse
@@ -348,7 +581,7 @@
             </table>
         </div>
         @if($medicines->hasPages())
-        <div class="px-6 py-3 border-t border-gray-100 bg-gray-50/50">
+        <div class="px-6 py-3 border-t border-gray-100 dark:border-slate-700 bg-gray-50/50 dark:bg-slate-900/40">
             {{ $medicines->links() }}
         </div>
         @endif
@@ -356,148 +589,18 @@
 
 </div>
 
-<!-- ── Add Medicine Modal ── -->
-<div id="addMedicineModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <div class="bg-gradient-to-r from-brand-600 to-brand-700 px-6 py-5 text-white">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-                        <i class="fa-solid fa-pills"></i>
-                    </div>
-                    <div>
-                        <h3 class="text-lg font-bold">Add New Medicine</h3>
-                        <p class="text-xs text-white/80">Manual inventory entry</p>
-                    </div>
-                </div>
-                <button type="button" onclick="closeAddModal()" class="w-8 h-8 rounded-xl flex items-center justify-center text-white/80 hover:text-white hover:bg-white/20">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
-            </div>
-        </div>
-        <form method="POST" action="{{ route('medicines.store') }}" enctype="multipart/form-data" class="px-6 py-5 space-y-5">
-            @csrf
-
-            <!-- Picture -->
-            <div class="flex items-center gap-4">
-                <div id="modalImgPreview" class="w-24 h-24 rounded-2xl border-2 border-dashed border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-slate-800 flex items-center justify-center overflow-hidden flex-shrink-0">
-                    <i class="fa-solid fa-image text-gray-300 dark:text-gray-500 text-2xl"></i>
-                </div>
-                <div>
-                    <label class="label">Medicine Picture <span class="text-gray-400 normal-case">(optional)</span></label>
-                    <label for="modalMedImage" class="btn-secondary cursor-pointer">
-                        <i class="fa-solid fa-upload"></i> Choose Image
-                    </label>
-                    <input type="file" id="modalMedImage" name="image" accept="image/*" class="hidden" onchange="previewModalImage(this)">
-                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1.5">JPG or PNG up to ~4 MB</p>
-                </div>
-            </div>
-
-            <div class="border-l-4 border-blue-400 bg-blue-50/30 rounded-r-xl p-4 space-y-3">
-                <p class="text-xs font-bold text-blue-700 uppercase tracking-wider flex items-center gap-2"><i class="fa-solid fa-tag"></i> Identity</p>
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="label">Name <span class="text-red-500">*</span></label>
-                        <input type="text" name="name" required class="input" placeholder="Amoxicillin 500mg">
-                    </div>
-                    <div>
-                        <label class="label">Generic Name</label>
-                        <input type="text" name="generic_name" class="input" placeholder="Amoxicillin">
-                    </div>
-                    <div>
-                        <label class="label">Type <span class="text-red-500">*</span></label>
-                        <select name="type" required class="input">
-                            <option value="normal">Over-the-Counter</option>
-                            <option value="prescription">Prescription (Rx)</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="label">Dosage</label>
-                        <input type="text" name="dosage" class="input" placeholder="500mg">
-                    </div>
-                    <div>
-                        <label class="label">Form</label>
-                        <select name="form" id="modalFormSelect" class="input" onchange="onModalFormChange()">
-                            <option value="">Select</option>
-                            <option value="tablet">Tablet</option>
-                            <option value="capsule">Capsule</option>
-                            <option value="syrup">Syrup</option>
-                            <option value="injection">Injection</option>
-                            <option value="cream">Cream / Ointment</option>
-                            <option value="other">Other (specify)</option>
-                        </select>
-                    </div>
-                    <div id="modalOtherNoteRow" class="hidden">
-                        <label class="label">Describe Form <span class="text-red-500">*</span></label>
-                        <input type="text" name="form_other_note" id="modalFormOtherNote" class="input" placeholder="e.g. Suppository, Inhaler">
-                    </div>
-                    <div>
-                        <label class="label">Barcode</label>
-                        <input type="text" name="barcode" class="input" placeholder="1234567890123">
-                    </div>
-                    <div>
-                        <label class="label">QR Code</label>
-                        <input type="text" name="qr_code" class="input" placeholder="optional">
-                    </div>
-                </div>
-            </div>
-
-            <div class="border-l-4 border-emerald-400 bg-emerald-50/30 rounded-r-xl p-4 space-y-3">
-                <p class="text-xs font-bold text-emerald-700 uppercase tracking-wider flex items-center gap-2"><i class="fa-solid fa-warehouse"></i> Stock & Location</p>
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="label">Quantity <span class="text-red-500">*</span></label>
-                        <input type="number" name="quantity" required min="0" class="input" placeholder="100">
-                    </div>
-                    <div>
-                        <label class="label">Min Stock Level <span class="text-red-500">*</span></label>
-                        <input type="number" name="min_stock_level" required min="1" value="10" class="input">
-                    </div>
-                    <div class="col-span-2">
-                        <label class="label">Storage Location <span class="text-red-500">*</span></label>
-                        <select name="location_id" required class="input">
-                            <option value="">Select location</option>
-                            @foreach($locations as $loc)
-                            <option value="{{ $loc->id }}">{{ $loc->full_location }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div>
-                        <label class="label">Expiry Date <span class="text-red-500">*</span></label>
-                        <input type="date" name="expiration_date" required class="input">
-                    </div>
-                    <div>
-                        <label class="label">Batch Number</label>
-                        <input type="text" name="batch_number" class="input" placeholder="BTH-2024-001">
-                    </div>
-                </div>
-            </div>
-
-            <div class="border-l-4 border-amber-400 bg-amber-50/30 rounded-r-xl p-4 space-y-3">
-                <p class="text-xs font-bold text-amber-700 uppercase tracking-wider flex items-center gap-2"><i class="fa-solid fa-circle-info"></i> Description</p>
-                <textarea name="description" rows="2" class="input resize-none" placeholder="Indications, side effects, special instructions"></textarea>
-            </div>
-
-            <div class="flex justify-between items-center pt-3 border-t border-gray-100">
-                <button type="button" onclick="closeAddModal()" class="btn-secondary"><i class="fa-solid fa-xmark"></i> Cancel</button>
-                <button type="submit" class="btn-primary"><i class="fa-solid fa-floppy-disk"></i> Save Medicine</button>
-            </div>
-        </form>
-    </div>
-</div>
-
 <!-- ── Dispense Modal ── -->
 <div id="dispenseModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md">
-        <div class="px-6 py-5 border-b border-gray-100">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-md border-2 border-gray-100 dark:border-slate-700">
+        <div class="px-6 py-5 border-b border-gray-100 dark:border-slate-700">
             <div class="flex items-center justify-between">
-                <h3 class="text-lg font-bold text-gray-900">Dispense Medicine</h3>
-                <button type="button" onclick="closeDispenseModal()" class="w-8 h-8 rounded-xl flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-100">
+                <h3 class="text-lg font-bold text-gray-900 dark:text-white">Dispense Medicine</h3>
+                <button type="button" onclick="closeDispenseModal()" class="w-8 h-8 rounded-xl flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-slate-800">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
-            <p class="text-sm text-brand-700 mt-2 font-semibold" id="dispenseMedName">—</p>
-            <p class="text-xs text-gray-500" id="dispenseMedStock">In stock: —</p>
+            <p class="text-sm text-brand-700 dark:text-brand-300 mt-2 font-semibold" id="dispenseMedName">—</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400" id="dispenseMedStock">In stock: —</p>
         </div>
         <form id="dispenseForm" method="POST" class="px-6 py-5 space-y-4">
             @csrf
@@ -509,7 +612,7 @@
                 <label class="label">Notes</label>
                 <input type="text" name="notes" class="input" placeholder="Patient name or reason">
             </div>
-            <div class="flex justify-between gap-3 pt-2 border-t border-gray-100">
+            <div class="flex justify-between gap-3 pt-2 border-t border-gray-100 dark:border-slate-700">
                 <button type="button" onclick="closeDispenseModal()" class="btn-secondary"><i class="fa-solid fa-xmark"></i> Cancel</button>
                 <button type="submit" class="btn-primary"><i class="fa-solid fa-hand-holding-medical"></i> Dispense</button>
             </div>
@@ -517,25 +620,35 @@
     </div>
 </div>
 
-<!-- ── Add Location Modal ── -->
-<div id="locationModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md">
-        <div class="px-6 py-5 border-b border-gray-100">
-            <h3 class="text-lg font-bold text-gray-900">Add Storage Location</h3>
-            <p class="text-xs text-gray-500 mt-0.5">Define a new cabinet, shelf, or section</p>
-        </div>
-        <form method="POST" action="{{ route('medicines.locations.store') }}" class="px-6 py-5 space-y-3">
-            @csrf
-            <div class="grid grid-cols-2 gap-3">
-                <div><label class="label">Cabinet <span class="text-red-500">*</span></label><input type="text" name="cabinet" required class="input" placeholder="A"></div>
-                <div><label class="label">Shelf <span class="text-red-500">*</span></label><input type="text" name="shelf" required class="input" placeholder="2"></div>
-                <div><label class="label">Level <span class="text-red-500">*</span></label><input type="text" name="level" required class="input" placeholder="Top"></div>
-                <div><label class="label">Section</label><input type="text" name="section" class="input" placeholder="Left"></div>
+<!-- ── Archive Modal ── -->
+<div id="archiveModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-md border-2 border-gray-100 dark:border-slate-700">
+        <div class="px-6 py-5 border-b border-gray-100 dark:border-slate-700">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-bold text-gray-900 dark:text-white">Archive Medicine</h3>
+                <button type="button" onclick="closeArchiveModal()" class="w-8 h-8 rounded-xl flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-slate-800">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
             </div>
-            <div><label class="label">Notes</label><textarea name="notes" rows="2" class="input resize-none"></textarea></div>
-            <div class="flex justify-between gap-3 pt-2 border-t border-gray-100">
-                <button type="button" onclick="closeLocationModal()" class="btn-secondary"><i class="fa-solid fa-xmark"></i> Cancel</button>
-                <button type="submit" class="btn-primary"><i class="fa-solid fa-plus"></i> Add Location</button>
+            <p class="text-sm text-slate-700 dark:text-slate-300 mt-2 font-semibold" id="archiveMedName">—</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Pull this medicine from active circulation. You can restore it any time.</p>
+        </div>
+        <form id="archiveForm" method="POST" class="px-6 py-5 space-y-4">
+            @csrf
+            <div>
+                <label class="label">Reason <span class="text-red-500">*</span></label>
+                <input type="text" name="reason" required maxlength="255" class="input" placeholder="Recalled by manufacturer, damaged batch, etc.">
+            </div>
+            <div>
+                <label class="label">Storage After Archive <span class="text-red-500">*</span></label>
+                <select name="archive_location_type" required class="input cs-select">
+                    <option value="med_room">Stays in the med room (off-rotation)</option>
+                    <option value="storage">Moved to storage / warehouse</option>
+                </select>
+            </div>
+            <div class="flex justify-between gap-3 pt-2 border-t border-gray-100 dark:border-slate-700">
+                <button type="button" onclick="closeArchiveModal()" class="btn-secondary"><i class="fa-solid fa-xmark"></i> Cancel</button>
+                <button type="submit" class="inline-flex items-center gap-2 px-4 py-2.5 bg-slate-700 hover:bg-slate-800 text-white text-sm font-semibold rounded-xl transition-colors"><i class="fa-solid fa-box-archive"></i> Archive</button>
             </div>
         </form>
     </div>
@@ -543,12 +656,7 @@
 
 @push('scripts')
 <script>
-function openAddModal()      { document.getElementById('addMedicineMenu').classList.add('hidden'); document.getElementById('addMedicineModal').classList.remove('hidden'); document.body.style.overflow='hidden'; }
-function closeAddModal()     { document.getElementById('addMedicineModal').classList.add('hidden'); document.body.style.overflow=''; }
-function openLocationModal() { document.getElementById('addMedicineMenu').classList.add('hidden'); document.getElementById('locationModal').classList.remove('hidden'); document.body.style.overflow='hidden'; }
-function closeLocationModal(){ document.getElementById('locationModal').classList.add('hidden'); document.body.style.overflow=''; }
 function closeDispenseModal(){ document.getElementById('dispenseModal').classList.add('hidden'); document.body.style.overflow=''; }
-
 function openDispenseModal(id, name, stock) {
     document.getElementById('dispenseMedName').textContent  = name;
     document.getElementById('dispenseMedStock').textContent = `In stock: ${stock} units`;
@@ -557,17 +665,17 @@ function openDispenseModal(id, name, stock) {
     document.getElementById('dispenseModal').classList.remove('hidden');
     document.body.style.overflow = 'hidden';
 }
-
-function toggleArchive() {
-    const c = document.getElementById('archiveContent');
-    const caret = document.getElementById('archiveCaret');
-    c.classList.toggle('hidden');
-    caret.classList.toggle('rotate-180');
+function openArchiveModal(id, name) {
+    document.getElementById('archiveMedName').textContent = name;
+    document.getElementById('archiveForm').action = `/medicines/${id}/archive`;
+    document.getElementById('archiveModal').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
 }
+function closeArchiveModal(){ document.getElementById('archiveModal').classList.add('hidden'); document.body.style.overflow=''; }
 
-document.addEventListener('keydown', e => { if(e.key==='Escape'){ closeAddModal(); closeLocationModal(); closeDispenseModal(); } });
+document.addEventListener('keydown', e => { if(e.key==='Escape'){ closeDispenseModal(); closeArchiveModal(); } });
 
-// Highlight & scroll to a newly-added medicine when arriving from Smart Scan (?highlight=ID)
+// Highlight & scroll to a newly-added medicine (?highlight=ID)
 (function () {
     const params = new URLSearchParams(window.location.search);
     const id = params.get('highlight');
@@ -583,34 +691,6 @@ document.addEventListener('keydown', e => { if(e.key==='Escape'){ closeAddModal(
         window.history.replaceState({}, '', url);
     }, 150);
 })();
-
-// Add-modal: "Other" form (Type ≠ Form here, but if you choose Other-form in modal, ask for a note)
-function onModalFormChange() {
-    const sel = document.getElementById('modalFormSelect');
-    const row = document.getElementById('modalOtherNoteRow');
-    const note = document.getElementById('modalFormOtherNote');
-    if (!sel || !row || !note) return;
-    if (sel.value === 'other') {
-        row.classList.remove('hidden');
-        note.required = true;
-    } else {
-        row.classList.add('hidden');
-        note.required = false;
-        note.value = '';
-    }
-}
-
-function previewModalImage(input) {
-    const file = input.files[0];
-    if (!file) return;
-    const r = new FileReader();
-    r.onload = e => {
-        document.getElementById('modalImgPreview').innerHTML = `<img src="${e.target.result}" class="w-full h-full object-cover" alt="preview">`;
-    };
-    r.readAsDataURL(file);
-}
-
-@if($errors->any()) openAddModal(); @endif
 </script>
 @endpush
 @endsection

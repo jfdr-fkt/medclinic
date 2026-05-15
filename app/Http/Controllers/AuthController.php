@@ -76,4 +76,38 @@ class AuthController extends Controller
         $request->session()->regenerateToken();
         return redirect()->route('login');
     }
+
+    /**
+     * Force-change-password screen. Only reachable when must_change_password = true on
+     * the logged-in user (the ForcePasswordChange middleware redirects every other
+     * route here until the flag clears).
+     */
+    public function showForcePassword()
+    {
+        // If somehow the flag was cleared already, send them on to the dashboard.
+        if (! Auth::user()?->must_change_password) {
+            return redirect()->route('dashboard');
+        }
+        return view('auth.force-password');
+    }
+
+    public function updateForcePassword(Request $request)
+    {
+        $request->validate([
+            'password' => 'required|string|min:6|confirmed',
+        ]);
+
+        $user = Auth::user();
+        // Reject reusing the same temporary password — they're supposed to pick a new one.
+        if (Hash::check($request->password, $user->password)) {
+            return back()->withErrors(['password' => 'Please pick a password different from the temporary one.']);
+        }
+
+        $user->update([
+            'password'             => Hash::make($request->password),
+            'must_change_password' => false,
+        ]);
+
+        return redirect()->route('dashboard')->with('success', 'Password updated. Welcome to ClinicMS!');
+    }
 }
