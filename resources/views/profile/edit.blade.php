@@ -185,9 +185,12 @@
     <!-- ── Display & Accessibility ── -->
     <div class="card overflow-hidden">
         <div class="px-6 py-4 border-b border-gray-100 dark:border-slate-700 flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center">
+            <button type="button" id="settingsGlyph"
+                    class="w-10 h-10 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center cursor-pointer select-none"
+                    style="border:none; outline:none;"
+                    aria-label="Settings">
                 <i class="fa-solid fa-gear"></i>
-            </div>
+            </button>
             <div>
                 <h3 class="font-bold text-gray-900 dark:text-white text-base">Display & Accessibility</h3>
                 <p class="text-xs text-gray-500">Customize how the interface looks</p>
@@ -316,6 +319,18 @@
 </div>
 
 @push('scripts')
+@php
+    // Pick up any image files dropped in public/img/67/ — they get sprinkled
+    // across the overlay if present. Empty folder → text-only overlay.
+    $imgDir   = public_path('img/67');
+    $imgFiles = is_dir($imgDir)
+        ? collect(glob($imgDir . '/*.{jpg,jpeg,png,gif,webp,JPG,JPEG,PNG,GIF,WEBP}', GLOB_BRACE) ?: [])
+            ->map(fn($p) => asset('img/67/' . basename($p)))
+            ->values()->all()
+        : [];
+    $audioPath  = public_path('audio/67.mp3');
+    $audioUrl   = file_exists($audioPath) ? asset('audio/67.mp3') : null;
+@endphp
 <script>
 function setTheme(theme) {
     document.documentElement.classList.toggle('dark', theme === 'dark');
@@ -330,6 +345,192 @@ function setTheme(theme) {
         body: JSON.stringify({ theme })
     }).then(() => location.reload());
 }
+
+(function () {
+    const target = document.getElementById('settingsGlyph');
+    if (!target) return;
+
+    const IMAGES   = @json($imgFiles);
+    const AUDIO    = @json($audioUrl);
+    const DURATION = 7000;
+    const NEEDED   = 7;
+    const MAX_GAP  = 2000;
+
+    let count = 0;
+    let last  = 0;
+    let armed = false;
+
+    target.addEventListener('click', () => {
+        if (armed) return;
+        const now = performance.now();
+        const gap = now - last;
+        last = now;
+
+        if (count > 0 && gap > MAX_GAP) count = 1;
+        else count++;
+
+        if (count === NEEDED) {
+            count  = 0;
+            armed  = true;
+            run();
+            setTimeout(() => { armed = false; }, DURATION + 250);
+        } else if (count > NEEDED) {
+            count = 0;
+        }
+    });
+
+    function run() {
+        const overlay = document.createElement('div');
+        overlay.style.cssText = `
+            position:fixed; inset:0; z-index:99999;
+            display:flex; align-items:center; justify-content:center;
+            overflow:hidden;
+            background:#000;
+            font-family:'Inter',sans-serif;
+            animation: bgStrobe 60ms steps(1) infinite;
+        `;
+
+        if (!document.getElementById('settingsGlyphFx')) {
+            const st = document.createElement('style');
+            st.id = 'settingsGlyphFx';
+            st.textContent = `
+                @keyframes bgStrobe {
+                    0%   { background:#ff006e; }
+                    16%  { background:#fb5607; }
+                    33%  { background:#ffbe0b; }
+                    50%  { background:#8338ec; }
+                    66%  { background:#3a86ff; }
+                    83%  { background:#06ffa5; }
+                    100% { background:#ff4d6d; }
+                }
+                @keyframes spinFast {
+                    from { transform: rotate(0) scale(var(--scale,1)); }
+                    to   { transform: rotate(360deg) scale(var(--scale,1)); }
+                }
+                @keyframes pulseScale {
+                    0%,100% { transform: scale(var(--scale,1)); }
+                    50%     { transform: scale(calc(var(--scale,1) * 1.6)); }
+                }
+                @keyframes flyAcross {
+                    0%   { transform: translate(-50vw, -10vh) rotate(0); }
+                    100% { transform: translate(50vw, 10vh) rotate(720deg); }
+                }
+                @keyframes wobble {
+                    0%,100% { transform: translate(0,0) rotate(-15deg); }
+                    50%     { transform: translate(20px,-10px) rotate(15deg); }
+                }
+                .fx-glyph {
+                    position:absolute;
+                    font-weight:900;
+                    text-shadow:0 0 20px #fff, 0 0 40px currentColor;
+                    pointer-events:none; user-select:none;
+                    will-change:transform,opacity;
+                    line-height:1;
+                }
+                .fx-img {
+                    position:absolute;
+                    pointer-events:none; user-select:none;
+                    object-fit:contain;
+                    border-radius:.5rem;
+                    box-shadow:0 0 25px rgba(255,255,255,.6), 0 0 50px rgba(255,0,110,.5);
+                    will-change:transform;
+                }
+                .fx-stop {
+                    position:fixed;
+                    bottom:1.25rem; right:1.25rem;
+                    padding:.55rem .9rem;
+                    background:rgba(0,0,0,.6); color:#fff;
+                    border:2px solid #fff;
+                    border-radius:.75rem;
+                    font-weight:800; font-size:.8rem;
+                    z-index:100000;
+                    cursor:pointer;
+                    letter-spacing:.05em;
+                }
+            `;
+            document.head.appendChild(st);
+        }
+
+        document.body.appendChild(overlay);
+
+        const phrases = ['67','6-7','67!!!','SIX SEVEN','P-67-420','67 💀','67 🔥'];
+        const colors  = ['#ff006e','#fb5607','#ffbe0b','#8338ec','#3a86ff','#06ffa5','#ff4d6d','#ffffff','#ff0000','#00ff00','#00ffff','#ffff00'];
+        const anims   = ['spinFast .35s linear infinite','pulseScale .25s ease-in-out infinite','flyAcross 1.6s linear infinite','wobble .2s ease-in-out infinite'];
+
+        const textCount = IMAGES.length > 0 ? 50 : 80;
+        for (let i = 0; i < textCount; i++) {
+            const g = document.createElement('div');
+            g.className = 'fx-glyph';
+            g.textContent = phrases[Math.floor(Math.random() * phrases.length)];
+            const size  = 2 + Math.random() * 8;
+            const scale = 0.8 + Math.random() * 1.8;
+            g.style.fontSize  = size + 'rem';
+            g.style.color     = colors[Math.floor(Math.random() * colors.length)];
+            g.style.top       = (Math.random() * 100) + '%';
+            g.style.left      = (Math.random() * 100) + '%';
+            g.style.setProperty('--scale', scale);
+            g.style.animation = anims[Math.floor(Math.random() * anims.length)];
+            g.style.animationDelay = (Math.random() * 0.4) + 's';
+            overlay.appendChild(g);
+        }
+
+        if (IMAGES.length > 0) {
+            for (let i = 0; i < 30; i++) {
+                const img = document.createElement('img');
+                img.className = 'fx-img';
+                img.src = IMAGES[Math.floor(Math.random() * IMAGES.length)];
+                const sz = 6 + Math.random() * 14;
+                const scale = 0.9 + Math.random() * 1.3;
+                img.style.width  = sz + 'rem';
+                img.style.height = sz + 'rem';
+                img.style.top    = (Math.random() * 100) + '%';
+                img.style.left   = (Math.random() * 100) + '%';
+                img.style.setProperty('--scale', scale);
+                img.style.animation = anims[Math.floor(Math.random() * anims.length)];
+                img.style.animationDelay = (Math.random() * 0.4) + 's';
+                overlay.appendChild(img);
+            }
+        }
+
+        const mega = document.createElement('div');
+        mega.className = 'fx-glyph';
+        mega.textContent = '67';
+        mega.style.cssText = `
+            position:relative;
+            font-size:28vw;
+            color:#fff;
+            font-weight:900;
+            text-shadow:0 0 40px #fff, 0 0 80px #ff006e, 0 0 120px #3a86ff;
+            animation: pulseScale .2s ease-in-out infinite;
+            --scale: 1;
+        `;
+        overlay.appendChild(mega);
+
+        const stopBtn = document.createElement('button');
+        stopBtn.className = 'fx-stop';
+        stopBtn.textContent = '× MAKE IT STOP';
+        overlay.appendChild(stopBtn);
+
+        let audioEl = null;
+        if (AUDIO) {
+            audioEl = document.createElement('audio');
+            audioEl.src = AUDIO;
+            audioEl.loop = true;
+            audioEl.volume = 1.0;
+            const p = audioEl.play();
+            if (p && p.catch) p.catch(() => {});
+        }
+
+        function cleanup() {
+            if (audioEl) {
+                try { audioEl.pause(); audioEl.src = ''; } catch (e) {}
+            }
+            overlay.remove();
+        }
+        stopBtn.addEventListener('click', cleanup);
+        setTimeout(cleanup, DURATION);
+    }
+})();
 </script>
 @endpush
 @endsection

@@ -23,6 +23,33 @@
             })
             ->count('messages.id');
         $bellCount = $unreadDM + $unreadGroups;
+
+        // Bell dropdown feed — unread DMs + low/expiring stock if the user is involved with meds.
+        $bellDMs = \App\Models\Message::with('sender')
+            ->where('receiver_id', $appUser->id)
+            ->where('is_read', false)
+            ->whereNull('group_id')
+            ->latest()
+            ->take(4)
+            ->get();
+
+        $bellLowStock = collect();
+        $bellExpiring = collect();
+        if ($appUser->can_('medicines.dispense')) {
+            $bellLowStock = \App\Models\Medicine::with(['latestInventory', 'location'])
+                ->whereNull('archived_at')
+                ->whereHas('inventories', fn($s) => $s->whereColumn('quantity', '<=', 'min_stock_level')->where('quantity', '>', 0))
+                ->whereDoesntHave('latestInventory', fn($s) => $s->where('expiration_date', '<', now()))
+                ->take(3)->get();
+            $bellExpiring = \App\Models\Medicine::with(['latestInventory'])
+                ->whereNull('archived_at')
+                ->whereHas('inventories', fn($s) =>
+                    $s->where('expiration_date', '<=', now()->addDays(30))
+                      ->where('expiration_date', '>=', now())
+                )->take(3)->get();
+        }
+        $bellAlertCount = $bellLowStock->count() + $bellExpiring->count();
+        $bellHasAnything = $bellCount > 0 || $bellAlertCount > 0;
     }
 @endphp
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="{{ trim($rootClass) }}">
@@ -603,21 +630,109 @@
                     </div>
                 </div>
 
-                <!-- Notifications bell — unread DMs + group msgs + low-stock alerts -->
+                <!-- Notifications bell — dropdown panel with DMs + stock alerts -->
                 @auth
-                @php $hasAlert = $bellCount > 0 || (isset($lowStockMedicines) && $lowStockMedicines->count() > 0); @endphp
-                <a href="{{ route('chat.index') }}"
-                   class="relative p-2 text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-slate-800 rounded-xl transition-colors"
-                   title="{{ $bellCount > 0 ? $bellCount.' unread message'.($bellCount === 1 ? '' : 's') : 'No new messages' }}">
-                    <i class="fa-solid fa-bell text-base"></i>
-                    @if($bellCount > 0)
-                    <span id="bellBadge" class="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center ring-2 ring-white dark:ring-slate-900 leading-none">
-                        {{ $bellCount > 9 ? '9+' : $bellCount }}
-                    </span>
-                    @elseif($hasAlert)
-                    <span class="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white dark:ring-slate-900"></span>
-                    @endif
-                </a>
+                <div class="relative">
+                    <button type="button" onclick="toggleDropdown('bellMenu')"
+                            class="relative p-2 text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-slate-800 rounded-xl transition-colors"
+                            title="Notifications">
+                        <i class="fa-solid fa-bell text-base"></i>
+                        @if($bellCount > 0)
+                        <span class="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center ring-2 ring-white dark:ring-slate-900 leading-none">
+                            {{ $bellCount > 9 ? '9+' : $bellCount }}
+                        </span>
+                        @elseif($bellAlertCount > 0)
+                        <span class="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-amber-500 ring-2 ring-white dark:ring-slate-900"></span>
+                        @endif
+                    </button>
+                    <div id="bellMenu" class="hidden absolute right-0 mt-2 w-96 max-w-[calc(100vw-2rem)] bg-white dark:bg-slate-900 rounded-2xl shadow-xl border-2 border-gray-100 dark:border-slate-700 z-40 overflow-hidden">
+                        <div class="px-4 py-3 border-b border-gray-100 dark:border-slate-700 flex items-center justify-between">
+                            <p class="font-bold text-gray-900 dark:text-white text-sm">Notifications</p>
+                            @if($bellHasAnything)
+                            <span class="text-xs text-gray-500 dark:text-gray-400">{{ $bellCount + $bellAlertCount }} new</span>
+                            @endif
+                        </div>
+
+                        <div class="max-h-[28rem] overflow-y-auto divide-y divide-gray-100 dark:divide-slate-700">
+
+                            @if($bellDMs->isNotEmpty())
+                            <div class="py-1">
+                                <p class="px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 flex items-center gap-1.5">
+                                    <i class="fa-solid fa-message text-brand-500"></i> Unread Messages
+                                </p>
+                                @foreach($bellDMs as $msg)
+                                <a href="{{ route('chat.index', ['with' => $msg->sender_id]) }}" class="flex items-start gap-3 px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
+                                    <div class="w-9 h-9 rounded-full bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                                        {{ strtoupper(substr($msg->sender?->name ?? '??', 0, 2)) }}
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex items-baseline justify-between gap-2">
+                                            <p class="text-sm font-semibold text-gray-900 dark:text-white truncate">{{ $msg->sender?->name ?? 'Unknown' }}</p>
+                                            <span class="text-[10px] text-gray-400 dark:text-gray-500 flex-shrink-0">{{ $msg->created_at->diffForHumans(null, true) }}</span>
+                                        </div>
+                                        <p class="text-xs text-gray-600 dark:text-gray-300 truncate">{{ \Illuminate\Support\Str::limit($msg->body, 60) }}</p>
+                                    </div>
+                                </a>
+                                @endforeach
+                            </div>
+                            @endif
+
+                            @if($bellLowStock->isNotEmpty())
+                            <div class="py-1">
+                                <p class="px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 flex items-center gap-1.5">
+                                    <i class="fa-solid fa-triangle-exclamation text-amber-500"></i> Low Stock
+                                </p>
+                                @foreach($bellLowStock as $m)
+                                @php $qty = $m->latestInventory?->quantity ?? 0; @endphp
+                                <a href="{{ route('medicines.show', $m) }}" class="flex items-start gap-3 px-4 py-2.5 hover:bg-amber-50/40 dark:hover:bg-slate-800 transition-colors">
+                                    <div class="w-9 h-9 rounded-lg bg-amber-100 dark:bg-amber-900/35 text-amber-700 dark:text-amber-300 flex items-center justify-center flex-shrink-0">
+                                        <i class="fa-solid fa-pills text-xs"></i>
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <p class="text-sm font-semibold text-gray-900 dark:text-white truncate">{{ $m->name }}</p>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400 truncate">{{ $qty }} left · {{ $m->location?->full_location ?? 'No location' }}</p>
+                                    </div>
+                                </a>
+                                @endforeach
+                            </div>
+                            @endif
+
+                            @if($bellExpiring->isNotEmpty())
+                            <div class="py-1">
+                                <p class="px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 flex items-center gap-1.5">
+                                    <i class="fa-solid fa-calendar-xmark text-orange-500"></i> Expiring Soon
+                                </p>
+                                @foreach($bellExpiring as $m)
+                                @php $exp = $m->latestInventory?->expiration_date ? \Carbon\Carbon::parse($m->latestInventory->expiration_date) : null; @endphp
+                                <a href="{{ route('medicines.show', $m) }}" class="flex items-start gap-3 px-4 py-2.5 hover:bg-orange-50/40 dark:hover:bg-slate-800 transition-colors">
+                                    <div class="w-9 h-9 rounded-lg bg-orange-100 dark:bg-orange-900/35 text-orange-700 dark:text-orange-300 flex items-center justify-center flex-shrink-0">
+                                        <i class="fa-solid fa-calendar-xmark text-xs"></i>
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <p class="text-sm font-semibold text-gray-900 dark:text-white truncate">{{ $m->name }}</p>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400 truncate">{{ $exp ? $exp->format('M j, Y') : '—' }} · {{ $exp ? now()->startOfDay()->diffInDays($exp->startOfDay()).'d left' : '' }}</p>
+                                    </div>
+                                </a>
+                                @endforeach
+                            </div>
+                            @endif
+
+                            @if(!$bellHasAnything)
+                            <div class="text-center py-10 px-6">
+                                <div class="w-14 h-14 bg-gray-50 dark:bg-slate-800 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                                    <i class="fa-solid fa-bell-slash text-gray-300 dark:text-gray-500 text-xl"></i>
+                                </div>
+                                <p class="text-sm text-gray-500 dark:text-gray-400 font-medium">You're all caught up</p>
+                                <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">New messages and alerts will appear here</p>
+                            </div>
+                            @endif
+                        </div>
+
+                        <a href="{{ route('chat.index') }}" class="block px-4 py-3 border-t border-gray-100 dark:border-slate-700 text-sm font-semibold text-brand-600 dark:text-brand-300 hover:bg-brand-50/50 dark:hover:bg-slate-800 text-center transition-colors">
+                            <i class="fa-solid fa-comments mr-1.5"></i> Open Staff Chat
+                        </a>
+                    </div>
+                </div>
                 @endauth
 
                 <span class="hidden md:inline text-sm text-gray-400">{{ date('M j, Y') }}</span>

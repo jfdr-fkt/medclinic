@@ -411,7 +411,7 @@
                 <span class="count-chip">{{ $archiveExpiredCount }}</span>
             </a>
             <a href="{{ $tabLink('manual_med_room') }}" class="archive-tab {{ $archiveTab === 'manual_med_room' ? 'active' : '' }}">
-                <i class="fa-solid fa-flask"></i> Med Room
+                <i class="fa-solid fa-shield-halved"></i> Quarantine
                 <span class="count-chip">{{ $archiveManualMedCount }}</span>
             </a>
             <a href="{{ $tabLink('manual_storage') }}" class="archive-tab {{ $archiveTab === 'manual_storage' ? 'active' : '' }}">
@@ -452,7 +452,7 @@
 
                         // Pick the row's status pill — archive states win over stock states.
                         if ($isArchivedMan) {
-                            $pill = ['arch', 'fa-box-archive', $m->archive_location_type === 'storage' ? 'ARCHIVED · STORAGE' : 'ARCHIVED · MED ROOM'];
+                            $pill = ['arch', 'fa-box-archive', $m->archive_location_type === 'storage' ? 'ARCHIVED · STORAGE' : 'ARCHIVED · QUARANTINE'];
                         } elseif ($isExpired) {
                             $pill = ['exp', 'fa-calendar-xmark', 'EXPIRED'];
                         } elseif ($qty <= 0) {
@@ -642,8 +642,8 @@
             <div>
                 <label class="label">Storage After Archive <span class="text-red-500">*</span></label>
                 <select name="archive_location_type" required class="input cs-select">
-                    <option value="med_room">Stays in the med room (off-rotation)</option>
-                    <option value="storage">Moved to storage / warehouse</option>
+                    <option value="med_room">Quarantine — still in the med room, pulled from rotation</option>
+                    <option value="storage">Storage Room — moved to back-of-house storage</option>
                 </select>
             </div>
             <div class="flex justify-between gap-3 pt-2 border-t border-gray-100 dark:border-slate-700">
