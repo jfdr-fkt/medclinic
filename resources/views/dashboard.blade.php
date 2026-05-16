@@ -113,10 +113,10 @@
         <div class="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
                 <h1 class="text-2xl font-bold">
-                    Good {{ now()->hour < 12 ? 'morning' : (now()->hour < 18 ? 'afternoon' : 'evening') }},
+                    <span id="greetingPart">Welcome</span>,
                     {{ Str::before(Auth::user()->name, ' ') }}
                 </h1>
-                <p class="text-white/80 text-sm mt-1">{{ date('l, F j, Y') }} &bull; Here's what's happening at the clinic today</p>
+                <p class="text-white/80 text-sm mt-1"><span id="greetingDate">{{ date('l, F j, Y') }}</span> &bull; Here's what's happening at the clinic today</p>
             </div>
             @if(Auth::user()->can_('patients.view'))
             <a href="{{ route('patients.index') }}" class="inline-flex items-center gap-2 bg-white/15 hover:bg-white/25 border border-white/20 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors w-fit"
@@ -341,4 +341,23 @@
     @endif
 
 </div>
+
+@push('scripts')
+<script>
+// Greeting reads from the browser's local clock, not the server, so users in
+// different timezones get the right "morning / afternoon / evening" word and
+// the date below it lines up with their actual day.
+(function () {
+    const now = new Date();
+    const h = now.getHours();
+    const word = h < 12 ? 'Good morning' : (h < 18 ? 'Good afternoon' : 'Good evening');
+    const part = document.getElementById('greetingPart');
+    const date = document.getElementById('greetingDate');
+    if (part) part.textContent = word;
+    if (date) date.textContent = now.toLocaleDateString(undefined, {
+        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+    });
+})();
+</script>
+@endpush
 @endsection

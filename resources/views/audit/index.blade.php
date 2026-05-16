@@ -180,11 +180,13 @@
                         <td>
                             <p class="text-sm text-gray-700 dark:text-gray-200">{{ $log->details ?? '—' }}</p>
                             @php
-                                // Build a deep-link to the record being audited, if we have a route for it.
-                                $deepLink = match($log->entity_type) {
-                                    \App\Models\Patient::class  => route('patients.show', $log->entity_id),
+                                // Delete actions point at rows that no longer exist — the deep link would 404 on click.
+                                // Surface a static "Record removed" label instead so the audit row still reads clean.
+                                $isDelete = str_ends_with($log->action, '.delete');
+                                $deepLink = $isDelete ? null : match($log->entity_type) {
+                                    \App\Models\Patient::class  => route('patients.show',  $log->entity_id),
                                     \App\Models\Medicine::class => route('medicines.show', $log->entity_id),
-                                    \App\Models\User::class     => route('staff.show', $log->entity_id),
+                                    \App\Models\User::class     => route('staff.show',     $log->entity_id),
                                     default                     => null,
                                 };
                             @endphp
@@ -192,6 +194,10 @@
                             <a href="{{ $deepLink }}" class="text-xs font-semibold text-brand-600 dark:text-brand-300 hover:underline inline-flex items-center gap-1 mt-1">
                                 <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i> Open record
                             </a>
+                            @elseif($isDelete)
+                            <span class="text-xs font-semibold text-gray-400 dark:text-gray-500 inline-flex items-center gap-1 mt-1 italic">
+                                <i class="fa-solid fa-circle-minus text-[10px]"></i> Record removed
+                            </span>
                             @endif
                         </td>
                         <td class="text-center">

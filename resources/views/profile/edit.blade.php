@@ -316,6 +316,22 @@
             </div>
         </div>
     </div>
+
+    <!-- ── Sign out ── -->
+    <div class="card p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
+            <p class="text-sm font-bold text-gray-900 dark:text-white">Sign out</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">End your session on this device.</p>
+        </div>
+        <form method="POST" action="{{ route('logout') }}"
+              onsubmit="return confirm('Sign out of ClinicMS?');">
+            @csrf
+            <button type="submit"
+                    class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-sm font-bold transition-colors shadow-sm">
+                <i class="fa-solid fa-right-from-bracket"></i> Log out
+            </button>
+        </form>
+    </div>
 </div>
 
 @push('scripts')

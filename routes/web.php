@@ -82,6 +82,8 @@ Route::middleware(['auth', 'no.back', 'force.pw.change'])->group(function () {
     Route::get('/staff',                          [StaffController::class, 'index'])->name('staff.index');
     Route::post('/staff',                         [StaffController::class, 'store'])->name('staff.store');
     Route::get('/staff/{user}',                   [StaffController::class, 'show'])->name('staff.show');
+    Route::delete('/staff/{user}',                [StaffController::class, 'destroy'])->name('staff.destroy');
+    Route::get('/staff/{user}/shift-on',          [StaffController::class, 'shiftOn'])->name('staff.shifts.lookup');
     Route::post('/staff/shifts/store',            [StaffController::class, 'storeShift'])->name('staff.shifts.store');
 
     // Chat

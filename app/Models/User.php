@@ -64,6 +64,7 @@ class User extends Authenticatable
             'medicines.locations' => in_array($r, ['admin','clinic_head']),
             // Staff management
             'staff.create'        => $r === 'admin',
+            'staff.delete'        => $r === 'admin',
             'staff.shifts.manage' => in_array($r, ['admin','clinic_head']),
             // Audit log — admin sees who accessed which patient records.
             // Required by HIPAA / PH Data Privacy Act: "minimum necessary access" + audit trail.

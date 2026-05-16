@@ -138,9 +138,9 @@
                         class="conv-order-btn flex-1 text-[11px] font-bold py-1.5 rounded-md transition-colors">
                     <i class="fa-solid fa-layer-group mr-1"></i> By Role
                 </button>
-                <button type="button" data-order="alpha" onclick="setConvOrder('alpha')"
+                <button type="button" id="convAlphaBtn" data-order="alpha" onclick="toggleAlphaOrder()"
                         class="conv-order-btn flex-1 text-[11px] font-bold py-1.5 rounded-md transition-colors">
-                    <i class="fa-solid fa-arrow-down-a-z mr-1"></i> A–Z
+                    <i class="fa-solid fa-arrow-down-a-z mr-1" id="convAlphaIcon"></i> <span id="convAlphaLabel">A–Z</span>
                 </button>
             </div>
             <p id="convSearchEmpty" class="hidden mt-2 text-center text-xs text-gray-400 dark:text-gray-500 italic">No matches found</p>
@@ -555,15 +555,27 @@ function toggleSection(sectionEl) {
 
 function setConvOrder(mode) {
     localStorage.setItem(ORDER_KEY, mode);
+    const alphaActive = (mode === 'alpha' || mode === 'alpha-desc');
     document.querySelectorAll('.conv-order-btn').forEach(btn => {
-        btn.classList.toggle('is-active', btn.dataset.order === mode);
+        const isAlpha = btn.dataset.order === 'alpha';
+        btn.classList.toggle('is-active', isAlpha ? alphaActive : btn.dataset.order === mode);
     });
+    // Reflect direction on the A-Z button itself so the user can see which way it'll go on the next click.
+    const icon  = document.getElementById('convAlphaIcon');
+    const label = document.getElementById('convAlphaLabel');
+    if (icon && label) {
+        const desc = (mode === 'alpha-desc');
+        icon.className  = 'fa-solid mr-1 ' + (desc ? 'fa-arrow-up-z-a' : 'fa-arrow-down-a-z');
+        label.textContent = desc ? 'Z–A' : 'A–Z';
+    }
+
     const scroll = document.getElementById('convScroll');
     if (!scroll) return;
     const sections = Array.from(scroll.querySelectorAll('.conv-section'));
 
-    if (mode === 'alpha') {
-        // Sort role sections alphabetically by their visible label; keep Groups pinned on top.
+    if (alphaActive) {
+        const dir = (mode === 'alpha-desc') ? -1 : 1;
+        // Sort role sections alphabetically by their visible label; keep Groups pinned on top regardless of direction.
         sections.sort((a, b) => {
             const aGroup = a.dataset.section === 'groups';
             const bGroup = b.dataset.section === 'groups';
@@ -571,9 +583,9 @@ function setConvOrder(mode) {
             if (!aGroup && bGroup) return 1;
             const aLabel = a.querySelector('.conv-section-header p')?.textContent.trim().toLowerCase() || '';
             const bLabel = b.querySelector('.conv-section-header p')?.textContent.trim().toLowerCase() || '';
-            return aLabel.localeCompare(bLabel);
+            return aLabel.localeCompare(bLabel) * dir;
         });
-        // Sort people inside each section alphabetically by name
+        // Sort people inside each section alphabetically by name (same direction).
         sections.forEach(s => {
             const rowsContainer = s.querySelector('.conv-rows');
             if (!rowsContainer) return;
@@ -581,7 +593,7 @@ function setConvOrder(mode) {
             rows.sort((a, b) => {
                 const aName = a.querySelector('.text-sm.font-semibold')?.textContent.trim().toLowerCase() || '';
                 const bName = b.querySelector('.text-sm.font-semibold')?.textContent.trim().toLowerCase() || '';
-                return aName.localeCompare(bName);
+                return aName.localeCompare(bName) * dir;
             });
             rows.forEach(r => rowsContainer.appendChild(r));
         });
@@ -590,6 +602,12 @@ function setConvOrder(mode) {
         sections.sort((a, b) => (a.dataset.sortKey || '').localeCompare(b.dataset.sortKey || ''));
     }
     sections.forEach(s => scroll.appendChild(s));
+}
+
+// Repeat clicks on the A-Z button cycle between ascending and descending.
+function toggleAlphaOrder() {
+    const current = localStorage.getItem(ORDER_KEY) || 'hierarchy';
+    setConvOrder(current === 'alpha' ? 'alpha-desc' : 'alpha');
 }
 
 // Restore order preference on load

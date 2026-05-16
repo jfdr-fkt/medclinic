@@ -249,6 +249,12 @@ class MedicineController extends Controller
         ]);
 
         $medicine->delete();
+        // back() so the user stays on the same filter/tab/page they were viewing.
+        // If the delete fires from the show page, fall through to index since the show URL is now 404.
+        $ref = request()->headers->get('referer');
+        if ($ref && !str_contains($ref, "/medicines/{$medicine->id}")) {
+            return redirect($ref)->with('success', 'Medicine removed.');
+        }
         return redirect()->route('medicines.index')->with('success', 'Medicine removed.');
     }
 

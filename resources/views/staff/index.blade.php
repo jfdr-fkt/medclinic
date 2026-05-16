@@ -185,6 +185,19 @@
 .btn-row-secondary:hover { background:#ddd6fe; }
 .dark .btn-row-secondary { background: rgba(168,85,247,.18); color:#d8b4fe; }
 .dark .btn-row-secondary:hover { background: rgba(168,85,247,.28); }
+
+.btn-row-delete {
+    display:inline-flex; align-items:center; justify-content:center; gap:.5rem;
+    padding: 0.7rem 1.1rem;
+    border-radius: 0.75rem;
+    font-size: 0.95rem;
+    font-weight: 700;
+    background:#fee2e2; color:#b91c1c;
+    transition: background .12s;
+}
+.btn-row-delete:hover { background:#fecaca; }
+.dark .btn-row-delete       { background: rgba(239,68,68,.18); color:#fca5a5; }
+.dark .btn-row-delete:hover { background: rgba(239,68,68,.28); }
 </style>
 @endpush
 
@@ -385,6 +398,16 @@
                                    title="Message">
                                     <i class="fa-solid fa-comment"></i> Chat
                                 </a>
+                                @if(auth()->user()->can_('staff.delete') && $member->id !== auth()->id())
+                                <form method="POST" action="{{ route('staff.destroy', $member) }}" class="inline row-action"
+                                      onsubmit="event.stopPropagation(); return confirm('Remove {{ addslashes($member->name) }} from staff? This cannot be undone.');"
+                                      onclick="event.stopPropagation()">
+                                    @csrf @method('DELETE')
+                                    <button type="submit" onclick="event.stopPropagation()" class="row-action btn-row-delete" title="Delete">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </form>
+                                @endif
                             </div>
                         </td>
                     </tr>
@@ -433,7 +456,15 @@
                     <option value="on_call">On Call (Custom hours)</option>
                 </select>
             </div>
-            <div><label class="label">Date <span class="text-red-500">*</span></label><input type="date" name="shift_date" required value="{{ date('Y-m-d') }}" class="input"></div>
+            <div><label class="label">Date <span class="text-red-500">*</span></label><input type="date" name="shift_date" id="shiftDate" required value="{{ date('Y-m-d') }}" class="input"></div>
+            <div id="shiftConflictWarning" class="hidden rounded-xl border-2 border-amber-300 dark:border-amber-700/60 bg-amber-50 dark:bg-amber-900/25 text-amber-800 dark:text-amber-200 px-3 py-2.5 text-xs flex items-start gap-2">
+                <i class="fa-solid fa-triangle-exclamation mt-0.5"></i>
+                <div>
+                    <p class="font-bold">Existing shift on this date</p>
+                    <p id="shiftConflictDetail" class="mt-0.5"></p>
+                    <p class="mt-1 text-[11px] italic">Saving will replace the existing shift.</p>
+                </div>
+            </div>
             <div class="grid grid-cols-2 gap-4">
                 <div><label class="label">Start <span class="text-red-500">*</span></label><input type="time" name="start_time" id="startTime" required value="07:00" class="input"></div>
                 <div><label class="label">End <span class="text-red-500">*</span></label><input type="time" name="end_time" id="endTime" required value="15:00" class="input"></div>
@@ -618,8 +649,35 @@ function openShiftModal(userId, userName) {
     document.getElementById('shiftStaffName').value = userName;
     document.getElementById('shiftModal').classList.remove('hidden');
     document.body.style.overflow = 'hidden';
+    checkShiftConflict();
 }
 function closeShiftModal()    { document.getElementById('shiftModal').classList.add('hidden'); document.body.style.overflow = ''; }
+
+// Ping the server to see if this user already has a shift on the chosen date.
+// Surfaces an amber warning so the admin knows save will overwrite (updateOrCreate behavior).
+async function checkShiftConflict() {
+    const userId = document.getElementById('shiftUserId').value;
+    const date   = document.getElementById('shiftDate').value;
+    const warn   = document.getElementById('shiftConflictWarning');
+    const detail = document.getElementById('shiftConflictDetail');
+    if (!userId || !date) { warn.classList.add('hidden'); return; }
+    try {
+        const r = await fetch(`/staff/${userId}/shift-on?date=${encodeURIComponent(date)}`, { headers: { 'Accept': 'application/json' } });
+        if (!r.ok) { warn.classList.add('hidden'); return; }
+        const j = await r.json();
+        if (j.exists) {
+            const label = j.shift_type === 'on_call' ? 'On Call'
+                        : j.shift_type.charAt(0).toUpperCase() + j.shift_type.slice(1) + ' shift';
+            detail.textContent = `${label} (${j.start_time} – ${j.end_time})`;
+            warn.classList.remove('hidden');
+        } else {
+            warn.classList.add('hidden');
+        }
+    } catch (e) {
+        warn.classList.add('hidden');
+    }
+}
+document.getElementById('shiftDate').addEventListener('change', checkShiftConflict);
 function openAddStaffModal()  { document.getElementById('addStaffModal').classList.remove('hidden'); document.body.style.overflow = 'hidden'; }
 function closeAddStaffModal() { document.getElementById('addStaffModal').classList.add('hidden'); document.body.style.overflow = ''; }
 

@@ -781,6 +781,7 @@
         @php $isSuccess = (bool) session('success'); @endphp
         <div id="flashToastWrap" class="fixed top-20 left-1/2 -translate-x-1/2 z-50 w-full max-w-md px-4 pointer-events-none">
             <div id="flashToast"
+                 data-flash="{{ $isSuccess ? 'success' : 'error' }}"
                  class="flash-toast pointer-events-auto rounded-2xl shadow-xl border-2 overflow-hidden relative
                         {{ $isSuccess
                             ? 'bg-white dark:bg-slate-900 border-emerald-300 dark:border-emerald-700'

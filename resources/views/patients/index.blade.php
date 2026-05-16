@@ -305,10 +305,18 @@
                                         <i class="fa-solid fa-chevron-down text-[10px]"></i>
                                     </button>
                                     <div id="pinMenu-{{ $patient->id }}" class="hidden absolute right-0 mt-2 w-52 bg-white dark:bg-slate-800 rounded-xl shadow-lg border-2 border-gray-100 dark:border-slate-700 py-2 z-20">
+                                        @if($isPinned)
+                                        <button type="button" onclick="event.stopPropagation(); pinPatient({{ $patient->id }}, 'self')"
+                                                class="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-slate-700 flex items-center gap-2">
+                                            <i class="fa-solid fa-thumbtack-slash text-rose-500 w-4"></i> Unpin from myself
+                                        </button>
+                                        <div class="my-1 border-t border-gray-100 dark:border-slate-700"></div>
+                                        @else
                                         <button type="button" onclick="event.stopPropagation(); pinPatient({{ $patient->id }}, 'self')"
                                                 class="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-slate-700 flex items-center gap-2">
                                             <i class="fa-solid fa-user text-amber-500 w-4"></i> Pin to myself
                                         </button>
+                                        @endif
                                         @if($canPinAll)
                                         <button type="button" onclick="event.stopPropagation(); pinPatient({{ $patient->id }}, 'all')"
                                                 class="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-slate-700 flex items-center gap-2">

@@ -129,6 +129,44 @@ class StaffController extends Controller
         return view('staff.show', compact('user', 'shifts', 'upcoming', 'monthStart', 'monthEnd'));
     }
 
+    public function shiftOn(User $user, Request $request)
+    {
+        if (Auth::user()->role !== 'admin') abort(403);
+        $date  = $request->validate(['date' => 'required|date'])['date'];
+        $shift = Shift::where('user_id', $user->id)->whereDate('shift_date', $date)->first();
+        if (!$shift) return response()->json(['exists' => false]);
+
+        return response()->json([
+            'exists'     => true,
+            'shift_type' => $shift->shift_type,
+            'start_time' => \Carbon\Carbon::parse($shift->start_time)->format('g:i A'),
+            'end_time'   => \Carbon\Carbon::parse($shift->end_time)->format('g:i A'),
+        ]);
+    }
+
+    public function destroy(User $user)
+    {
+        $me = Auth::user();
+        if (!$me->can_('staff.delete')) abort(403, 'Only admins can remove staff.');
+        if ($user->id === $me->id) abort(403, 'You cannot delete your own account.');
+
+        $name  = $user->name;
+        $label = $user->roleLabel();
+        $uid   = $user->id;
+
+        $user->delete();
+
+        ActivityLog::create([
+            'user_id'     => $me->id,
+            'action'      => 'staff.delete',
+            'entity_type' => User::class,
+            'entity_id'   => $uid,
+            'details'     => "Removed staff {$name} ({$label})",
+        ]);
+
+        return redirect()->route('staff.index')->with('success', "Staff member {$name} removed.");
+    }
+
     public function storeShift(Request $request)
     {
         if (\Illuminate\Support\Facades\Auth::user()->role !== 'admin') {

@@ -691,6 +691,25 @@ document.addEventListener('keydown', e => { if(e.key==='Escape'){ closeDispenseM
         window.history.replaceState({}, '', url);
     }, 150);
 })();
+
+// Preserve scroll position across dispense / archive / restore / delete actions on this page.
+// Stores scrollY in sessionStorage right before any in-table form submits; on reload, if we just
+// did an action (success flash present), restore. Cleared either way to avoid sticking on a fresh visit.
+(function preserveMedicineScroll() {
+    const KEY = 'medicines:scrollY';
+    document.querySelectorAll('form').forEach(form => {
+        if (form.action && form.action.includes('/medicines/')) {
+            form.addEventListener('submit', () => sessionStorage.setItem(KEY, String(window.scrollY)));
+        }
+    });
+    const saved = sessionStorage.getItem(KEY);
+    const justActed = !!document.querySelector('[data-flash="success"]');
+    if (saved !== null && justActed) {
+        // Defer one frame so layout has settled (status pills, archived rows, etc.)
+        requestAnimationFrame(() => window.scrollTo({ top: parseInt(saved, 10), left: 0, behavior: 'instant' }));
+    }
+    sessionStorage.removeItem(KEY);
+})();
 </script>
 @endpush
 @endsection
