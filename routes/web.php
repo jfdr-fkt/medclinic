@@ -9,6 +9,7 @@ use App\Http\Controllers\PatientController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ScanController;
 use App\Http\Controllers\StaffController;
+use App\Http\Controllers\VisitController;
 use Illuminate\Support\Facades\Route;
 
 // Public auth routes — no.back keeps the browser from showing a cached login page
@@ -42,6 +43,12 @@ Route::middleware(['auth', 'no.back', 'force.pw.change'])->group(function () {
     Route::put('/profile/appearance',     [ProfileController::class, 'appearance'])->name('profile.appearance');
     Route::delete('/profile/avatar',      [ProfileController::class, 'removeAvatar'])->name('profile.avatar.remove');
 
+    // Today's Queue / visits (front desk + clinical status flow)
+    Route::get('/visits',                       [VisitController::class, 'index'])->name('visits.index');
+    Route::post('/visits',                      [VisitController::class, 'store'])->name('visits.store');
+    Route::put('/visits/{visit}/status',        [VisitController::class, 'updateStatus'])->name('visits.status');
+    Route::delete('/visits/{visit}',            [VisitController::class, 'destroy'])->name('visits.destroy');
+
     // Patients
     Route::get('/patients',                   [PatientController::class, 'index'])->name('patients.index');
     Route::post('/patients',                  [PatientController::class, 'store'])->name('patients.store');
@@ -49,6 +56,8 @@ Route::middleware(['auth', 'no.back', 'force.pw.change'])->group(function () {
     Route::put('/patients/{patient}',         [PatientController::class, 'update'])->name('patients.update');
     Route::delete('/patients/{patient}',      [PatientController::class, 'destroy'])->name('patients.destroy');
     Route::post('/patients/{patient}/pin',    [PatientController::class, 'pin'])->name('patients.pin');
+    Route::post('/patients/{patient}/images', [PatientController::class, 'uploadImages'])->name('patients.images.upload');
+    Route::delete('/patients/{patient}/images/{image}', [PatientController::class, 'deleteImage'])->name('patients.images.delete');
 
     // Medicines / Inventory
     // CRITICAL ordering note: literal sub-paths (locations, create, archive) MUST come BEFORE
@@ -69,6 +78,8 @@ Route::middleware(['auth', 'no.back', 'force.pw.change'])->group(function () {
     Route::post('/medicines/{medicine}/dispense',     [MedicineController::class, 'dispense'])->name('medicines.dispense');
     Route::post('/medicines/{medicine}/archive',      [MedicineController::class, 'archive'])->name('medicines.archive');
     Route::post('/medicines/{medicine}/unarchive',    [MedicineController::class, 'unarchive'])->name('medicines.unarchive');
+    Route::post('/medicines/{medicine}/gallery',      [MedicineController::class, 'uploadGalleryImages'])->name('medicines.gallery.upload');
+    Route::delete('/medicines/{medicine}/gallery',    [MedicineController::class, 'deleteGalleryImage'])->name('medicines.gallery.delete');
 
     // Smart Scan
     Route::get('/scan',         [ScanController::class, 'index'])->name('scan.index');
@@ -94,6 +105,7 @@ Route::middleware(['auth', 'no.back', 'force.pw.change'])->group(function () {
     Route::post('/chat/groups',                   [ChatController::class, 'storeGroup'])->name('chat.groups.store');
     Route::post('/chat/groups/{group}/add',       [ChatController::class, 'addToGroup'])->name('chat.groups.add');
     Route::delete('/chat/messages/{message}',    [ChatController::class, 'destroyMessage'])->name('chat.messages.destroy');
+    Route::post('/chat/mark-all-read',            [ChatController::class, 'markAllRead'])->name('chat.markAllRead');
 
     // AJAX API endpoints
     Route::prefix('api')->group(function () {

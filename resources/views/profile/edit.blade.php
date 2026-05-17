@@ -43,67 +43,62 @@
 
 <div class="space-y-6 max-w-3xl mx-auto">
 
-    <!-- ── Profile header (left-aligned) ── -->
-    <div class="card overflow-hidden">
-        <div class="h-36 relative overflow-hidden bg-gradient-to-br {{ $bannerGradient }}">
-            {{-- Soft radial highlight — works as a subtle visual accent in both modes --}}
-            <div class="absolute inset-0 pointer-events-none" style="background-image: radial-gradient(circle at 50% 30%, rgba(255,255,255,.20) 0%, transparent 60%), radial-gradient(circle at 10% 90%, rgba(0,0,0,.15) 0%, transparent 50%);"></div>
-            {{-- Subtle grid pattern --}}
-            <div class="absolute inset-0 pointer-events-none opacity-[0.07]" style="background-image: linear-gradient(rgba(255,255,255,.4) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.4) 1px, transparent 1px); background-size: 24px 24px;"></div>
-        </div>
+    <!-- ── Profile header (flat in-gradient, predictable on all viewports) ── -->
+    <div class="rounded-2xl overflow-hidden bg-gradient-to-br {{ $bannerGradient }} text-white shadow-md relative">
+        <div class="absolute inset-0 pointer-events-none opacity-25" style="background-image: radial-gradient(circle at 50% 30%, rgba(255,255,255,.25) 0%, transparent 55%), radial-gradient(circle at 10% 90%, rgba(0,0,0,.18) 0%, transparent 50%);"></div>
+        <div class="absolute inset-0 pointer-events-none opacity-[0.05]" style="background-image: linear-gradient(rgba(255,255,255,.4) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.4) 1px, transparent 1px); background-size: 24px 24px;"></div>
 
-        <div class="px-6 pb-6 -mt-14">
-            <div class="flex items-end gap-5 flex-wrap">
-                <div class="relative flex-shrink-0">
-                    @if($user->avatarUrl())
-                    <img src="{{ $user->avatarUrl() }}" alt="{{ $user->name }}"
-                         class="h-28 w-28 rounded-2xl object-cover ring-4 ring-white dark:ring-slate-900 shadow-lg">
-                    @else
-                    <div class="h-28 w-28 rounded-2xl bg-gradient-to-br {{ $avatarGrad }} flex items-center justify-center text-white text-4xl font-bold ring-4 ring-white dark:ring-slate-900 shadow-lg">
-                        {{ strtoupper(substr($user->name, 0, 2)) }}
-                    </div>
-                    @endif
-                    <button type="button" onclick="document.getElementById('avatarInput').click()"
-                            class="absolute -bottom-1 -right-1 w-9 h-9 bg-brand-600 hover:bg-brand-700 text-white rounded-full flex items-center justify-center shadow-md ring-2 ring-white dark:ring-slate-900 transition-colors"
-                            title="Change avatar">
-                        <i class="fa-solid fa-camera text-sm"></i>
-                    </button>
-                </div>
-                <div class="flex-1 min-w-0 pb-1">
-                    <h2 class="text-2xl font-extrabold text-gray-900 dark:text-white truncate">{{ $user->name }}</h2>
-                    <div class="flex items-center gap-2 mt-2 flex-wrap">
-                        <span class="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider {{ $bannerColor }} text-white px-2.5 py-1 rounded-md">
-                            <i class="fa-solid {{ match($user->role) {
-                                'admin' => 'fa-user-shield',
-                                'clinic_head' => 'fa-user-tie',
-                                'doctor' => 'fa-user-doctor',
-                                'pharmacist' => 'fa-prescription-bottle-medical',
-                                'nurse' => 'fa-user-nurse',
-                                'secretary' => 'fa-id-badge',
-                                'assistant' => 'fa-user',
-                                default => 'fa-user',
-                            } }} text-[10px]"></i>
-                            {{ $user->roleLabel() }}
-                        </span>
-                        @if($user->specialization)
-                        <span class="text-sm text-gray-500 dark:text-gray-400">{{ $user->specialization }}</span>
-                        @endif
-                    </div>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-2 flex items-center gap-1.5">
-                        <span class="status-dot {{ $statusKey }}"></span>
-                        Status: <span class="font-medium text-gray-700 dark:text-gray-300">{{ $user->statusLabel() }}</span>
-                    </p>
-                </div>
+        <div class="relative px-5 sm:px-6 py-5 flex items-center gap-4 sm:gap-5 flex-wrap">
+            <div class="relative flex-shrink-0">
                 @if($user->avatarUrl())
-                <form method="POST" action="{{ route('profile.avatar.remove') }}" class="pb-1"
-                      onsubmit="return confirm('Remove your avatar?')">
-                    @csrf @method('DELETE')
-                    <button type="submit" class="inline-flex items-center gap-2 text-sm text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 font-medium px-3 py-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
-                        <i class="fa-solid fa-trash"></i> Remove avatar
-                    </button>
-                </form>
+                <img src="{{ $user->avatarUrl() }}" alt="{{ $user->name }}"
+                     class="h-20 w-20 sm:h-24 sm:w-24 rounded-2xl object-cover ring-2 ring-white/40 shadow-md">
+                @else
+                <div class="h-20 w-20 sm:h-24 sm:w-24 rounded-2xl bg-white/15 backdrop-blur-sm ring-1 ring-white/25 flex items-center justify-center text-white text-2xl sm:text-3xl font-extrabold">
+                    {{ strtoupper(substr($user->name, 0, 2)) }}
+                </div>
                 @endif
+                <button type="button" onclick="document.getElementById('avatarInput').click()"
+                        class="absolute -bottom-1 -right-1 w-8 h-8 sm:w-9 sm:h-9 bg-white text-brand-700 hover:bg-brand-50 rounded-full flex items-center justify-center shadow-md transition-colors"
+                        title="Change avatar">
+                    <i class="fa-solid fa-camera text-xs sm:text-sm"></i>
+                </button>
             </div>
+            <div class="flex-1 min-w-0">
+                <h2 class="text-xl sm:text-2xl font-extrabold leading-tight truncate">{{ $user->name }}</h2>
+                <div class="flex items-center gap-2 mt-2 flex-wrap">
+                    <span class="inline-flex items-center gap-1.5 bg-white/20 ring-1 ring-white/25 text-white px-2.5 py-1 rounded-full text-xs font-bold">
+                        <i class="fa-solid {{ match($user->role) {
+                            'admin' => 'fa-user-shield',
+                            'clinic_head' => 'fa-user-tie',
+                            'doctor' => 'fa-user-doctor',
+                            'pharmacist' => 'fa-prescription-bottle-medical',
+                            'nurse' => 'fa-user-nurse',
+                            'secretary' => 'fa-id-badge',
+                            'assistant' => 'fa-user',
+                            default => 'fa-user',
+                        } }} text-[10px]"></i>
+                        {{ $user->roleLabel() }}
+                    </span>
+                    <span class="inline-flex items-center gap-1.5 bg-white text-{{ $user->statusColor() === 'gray' ? 'gray' : $user->statusColor() }}-700 px-2.5 py-1 rounded-full text-xs font-bold shadow-sm">
+                        <span class="w-1.5 h-1.5 rounded-full bg-{{ $user->statusColor() === 'gray' ? 'gray' : $user->statusColor() }}-500 {{ $user->isOnline() ? 'animate-pulse' : '' }}"></span>
+                        {{ $user->statusLabel() }}
+                    </span>
+                    @if($user->specialization)
+                    <span class="text-sm text-white/85 font-medium">&bull; {{ $user->specialization }}</span>
+                    @endif
+                </div>
+            </div>
+            @if($user->avatarUrl())
+            <form method="POST" action="{{ route('profile.avatar.remove') }}"
+                  class="w-full sm:w-auto flex-shrink-0"
+                  onsubmit="return confirm('Remove your avatar?')">
+                @csrf @method('DELETE')
+                <button type="submit" class="inline-flex w-full sm:w-auto items-center justify-center gap-2 text-sm font-bold bg-white/15 hover:bg-white/25 text-white px-3 py-2 rounded-xl ring-1 ring-white/20 transition-colors">
+                    <i class="fa-solid fa-trash"></i> Remove avatar
+                </button>
+            </form>
+            @endif
         </div>
     </div>
 

@@ -64,15 +64,9 @@
 .patient-meta { color: #64748b; font-weight: 500; }
 .dark .patient-meta { color: #94a3b8; }
 
-/* Plain mono patient ID — no chip, just clear monospace text */
-.patient-id-text {
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-    font-size: 0.92rem;
-    font-weight: 700;
-    letter-spacing: .02em;
-    color: #1e293b;
-}
-.dark .patient-id-text { color: #e2e8f0; }
+/* .patient-id-text is defined globally in layouts/app.blade.php so every
+   surface (patient list, show page, queue, check-in modal) uses the same
+   mono font, weight, and size. */
 
 .assign-line {
     display: inline-flex; align-items: center; gap: .5rem;
@@ -127,19 +121,27 @@
 
 <div class="space-y-5">
 
-    <!-- Header -->
-    <div class="flex items-center justify-between flex-wrap gap-3">
-        <div>
-            <h1 class="text-2xl font-extrabold text-gray-900 dark:text-white">Patients</h1>
-            <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-                {{ $patients->total() }} records total &bull; {{ $canCreate ? 'Add and manage patient records' : 'View patient records' }}
-            </p>
+    <!-- Hero banner — gradient header card -->
+    <div class="rounded-2xl overflow-hidden bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 text-white shadow-md relative">
+        <div class="absolute inset-0 opacity-20 pointer-events-none" style="background-image: radial-gradient(circle at 18% 30%, rgba(255,255,255,.55) 0, transparent 35%), radial-gradient(circle at 78% 75%, rgba(255,255,255,.35) 0, transparent 32%), radial-gradient(circle at 95% 20%, rgba(255,255,255,.25) 0, transparent 25%);"></div>
+        <div class="relative px-5 sm:px-6 py-5 flex items-center justify-between gap-4 flex-wrap">
+            <div class="flex items-center gap-4 min-w-0 flex-1">
+                <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-white/15 backdrop-blur-sm flex items-center justify-center flex-shrink-0 ring-1 ring-white/25">
+                    <i class="fa-solid fa-user-injured text-xl sm:text-2xl"></i>
+                </div>
+                <div class="min-w-0">
+                    <h1 class="text-xl sm:text-2xl font-extrabold leading-tight">Patients</h1>
+                    <p class="text-white/80 text-sm mt-0.5">
+                        <span class="font-bold">{{ $patients->total() }}</span> records total &bull; {{ $canCreate ? 'Add and manage patient records' : 'View patient records' }}
+                    </p>
+                </div>
+            </div>
+            @if($canCreate)
+            <button onclick="openModal()" class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white text-blue-700 hover:bg-blue-50 text-sm font-bold transition-colors shadow-sm w-full sm:w-auto flex-shrink-0">
+                <i class="fa-solid fa-user-plus"></i> Add Patient
+            </button>
+            @endif
         </div>
-        @if($canCreate)
-        <button onclick="openModal()" class="btn-primary">
-            <i class="fa-solid fa-user-plus"></i> Add Patient
-        </button>
-        @endif
     </div>
 
     <!-- Search + filter -->
@@ -213,9 +215,9 @@
     </form>
 
     <!-- Patient table -->
-    <div class="patient-card overflow-hidden">
+    <div class="patient-card overflow-hidden -mx-4 md:mx-0 rounded-none md:rounded-2xl border-x-0 md:border-x-2">
         <div class="overflow-x-auto">
-            <table class="min-w-full patient-table">
+            <table class="min-w-full patient-table responsive-table">
                 <thead>
                     <tr>
                         <th>Patient</th>
@@ -245,7 +247,7 @@
                     <tr data-href="{{ route('patients.show', $patient) }}"
                         onclick="if(!event.target.closest('.row-action')) window.location=this.dataset.href"
                         class="group">
-                        <td>
+                        <td class="cell-primary">
                             <div class="flex items-center gap-3">
                                 <div class="h-10 w-10 rounded-full bg-gradient-to-br {{ $grad }} flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
                                     {{ strtoupper(substr($patient->name, 0, 2)) }}
@@ -261,10 +263,10 @@
                                 </div>
                             </div>
                         </td>
-                        <td class="text-center">
+                        <td class="text-center" data-label="Patient ID">
                             <span class="patient-id-text">{{ $patient->patient_id }}</span>
                         </td>
-                        <td class="text-center">
+                        <td class="text-center" data-label="Age">
                             @if($patient->date_of_birth)
                                 <p class="text-sm font-semibold text-gray-800 dark:text-gray-100">{{ $patient->date_of_birth->age }} years</p>
                                 <p class="text-sm patient-meta">{{ $patient->date_of_birth->format('M j, Y') }}</p>
@@ -272,7 +274,7 @@
                                 <span class="text-sm patient-meta italic">Not on file</span>
                             @endif
                         </td>
-                        <td>
+                        <td data-label="Care Team">
                             <div class="flex flex-col items-center gap-2">
                                 <span class="assign-line">
                                     <span class="role-tag doctor">DR</span>
@@ -284,7 +286,7 @@
                                 </span>
                             </div>
                         </td>
-                        <td class="text-center">
+                        <td class="text-center" data-label="Last Visit">
                             @if($patient->last_visit)
                                 <p class="text-sm font-semibold text-gray-800 dark:text-gray-100">{{ $patient->last_visit->format('M j, Y') }}</p>
                                 <p class="text-sm patient-meta">{{ $patient->last_visit->diffForHumans() }}</p>
@@ -292,7 +294,7 @@
                                 <span class="text-sm patient-meta italic">Never visited</span>
                             @endif
                         </td>
-                        <td>
+                        <td class="cell-actions">
                             <div class="flex items-center gap-3 row-action w-full">
                                 <!-- Pin dropdown -->
                                 <div class="relative flex-1">
@@ -388,7 +390,7 @@
             @csrf
 
             <!-- Identity -->
-            <div class="border-l-4 border-blue-400 bg-blue-50/30 rounded-r-xl p-4 space-y-3">
+            <div class="border-l-4 border-blue-400 bg-blue-50/30 dark:bg-blue-900/15 rounded-r-xl p-4 space-y-3">
                 <p class="text-xs font-bold text-blue-700 dark:text-blue-300 uppercase tracking-wider flex items-center gap-2">
                     <i class="fa-solid fa-id-card"></i> Identity
                 </p>
@@ -396,22 +398,57 @@
                     <label class="label">Full Name <span class="text-red-500">*</span></label>
                     <input type="text" name="name" required value="{{ old('name') }}" class="input" placeholder="Juan Dela Cruz">
                 </div>
-            </div>
-
-            <!-- Personal -->
-            <div class="border-l-4 border-purple-400 bg-purple-50/30 rounded-r-xl p-4 space-y-3">
-                <p class="text-xs font-bold text-purple-700 dark:text-purple-300 uppercase tracking-wider flex items-center gap-2">
-                    <i class="fa-solid fa-user"></i> Personal Details
-                </p>
-                <div class="grid grid-cols-2 gap-3">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div>
                         <label class="label">Date of Birth</label>
                         <input type="date" name="date_of_birth" value="{{ old('date_of_birth') }}" class="input">
                     </div>
                     <div>
-                        <label class="label">Phone</label>
-                        <input type="tel" name="phone" value="{{ old('phone') }}" placeholder="09XX-XXX-XXXX" class="input">
+                        <label class="label">Sex</label>
+                        <select name="sex" class="input cs-select">
+                            <option value="">Not specified</option>
+                            <option value="male"   {{ old('sex')==='male' ? 'selected':'' }}>Male</option>
+                            <option value="female" {{ old('sex')==='female' ? 'selected':'' }}>Female</option>
+                            <option value="other"  {{ old('sex')==='other' ? 'selected':'' }}>Other</option>
+                        </select>
                     </div>
+                    <div>
+                        <label class="label">Blood Type</label>
+                        <select name="blood_type" class="input cs-select">
+                            <option value="">Unknown</option>
+                            @foreach(['A+','A-','B+','B-','AB+','AB-','O+','O-'] as $bt)
+                            <option value="{{ $bt }}" {{ old('blood_type')===$bt ? 'selected':'' }}>{{ $bt }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Vitals -->
+            <div class="border-l-4 border-cyan-400 bg-cyan-50/30 dark:bg-cyan-900/15 rounded-r-xl p-4 space-y-3">
+                <p class="text-xs font-bold text-cyan-700 dark:text-cyan-300 uppercase tracking-wider flex items-center gap-2">
+                    <i class="fa-solid fa-heart-pulse"></i> Vitals <span class="text-gray-400 font-normal normal-case">(optional)</span>
+                </p>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="label">Height <span class="text-gray-400 normal-case">(cm)</span></label>
+                        <input type="number" name="height_cm" min="20" max="260" value="{{ old('height_cm') }}" class="input" placeholder="e.g. 168">
+                    </div>
+                    <div>
+                        <label class="label">Weight <span class="text-gray-400 normal-case">(kg)</span></label>
+                        <input type="number" step="0.1" name="weight_kg" min="0.5" max="500" value="{{ old('weight_kg') }}" class="input" placeholder="e.g. 65.5">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contact -->
+            <div class="border-l-4 border-purple-400 bg-purple-50/30 dark:bg-purple-900/15 rounded-r-xl p-4 space-y-3">
+                <p class="text-xs font-bold text-purple-700 dark:text-purple-300 uppercase tracking-wider flex items-center gap-2">
+                    <i class="fa-solid fa-address-book"></i> Contact
+                </p>
+                <div>
+                    <label class="label">Phone</label>
+                    <input type="tel" name="phone" value="{{ old('phone') }}" placeholder="09XX-XXX-XXXX" class="input">
                 </div>
                 <div>
                     <label class="label">Address</label>
@@ -420,14 +457,14 @@
             </div>
 
             <!-- Care Team -->
-            <div class="border-l-4 border-emerald-400 bg-emerald-50/30 rounded-r-xl p-4 space-y-3">
+            <div class="border-l-4 border-emerald-400 bg-emerald-50/30 dark:bg-emerald-900/15 rounded-r-xl p-4 space-y-3">
                 <p class="text-xs font-bold text-emerald-700 dark:text-emerald-300 uppercase tracking-wider flex items-center gap-2">
                     <i class="fa-solid fa-stethoscope"></i> Care Team
                 </p>
-                <div class="grid grid-cols-2 gap-3">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                         <label class="label">Assigned Nurse</label>
-                        <select name="assigned_nurse_id" class="input">
+                        <select name="assigned_nurse_id" class="input cs-select">
                             <option value="">Select Nurse</option>
                             @foreach($nurses as $n)
                             <option value="{{ $n->id }}" {{ old('assigned_nurse_id')==$n->id ? 'selected':'' }}>{{ $n->name }}</option>
@@ -436,7 +473,7 @@
                     </div>
                     <div>
                         <label class="label">Assigned Doctor</label>
-                        <select name="assigned_doctor_id" class="input">
+                        <select name="assigned_doctor_id" class="input cs-select">
                             <option value="">Select Doctor</option>
                             @foreach($doctors as $d)
                             <option value="{{ $d->id }}" {{ old('assigned_doctor_id')==$d->id ? 'selected':'' }}>{{ $d->name }}</option>
@@ -446,12 +483,58 @@
                 </div>
             </div>
 
-            <!-- Medical Notes -->
-            <div class="border-l-4 border-amber-400 bg-amber-50/30 rounded-r-xl p-4 space-y-3">
+            <!-- Clinical -->
+            <div class="border-l-4 border-amber-400 bg-amber-50/30 dark:bg-amber-900/15 rounded-r-xl p-4 space-y-3">
                 <p class="text-xs font-bold text-amber-700 dark:text-amber-300 uppercase tracking-wider flex items-center gap-2">
-                    <i class="fa-solid fa-notes-medical"></i> Medical Notes
+                    <i class="fa-solid fa-notes-medical"></i> Clinical
                 </p>
-                <textarea name="medical_history" rows="6" class="input resize-y" placeholder="Allergies, conditions, medications, family history, special instructions">{{ old('medical_history') }}</textarea>
+                <div>
+                    <label class="label flex items-center gap-1.5"><i class="fa-solid fa-triangle-exclamation text-red-500"></i> Allergies</label>
+                    <input type="text" name="allergies" value="{{ old('allergies') }}" class="input" placeholder="e.g. Penicillin, Sulfa drugs, NKDA">
+                </div>
+                <div>
+                    <label class="label flex items-center gap-1.5"><i class="fa-solid fa-heart text-orange-500"></i> Chronic Conditions</label>
+                    <input type="text" name="chronic_conditions" value="{{ old('chronic_conditions') }}" class="input" placeholder="e.g. Hypertension, Type 2 Diabetes">
+                </div>
+                <div>
+                    <label class="label">Medical History &amp; Notes</label>
+                    <textarea name="medical_history" rows="8" class="input resize-y leading-relaxed" placeholder="Past surgeries, immunizations, family history, social history, ongoing medications, special instructions…">{{ old('medical_history') }}</textarea>
+                </div>
+            </div>
+
+            <!-- Emergency Contacts — minimum two -->
+            <div class="border-l-4 border-rose-400 bg-rose-50/30 dark:bg-rose-900/15 rounded-r-xl p-4 space-y-4">
+                <p class="text-xs font-bold text-rose-700 dark:text-rose-300 uppercase tracking-wider flex items-center gap-2">
+                    <i class="fa-solid fa-phone-volume"></i> Emergency Contacts <span class="text-gray-400 dark:text-gray-500 normal-case font-normal">(at least two recommended)</span>
+                </p>
+
+                <div class="space-y-3">
+                    <p class="text-[11px] font-bold uppercase tracking-wider text-rose-600 dark:text-rose-400">Primary <span class="text-red-500">*</span></p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="label">Contact Name</label>
+                            <input type="text" name="emergency_contact_name" required value="{{ old('emergency_contact_name') }}" class="input" placeholder="Relationship + name">
+                        </div>
+                        <div>
+                            <label class="label">Contact Phone</label>
+                            <input type="tel" name="emergency_contact_phone" required value="{{ old('emergency_contact_phone') }}" class="input" placeholder="09XX-XXX-XXXX">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-3 pt-2 border-t border-rose-200/60 dark:border-rose-800/50">
+                    <p class="text-[11px] font-bold uppercase tracking-wider text-rose-600 dark:text-rose-400">Secondary <span class="text-red-500">*</span></p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="label">Contact Name</label>
+                            <input type="text" name="emergency_contact_2_name" required value="{{ old('emergency_contact_2_name') }}" class="input" placeholder="Backup contact">
+                        </div>
+                        <div>
+                            <label class="label">Contact Phone</label>
+                            <input type="tel" name="emergency_contact_2_phone" required value="{{ old('emergency_contact_2_phone') }}" class="input" placeholder="09XX-XXX-XXXX">
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div class="flex justify-between items-center gap-3 pt-3 border-t border-gray-100 dark:border-slate-700">
@@ -461,7 +544,7 @@
                 </button>
                 <button type="submit"
                         class="px-6 py-2.5 bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold rounded-xl transition-colors shadow-sm">
-                    Save Patient
+                    <i class="fa-solid fa-user-plus mr-1"></i> Save Patient
                 </button>
             </div>
         </form>

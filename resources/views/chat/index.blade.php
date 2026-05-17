@@ -4,6 +4,10 @@
 
 @section('content')
 @php
+    // Phone layout: when a conversation is open, hide the list and show only the thread.
+    // When no conversation is open, hide the empty pane and show only the list. md+ keeps both.
+    $hasConv = isset($withUser) || isset($withGroup);
+
     // Role styling — light + dark variants kept side-by-side so blade can splat them inline.
     $roleConfig = [
         'admin'       => ['label'=>'Admins',        'icon'=>'fa-user-shield',                'accent'=>'slate',   'bg'=>'bg-slate-50',   'darkBg'=>'dark:bg-slate-800/40',   'border'=>'border-slate-200',   'darkBorder'=>'dark:border-slate-700',     'text'=>'text-slate-700',   'darkText'=>'dark:text-slate-200',   'gradient'=>'from-slate-500 to-slate-700'],
@@ -18,10 +22,10 @@
 
 @push('head')
 <style>
-/* Send button — sized to match the input pill, gentle lift on hover */
+/* Send button — sized to match the input pill, gentle lift on hover. Slightly smaller on phones to keep input wide. */
 .send-btn {
-    width: 3.5rem; height: 3.5rem;
-    border-radius: 1rem;
+    width: 3rem; height: 3rem;
+    border-radius: 0.9rem;
     background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%);
     color: #fff;
     display: inline-flex; align-items: center; justify-content: center;
@@ -30,6 +34,9 @@
     flex-shrink: 0;
     cursor: pointer;
     border: none;
+}
+@media (min-width: 768px) {
+    .send-btn { width: 3.5rem; height: 3.5rem; border-radius: 1rem; }
 }
 .send-btn:hover { background: linear-gradient(135deg, #0f766e 0%, #115e59 100%); box-shadow: 0 8px 22px rgba(13,148,136,.45); transform: translateY(-1px); }
 .send-btn:active { transform: translateY(0); }
@@ -104,10 +111,13 @@
 </style>
 @endpush
 
-<div class="flex h-[calc(100vh-8rem)] rounded-2xl bg-white dark:bg-slate-900 border-2 border-gray-100 dark:border-slate-700 overflow-hidden shadow-sm">
+{{-- Chat shell: on phones it's a full-bleed FB-Messenger-style surface with no
+     card chrome (edge-to-edge, no rounded corners, no outer border, takes the
+     full viewport height under the header). On md+ it's the usual rounded card. --}}
+<div class="flex h-[calc(100dvh-4rem)] md:h-[calc(100vh-8rem)] -mx-4 md:mx-0 bg-white dark:bg-slate-900 md:rounded-2xl border-0 md:border-2 border-gray-100 dark:border-slate-700 overflow-hidden shadow-none md:shadow-sm">
 
     <!-- ── Sidebar ── -->
-    <aside class="w-72 flex-shrink-0 border-r border-gray-100 dark:border-slate-700 flex flex-col bg-gray-50/40 dark:bg-slate-900/60">
+    <aside class="w-full md:w-72 flex-shrink-0 border-r border-gray-100 dark:border-slate-700 {{ $hasConv ? 'hidden md:flex' : 'flex' }} flex-col bg-gray-50/40 dark:bg-slate-900/60">
         <div class="px-4 py-4 border-b border-gray-100 dark:border-slate-700 flex items-center justify-between">
             <div>
                 <h2 class="font-bold text-gray-800 dark:text-white text-sm">Conversations</h2>
@@ -235,40 +245,53 @@
     </aside>
 
     <!-- ── Chat area ── -->
-    <main class="flex-1 flex flex-col overflow-hidden bg-white dark:bg-slate-900">
+    <main class="flex-1 {{ $hasConv ? 'flex' : 'hidden md:flex' }} flex-col overflow-hidden bg-white dark:bg-slate-900">
 
         @if(isset($withUser))
             @php $cfg = $roleConfig[$withUser->role] ?? $roleConfig['admin']; @endphp
             <!-- DM header -->
-            <div class="flex items-center gap-3 px-6 py-4 border-b border-gray-100 dark:border-slate-700 bg-gray-50/60 dark:bg-slate-900/60 flex-shrink-0">
-                <div class="relative">
-                    @if($withUser->avatarUrl())
-                    <img src="{{ $withUser->avatarUrl() }}" alt="{{ $withUser->name }}" class="h-11 w-11 rounded-full object-cover ring-2 ring-white dark:ring-slate-800 shadow-sm">
-                    @else
-                    <div class="h-11 w-11 rounded-full bg-gradient-to-br {{ $cfg['gradient'] }} flex items-center justify-center text-white text-sm font-bold shadow-sm">
-                        {{ strtoupper(substr($withUser->name, 0, 2)) }}
-                    </div>
-                    @endif
-                    <span class="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-white dark:border-slate-900 {{ $withUser->isOnline() ? 'bg-emerald-400' : 'bg-gray-300 dark:bg-slate-600' }}"></span>
-                </div>
-                <div class="min-w-0">
-                    <p class="font-bold text-gray-900 dark:text-white truncate">{{ $withUser->name }}</p>
-                    <p class="text-xs {{ $withUser->isOnline() ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-400 dark:text-gray-500' }}">
-                        @if($withUser->isOnline())
-                            <span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1 align-middle"></span> Online now
+            <div class="flex items-center gap-2 md:gap-3 px-3 md:px-6 py-3 md:py-4 border-b border-gray-100 dark:border-slate-700 bg-gray-50/60 dark:bg-slate-900/60 flex-shrink-0">
+                <a href="{{ route('chat.index') }}" class="md:hidden w-9 h-9 -ml-1 rounded-xl flex items-center justify-center text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors flex-shrink-0" title="Back to conversations">
+                    <i class="fa-solid fa-arrow-left"></i>
+                </a>
+                {{-- Avatar + name link to the user's staff profile so coworkers can
+                     quickly check role, shift schedule, contact info, etc. --}}
+                <a href="{{ route('staff.show', $withUser) }}" class="flex items-center gap-3 min-w-0 group" title="View staff profile">
+                    <div class="relative">
+                        @if($withUser->avatarUrl())
+                        <img src="{{ $withUser->avatarUrl() }}" alt="{{ $withUser->name }}" class="h-11 w-11 rounded-full object-cover ring-2 ring-white dark:ring-slate-800 shadow-sm group-hover:ring-brand-300 dark:group-hover:ring-brand-700 transition-all">
                         @else
-                            {{ $withUser->last_seen_at ? 'Last seen '.$withUser->last_seen_at->diffForHumans() : 'Offline' }}
+                        <div class="h-11 w-11 rounded-full bg-gradient-to-br {{ $cfg['gradient'] }} flex items-center justify-center text-white text-sm font-bold shadow-sm ring-2 ring-transparent group-hover:ring-brand-300 dark:group-hover:ring-brand-700 transition-all">
+                            {{ strtoupper(substr($withUser->name, 0, 2)) }}
+                        </div>
                         @endif
-                    </p>
-                </div>
-                <span class="ml-auto text-xs {{ $cfg['bg'] }} {{ $cfg['darkBg'] }} {{ $cfg['text'] }} {{ $cfg['darkText'] }} px-2.5 py-1 rounded-full font-semibold border {{ $cfg['border'] }} {{ $cfg['darkBorder'] }}">
+                        <span class="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-white dark:border-slate-900 {{ $withUser->isOnline() ? 'bg-emerald-400' : 'bg-gray-300 dark:bg-slate-600' }}"></span>
+                    </div>
+                    <div class="min-w-0">
+                        <p class="font-bold text-gray-900 dark:text-white group-hover:text-brand-700 dark:group-hover:text-brand-300 transition-colors truncate flex items-center gap-1.5">
+                            {{ $withUser->name }}
+                            <i class="fa-solid fa-arrow-up-right-from-square text-[10px] text-gray-300 dark:text-gray-600 group-hover:text-brand-500 transition-colors"></i>
+                        </p>
+                        <p class="text-xs {{ $withUser->isOnline() ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-400 dark:text-gray-500' }}">
+                            @if($withUser->isOnline())
+                                <span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1 align-middle"></span> Online now
+                            @else
+                                {{ $withUser->last_seen_at ? 'Last seen '.$withUser->last_seen_at->diffForHumans() : 'Offline' }}
+                            @endif
+                        </p>
+                    </div>
+                </a>
+                <span class="ml-auto hidden sm:inline-flex text-xs {{ $cfg['bg'] }} {{ $cfg['darkBg'] }} {{ $cfg['text'] }} {{ $cfg['darkText'] }} px-2.5 py-1 rounded-full font-semibold border {{ $cfg['border'] }} {{ $cfg['darkBorder'] }}">
                     {{ $withUser->roleLabel() }}
                 </span>
             </div>
         @elseif(isset($withGroup))
             <!-- Group header -->
-            <div class="flex items-center gap-3 px-6 py-4 border-b border-gray-100 dark:border-slate-700 bg-gray-50/60 dark:bg-slate-900/60 flex-shrink-0">
-                <div class="h-11 w-11 rounded-full bg-gradient-to-br from-indigo-400 to-indigo-600 flex items-center justify-center text-white shadow-sm">
+            <div class="flex items-center gap-2 md:gap-3 px-3 md:px-6 py-3 md:py-4 border-b border-gray-100 dark:border-slate-700 bg-gray-50/60 dark:bg-slate-900/60 flex-shrink-0">
+                <a href="{{ route('chat.index') }}" class="md:hidden w-9 h-9 -ml-1 rounded-xl flex items-center justify-center text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors flex-shrink-0" title="Back to conversations">
+                    <i class="fa-solid fa-arrow-left"></i>
+                </a>
+                <div class="h-11 w-11 rounded-full bg-gradient-to-br from-indigo-400 to-indigo-600 flex items-center justify-center text-white shadow-sm flex-shrink-0">
                     <i class="fa-solid fa-users text-sm"></i>
                 </div>
                 <div class="flex-1 min-w-0">
@@ -286,7 +309,7 @@
 
         @if(isset($withUser) || isset($withGroup))
         <!-- Messages -->
-        <div class="flex-1 overflow-y-auto px-6 py-5 space-y-4 bg-gray-50/30 dark:bg-slate-950/40" id="messagesContainer">
+        <div class="flex-1 overflow-y-auto px-3 md:px-6 py-4 md:py-5 space-y-4 bg-gray-50/30 dark:bg-slate-950/40" id="messagesContainer">
             @forelse($messages as $msg)
                 @php $isMine = $msg->sender_id === Auth::id(); @endphp
                 @if(isset($withGroup) && !$isMine)
@@ -294,7 +317,7 @@
                     <div class="h-7 w-7 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0 shadow-sm">
                         {{ strtoupper(substr($msg->sender->name, 0, 2)) }}
                     </div>
-                    <div class="max-w-xs lg:max-w-md">
+                    <div class="max-w-[78%] sm:max-w-xs lg:max-w-md">
                         <p class="text-xs text-gray-500 dark:text-gray-400 mb-0.5 ml-1">{{ $msg->sender->name }}</p>
                         <div class="px-4 py-2.5 rounded-2xl rounded-bl-md text-sm bg-white dark:bg-slate-800 text-gray-800 dark:text-gray-100 border border-gray-100 dark:border-slate-700 shadow-sm">{{ $msg->body }}</div>
                         <p class="text-xs text-gray-400 dark:text-gray-500 mt-1 ml-1">{{ $msg->created_at->format('g:i A') }}</p>
@@ -308,7 +331,7 @@
                         {{ strtoupper(substr($msg->sender->name, 0, 2)) }}
                     </div>
                     @endif
-                    <div class="max-w-xs lg:max-w-md {{ $isMine ? 'flex flex-col items-end' : '' }}">
+                    <div class="max-w-[78%] sm:max-w-xs lg:max-w-md {{ $isMine ? 'flex flex-col items-end' : '' }}">
                         <div class="px-4 py-2.5 rounded-2xl text-sm shadow-sm
                             {{ $isMine
                                 ? 'bg-gradient-to-br from-brand-500 to-brand-700 text-white rounded-br-md'
@@ -349,8 +372,8 @@
         </div>
 
         <!-- Input row -->
-        <div class="px-6 py-4 border-t border-gray-100 dark:border-slate-700 bg-white dark:bg-slate-900 flex-shrink-0">
-            <div class="flex items-end gap-3">
+        <div class="px-3 md:px-6 py-3 md:py-4 border-t border-gray-100 dark:border-slate-700 bg-white dark:bg-slate-900 flex-shrink-0">
+            <div class="flex items-end gap-2 md:gap-3">
                 <label class="chat-input-pill flex-1 flex items-center gap-2 px-4 py-3.5">
                     <i class="fa-solid fa-comment-dots text-gray-400 dark:text-gray-500 text-sm"></i>
                     <input type="text" id="messageInput" placeholder="Type a message" autofocus
@@ -663,7 +686,7 @@ function appendMessage(msg, isMine) {
 
     if (isMine) {
         div.innerHTML = `
-            <div class="max-w-xs lg:max-w-md flex flex-col items-end">
+            <div class="max-w-[78%] sm:max-w-xs lg:max-w-md flex flex-col items-end">
                 <div class="px-4 py-2.5 rounded-2xl rounded-br-md text-sm bg-gradient-to-br from-brand-500 to-brand-700 text-white shadow-sm">${escHtml(msg.body)}</div>
                 <p class="text-xs text-gray-400 dark:text-gray-500 mt-1 text-right">
                     ${msg.created_at}
@@ -682,7 +705,7 @@ function appendMessage(msg, isMine) {
             <div class="h-7 w-7 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0 shadow-sm">
                 ${initials}
             </div>
-            <div class="max-w-xs lg:max-w-md">
+            <div class="max-w-[78%] sm:max-w-xs lg:max-w-md">
                 ${isGroup ? `<p class="text-xs text-gray-500 dark:text-gray-400 mb-0.5 ml-1">${escHtml(msg.sender)}</p>` : ''}
                 <div class="px-4 py-2.5 rounded-2xl rounded-bl-md text-sm bg-white dark:bg-slate-800 text-gray-800 dark:text-gray-100 border border-gray-100 dark:border-slate-700 shadow-sm">${escHtml(msg.body)}</div>
                 <p class="text-xs text-gray-400 dark:text-gray-500 mt-1 ${isGroup ? 'ml-1' : ''}">${msg.created_at}</p>

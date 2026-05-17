@@ -203,19 +203,27 @@
 
 <div class="space-y-5">
 
-    <!-- Header -->
-    <div class="flex items-center justify-between flex-wrap gap-3">
-        <div>
-            <h1 class="text-2xl font-extrabold text-gray-900 dark:text-white">Staff Directory</h1>
-            <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-                {{ $staff->total() }} members &bull; {{ $isAdmin ? 'Manage staff and assign shifts' : 'View clinic staff and shifts' }}
-            </p>
+    <!-- Hero banner — gradient header card matching Staff Profile -->
+    <div class="rounded-2xl overflow-hidden bg-gradient-to-r from-brand-600 via-teal-600 to-emerald-700 text-white shadow-md relative">
+        <div class="absolute inset-0 opacity-20 pointer-events-none" style="background-image: radial-gradient(circle at 18% 30%, rgba(255,255,255,.55) 0, transparent 35%), radial-gradient(circle at 78% 75%, rgba(255,255,255,.35) 0, transparent 32%), radial-gradient(circle at 95% 20%, rgba(255,255,255,.25) 0, transparent 25%);"></div>
+        <div class="relative px-5 sm:px-6 py-5 flex items-center justify-between gap-4 flex-wrap">
+            <div class="flex items-center gap-4 min-w-0 flex-1">
+                <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-white/15 backdrop-blur-sm flex items-center justify-center flex-shrink-0 ring-1 ring-white/25">
+                    <i class="fa-solid fa-user-group text-xl sm:text-2xl"></i>
+                </div>
+                <div class="min-w-0">
+                    <h1 class="text-xl sm:text-2xl font-extrabold leading-tight">Staff Directory</h1>
+                    <p class="text-white/80 text-sm mt-0.5">
+                        <span class="font-bold">{{ $staff->total() }}</span> members &bull; {{ $isAdmin ? 'Manage staff and assign shifts' : 'View clinic staff and shifts' }}
+                    </p>
+                </div>
+            </div>
+            @if($isAdmin)
+            <button onclick="openAddStaffModal()" class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white text-teal-700 hover:bg-teal-50 text-sm font-bold transition-colors shadow-sm w-full sm:w-auto flex-shrink-0">
+                <i class="fa-solid fa-user-plus"></i> Add Staff
+            </button>
+            @endif
         </div>
-        @if($isAdmin)
-        <button onclick="openAddStaffModal()" class="btn-primary">
-            <i class="fa-solid fa-user-plus"></i> Add Staff
-        </button>
-        @endif
     </div>
 
     <!-- Search + filter -->
@@ -293,9 +301,9 @@
     </form>
 
     <!-- Staff table -->
-    <div class="staff-card overflow-hidden">
+    <div class="staff-card overflow-hidden -mx-4 md:mx-0 rounded-none md:rounded-2xl border-x-0 md:border-x-2">
         <div class="overflow-x-auto">
-            <table class="min-w-full staff-table">
+            <table class="min-w-full staff-table responsive-table">
                 <thead>
                     <tr>
                         <th>Staff Member</th>
@@ -330,9 +338,10 @@
                         };
                     @endphp
                     <tr data-href="{{ route('staff.show', $member) }}"
+                        data-role-accent="{{ $member->role }}"
                         onclick="if(!event.target.closest('.row-action')) window.location=this.dataset.href"
                         class="group">
-                        <td>
+                        <td class="cell-primary">
                             <div class="flex items-center gap-3">
                                 <x-avatar :user="$member" size="lg" :gradient="$cfg['grad']" />
                                 <div class="min-w-0">
@@ -341,18 +350,18 @@
                                 </div>
                             </div>
                         </td>
-                        <td class="text-center">
+                        <td class="text-center" data-label="Role">
                             <span class="role-pill {{ $cfg['bg'] }} {{ $cfg['darkBg'] }} {{ $cfg['text'] }} {{ $cfg['darkText'] }} {{ $cfg['border'] }} {{ $cfg['darkBorder'] }}">
                                 <i class="fa-solid {{ $cfg['icon'] }} text-xs"></i> {{ $cfg['label'] }}
                             </span>
                         </td>
-                        <td>
+                        <td data-label="Contact">
                             <div class="text-sm text-gray-700 dark:text-gray-200 text-center">
                                 <p class="truncate">{{ $member->email }}</p>
                                 <p class="staff-meta">{{ $member->phone ?? '—' }}</p>
                             </div>
                         </td>
-                        <td>
+                        <td data-label="Shift">
                             @if($todayShift)
                                 <div class="flex items-center justify-center gap-2">
                                     <span class="shift-chip shift-{{ $todayShift->shift_type }}">
@@ -373,7 +382,7 @@
                                 <p class="text-sm staff-meta italic text-center">Rest day</p>
                             @endif
                         </td>
-                        <td>
+                        <td data-label="Status">
                             <div class="flex items-center justify-center gap-2 whitespace-nowrap">
                                 <span class="inline-flex items-center gap-1.5 text-sm font-semibold {{ $statusTextClass }}">
                                     <span class="w-2 h-2 rounded-full {{ $statusDotClass }}"></span>
@@ -384,7 +393,7 @@
                                 @endif
                             </div>
                         </td>
-                        <td>
+                        <td class="cell-actions">
                             <div class="flex items-center gap-3 row-action w-full">
                                 @if($isAdmin)
                                 <button type="button" onclick="event.stopPropagation(); openShiftModal({{ $member->id }}, '{{ addslashes($member->name) }}')"

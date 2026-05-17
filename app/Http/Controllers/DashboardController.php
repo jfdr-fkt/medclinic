@@ -4,13 +4,25 @@ namespace App\Http\Controllers;
 use App\Models\Medicine;
 use App\Models\Patient;
 use App\Models\User;
+use App\Models\Visit;
 use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
 {
     public function index()
     {
-        $todayPatients = Patient::whereDate('last_visit', today())->count();
+        // Today's queue snapshot — drives both the headline stat and the live counts panel.
+        $todayVisits = Visit::whereDate('checked_in_at', today())->get();
+        $queueCounts = [
+            'total'        => $todayVisits->count(),
+            'waiting'      => $todayVisits->where('status', 'waiting')->count(),
+            'with_nurse'   => $todayVisits->where('status', 'with_nurse')->count(),
+            'with_doctor'  => $todayVisits->where('status', 'with_doctor')->count(),
+            'pharmacy'     => $todayVisits->where('status', 'pharmacy')->count(),
+            'completed'    => $todayVisits->where('status', 'completed')->count(),
+            'in_progress'  => $todayVisits->whereIn('status', ['with_nurse','with_doctor','pharmacy'])->count(),
+        ];
+        $todayPatients = $queueCounts['total'];
 
         // Exclude expired medicines (those whose latestInventory.expiration_date is past)
         $notExpired = fn($q) => $q->whereDoesntHave('latestInventory', fn($s) => $s->where('expiration_date', '<', now()));
@@ -41,7 +53,7 @@ class DashboardController extends Controller
             ->get();
 
         return view('dashboard', compact(
-            'todayPatients', 'lowStockMedicines', 'expiringSoon', 'onlineStaff', 'myPinnedPatients'
+            'todayPatients', 'queueCounts', 'lowStockMedicines', 'expiringSoon', 'onlineStaff', 'myPinnedPatients'
         ));
     }
 }

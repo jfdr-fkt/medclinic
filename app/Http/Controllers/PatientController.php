@@ -3,10 +3,12 @@ namespace App\Http\Controllers;
 
 use App\Models\ActivityLog;
 use App\Models\Patient;
+use App\Models\PatientImage;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class PatientController extends Controller
 {
@@ -55,13 +57,23 @@ class PatientController extends Controller
         $user = Auth::user();
         if (!$user->can_('patients.create')) abort(403, 'Not authorized to add patients.');
         $validated = $request->validate([
-            'name'                => 'required|string|max:255',
-            'date_of_birth'       => 'nullable|date',
-            'phone'               => 'nullable|string',
-            'address'             => 'nullable|string',
-            'medical_history'     => 'nullable|string',
-            'assigned_nurse_id'   => 'nullable|exists:users,id',
-            'assigned_doctor_id'  => 'nullable|exists:users,id',
+            'name'                     => 'required|string|max:255',
+            'date_of_birth'            => 'nullable|date',
+            'sex'                      => 'nullable|in:male,female,other',
+            'blood_type'               => 'nullable|in:A+,A-,B+,B-,AB+,AB-,O+,O-',
+            'height_cm'                => 'nullable|numeric|min:20|max:260',
+            'weight_kg'                => 'nullable|numeric|min:0.5|max:500',
+            'phone'                    => 'nullable|string|max:50',
+            'address'                  => 'nullable|string',
+            'allergies'                => 'nullable|string|max:1000',
+            'chronic_conditions'       => 'nullable|string|max:1000',
+            'medical_history'          => 'nullable|string',
+            'assigned_nurse_id'        => 'nullable|exists:users,id',
+            'assigned_doctor_id'       => 'nullable|exists:users,id',
+            'emergency_contact_name'    => 'nullable|string|max:255',
+            'emergency_contact_phone'   => 'nullable|string|max:50',
+            'emergency_contact_2_name'  => 'nullable|string|max:255',
+            'emergency_contact_2_phone' => 'nullable|string|max:50',
         ]);
 
         do {
@@ -89,15 +101,16 @@ class PatientController extends Controller
         if (!$user->can_('patients.view')) abort(403, 'You do not have access to patient records.');
 
         // Clinical staff (doctor / nurse) can only open records they are personally assigned to.
-        // Oversight roles (admin / clinic_head) can open any record but every cross-team open
-        // is audit-logged below.
+        // patients.view_all roles (admin / clinic_head / secretary) can open any record but
+        // every cross-team open is audit-logged below.
         $isAssigned = $patient->assigned_doctor_id === $user->id
                    || $patient->assigned_nurse_id  === $user->id;
         if (!$user->can_('patients.view_all') && !$isAssigned) {
             abort(403, 'This patient is not assigned to you.');
         }
 
-        $patient->load(['nurse', 'doctor']);
+        $patient->load(['nurse', 'doctor', 'visits.currentStaff', 'images.uploadedBy']);
+        $visits = $patient->visits()->with('currentStaff')->take(15)->get();
 
         // Audit trail: oversight role opening someone they're not clinically assigned to.
         // HIPAA / PH Data Privacy Act pattern of "minimum necessary access + full audit trail".
@@ -111,20 +124,33 @@ class PatientController extends Controller
             ]);
         }
 
-        return view('patients.show', compact('patient'));
+        // For the inline Edit Patient modal on the show page.
+        $nurses  = User::where('role', 'nurse')->orderBy('name')->get();
+        $doctors = User::where('role', 'doctor')->orderBy('name')->get();
+        return view('patients.show', compact('patient', 'visits', 'nurses', 'doctors'));
     }
 
     public function update(Request $request, Patient $patient)
     {
         $user = Auth::user();
         $validated = $request->validate([
-            'name'                => 'required|string|max:255',
-            'date_of_birth'       => 'nullable|date',
-            'phone'               => 'nullable|string',
-            'address'             => 'nullable|string',
-            'medical_history'     => 'nullable|string',
-            'assigned_nurse_id'   => 'nullable|exists:users,id',
-            'assigned_doctor_id'  => 'nullable|exists:users,id',
+            'name'                     => 'required|string|max:255',
+            'date_of_birth'            => 'nullable|date',
+            'sex'                      => 'nullable|in:male,female,other',
+            'blood_type'               => 'nullable|in:A+,A-,B+,B-,AB+,AB-,O+,O-',
+            'height_cm'                => 'nullable|numeric|min:20|max:260',
+            'weight_kg'                => 'nullable|numeric|min:0.5|max:500',
+            'phone'                    => 'nullable|string|max:50',
+            'address'                  => 'nullable|string',
+            'allergies'                => 'nullable|string|max:1000',
+            'chronic_conditions'       => 'nullable|string|max:1000',
+            'medical_history'          => 'nullable|string',
+            'assigned_nurse_id'        => 'nullable|exists:users,id',
+            'assigned_doctor_id'       => 'nullable|exists:users,id',
+            'emergency_contact_name'    => 'nullable|string|max:255',
+            'emergency_contact_phone'   => 'nullable|string|max:50',
+            'emergency_contact_2_name'  => 'nullable|string|max:255',
+            'emergency_contact_2_phone' => 'nullable|string|max:50',
         ]);
         $patient->update($validated);
 
@@ -137,6 +163,68 @@ class PatientController extends Controller
         ]);
 
         return back()->with('success', 'Patient updated!');
+    }
+
+    /**
+     * Upload one or more clinical photos (skin condition, x-ray, etc.) for a patient.
+     * Each image records who uploaded it so the audit trail is intact.
+     */
+    public function uploadImages(Request $request, Patient $patient)
+    {
+        $user = Auth::user();
+        if (!$user->can_('patients.create')) abort(403, 'You cannot edit patient records.');
+        $request->validate([
+            'images'   => 'required|array|min:1|max:8',
+            'images.*' => 'image|mimes:jpeg,png,webp|max:6144',
+            'caption'  => 'nullable|string|max:255',
+        ]);
+
+        $created = 0;
+        foreach ($request->file('images') as $file) {
+            $path = $file->store('patients/photos', 'public');
+            PatientImage::create([
+                'patient_id'  => $patient->id,
+                'uploaded_by' => $user->id,
+                'path'        => $path,
+                'caption'     => $request->input('caption'),
+            ]);
+            $created++;
+        }
+
+        ActivityLog::create([
+            'user_id'     => $user->id,
+            'action'      => 'patient.image.add',
+            'entity_type' => Patient::class,
+            'entity_id'   => $patient->id,
+            'details'     => "Added {$created} photo(s) to {$patient->name} ({$patient->patient_id})",
+        ]);
+
+        return back()->with('success', "{$created} photo(s) uploaded.");
+    }
+
+    /**
+     * Delete a single patient photo. Only the uploader, admin, or clinic_head can remove.
+     */
+    public function deleteImage(Patient $patient, PatientImage $image)
+    {
+        $user = Auth::user();
+        $isOwn       = $image->uploaded_by === $user->id;
+        $isOversight = in_array($user->role, ['admin', 'clinic_head']);
+        if (!$isOwn && !$isOversight) abort(403, 'You can only remove photos you uploaded.');
+        if ($image->patient_id !== $patient->id) abort(404);
+
+        try { Storage::disk('public')->delete($image->path); } catch (\Throwable $e) { /* ignore */ }
+        $image->delete();
+
+        ActivityLog::create([
+            'user_id'     => $user->id,
+            'action'      => 'patient.image.remove',
+            'entity_type' => Patient::class,
+            'entity_id'   => $patient->id,
+            'details'     => "Removed a photo from {$patient->name} ({$patient->patient_id})",
+        ]);
+
+        return back()->with('success', 'Photo removed.');
     }
 
     public function destroy(Patient $patient)

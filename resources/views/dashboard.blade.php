@@ -118,10 +118,10 @@
                 </h1>
                 <p class="text-white/80 text-sm mt-1"><span id="greetingDate">{{ date('l, F j, Y') }}</span> &bull; Here's what's happening at the clinic today</p>
             </div>
-            @if(Auth::user()->can_('patients.view'))
-            <a href="{{ route('patients.index') }}" class="inline-flex items-center gap-2 bg-white/15 hover:bg-white/25 border border-white/20 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors w-fit"
-               style="backdrop-filter: blur(4px);">
-                <i class="fa-solid fa-user-plus"></i> Open Patient List
+            @if(Auth::user()->can_('visits.checkin'))
+            <a href="{{ route('visits.index') }}#checkin"
+               class="inline-flex items-center gap-2 bg-white text-teal-700 hover:bg-teal-50 px-4 py-2.5 rounded-xl text-sm font-bold transition-colors shadow-sm w-fit">
+                <i class="fa-solid fa-user-plus"></i> Check In Patient
             </a>
             @endif
         </div>
@@ -129,13 +129,13 @@
 
     <!-- ── Stat cards ── -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <a href="{{ Auth::user()->can_('patients.view') ? route('patients.index') : '#' }}" class="dash-stat dash-blue group">
+        <a href="{{ Auth::user()->can_('visits.view') ? route('visits.index') : route('patients.index') }}" class="dash-stat dash-blue group">
             <div class="flex items-center justify-between">
-                <span class="stat-icon"><i class="fa-solid fa-user-group"></i></span>
+                <span class="stat-icon"><i class="fa-solid fa-clipboard-list"></i></span>
                 <i class="fa-solid fa-arrow-right opacity-50 group-hover:translate-x-1 group-hover:opacity-100 transition-all"></i>
             </div>
             <p class="stat-number">{{ $todayPatients }}</p>
-            <p class="stat-label">Patients today</p>
+            <p class="stat-label">In queue today</p>
         </a>
 
         <a href="{{ route('medicines.index', ['view' => 'low']) }}" class="dash-stat dash-amber group">
@@ -166,55 +166,124 @@
         </a>
     </div>
 
-    <!-- ── Quick Actions ── -->
-    <div class="dash-panel p-5">
-        <h3 class="font-bold text-gray-900 dark:text-white text-sm mb-4 flex items-center gap-2">
-            <i class="fa-solid fa-bolt text-brand-500"></i> Quick Actions
-        </h3>
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-            @if(Auth::user()->can_('patients.view'))
-            <a href="{{ route('patients.index') }}" class="flex items-center gap-3 p-3 rounded-xl border-2 border-gray-100 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-700 hover:bg-blue-50/50 dark:hover:bg-blue-900/15 transition-all">
-                <div class="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/35 text-blue-600 dark:text-blue-300 flex items-center justify-center flex-shrink-0">
-                    <i class="fa-solid fa-user-injured"></i>
-                </div>
-                <div class="min-w-0">
-                    <p class="text-sm font-semibold text-gray-800 dark:text-gray-100 truncate">Patients</p>
-                    <p class="text-xs text-gray-400 dark:text-gray-500">Manage records</p>
-                </div>
-            </a>
-            @endif
-            @if(Auth::user()->can_('medicines.create'))
-            <a href="{{ route('scan.index') }}" class="flex items-center gap-3 p-3 rounded-xl border-2 border-gray-100 dark:border-slate-700 hover:border-purple-300 dark:hover:border-purple-700 hover:bg-purple-50/50 dark:hover:bg-purple-900/15 transition-all">
-                <div class="w-10 h-10 rounded-lg bg-purple-100 dark:bg-purple-900/35 text-purple-600 dark:text-purple-300 flex items-center justify-center flex-shrink-0">
-                    <i class="fa-solid fa-plus"></i>
-                </div>
-                <div class="min-w-0">
-                    <p class="text-sm font-semibold text-gray-800 dark:text-gray-100 truncate">Add Medicine</p>
-                    <p class="text-xs text-gray-400 dark:text-gray-500">Add to inventory</p>
-                </div>
-            </a>
-            @endif
-            @if(Auth::user()->can_('medicines.dispense'))
-            <a href="{{ route('medicines.index') }}" class="flex items-center gap-3 p-3 rounded-xl border-2 border-gray-100 dark:border-slate-700 hover:border-emerald-300 dark:hover:border-emerald-700 hover:bg-emerald-50/50 dark:hover:bg-emerald-900/15 transition-all">
-                <div class="w-10 h-10 rounded-lg bg-emerald-100 dark:bg-emerald-900/35 text-emerald-600 dark:text-emerald-300 flex items-center justify-center flex-shrink-0">
-                    <i class="fa-solid fa-pills"></i>
-                </div>
-                <div class="min-w-0">
-                    <p class="text-sm font-semibold text-gray-800 dark:text-gray-100 truncate">Inventory</p>
-                    <p class="text-xs text-gray-400 dark:text-gray-500">View stock</p>
-                </div>
-            </a>
-            @endif
-            <a href="{{ route('chat.index') }}" class="flex items-center gap-3 p-3 rounded-xl border-2 border-gray-100 dark:border-slate-700 hover:border-amber-300 dark:hover:border-amber-700 hover:bg-amber-50/50 dark:hover:bg-amber-900/15 transition-all">
-                <div class="w-10 h-10 rounded-lg bg-amber-100 dark:bg-amber-900/35 text-amber-600 dark:text-amber-300 flex items-center justify-center flex-shrink-0">
-                    <i class="fa-solid fa-comments"></i>
-                </div>
-                <div class="min-w-0">
-                    <p class="text-sm font-semibold text-gray-800 dark:text-gray-100 truncate">Messages</p>
-                    <p class="text-xs text-gray-400 dark:text-gray-500">Staff chat</p>
-                </div>
-            </a>
-        </div>
+    {{-- ── Combined panel: Today's Queue + Quick Actions ──
+         One container per the design request. Each section has its own
+         chevron-style hide/show toggle; collapsed state persists in
+         localStorage so it carries across page loads. --}}
+    @php
+        $hasQueue = Auth::user()->can_('visits.view') && ($queueCounts['total'] ?? 0) > 0;
+        $queueTiles = [
+            ['waiting',     'Waiting',     'amber',   'fa-hourglass-half'],
+            ['with_nurse',  'With Nurse',  'cyan',    'fa-user-nurse'],
+            ['with_doctor', 'With Doctor', 'blue',    'fa-user-doctor'],
+            ['pharmacy',    'Pharmacy',    'purple',  'fa-prescription-bottle-medical'],
+            ['completed',   'Completed',   'emerald', 'fa-circle-check'],
+        ];
+    @endphp
+    <div class="dash-panel p-5 space-y-5">
+
+        @if($hasQueue)
+        {{-- Section 1: Today's Queue --}}
+        <section data-collapse-key="queue">
+            <div class="flex items-center justify-between flex-wrap gap-2">
+                <button type="button" data-collapse-toggle
+                        class="flex items-center gap-2 text-left group">
+                    <span class="w-7 h-7 rounded-lg bg-brand-100 dark:bg-brand-900/40 text-brand-600 dark:text-brand-300 inline-flex items-center justify-center">
+                        <i class="fa-solid fa-people-arrows text-xs"></i>
+                    </span>
+                    <h3 class="font-bold text-gray-900 dark:text-white text-sm">Today's Queue</h3>
+                    <span class="text-[10px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-900/40 px-2 py-0.5 rounded-full uppercase tracking-wider inline-flex items-center gap-1">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Live
+                    </span>
+                    <i class="fa-solid fa-chevron-down text-[10px] text-gray-400 dark:text-gray-500 transition-transform group-hover:text-gray-700 dark:group-hover:text-gray-200" data-collapse-chevron></i>
+                </button>
+                <a href="{{ route('visits.index') }}" class="text-xs text-brand-600 dark:text-brand-300 hover:underline font-semibold">Open queue →</a>
+            </div>
+            <div data-collapse-body class="mt-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+                @foreach($queueTiles as [$key, $label, $hue, $icon])
+                <a href="{{ route('visits.index', ['status' => $key]) }}"
+                   class="flex items-center gap-3 p-3 rounded-xl border-2 border-gray-100 dark:border-slate-700 hover:border-{{ $hue }}-300 dark:hover:border-{{ $hue }}-700 hover:bg-{{ $hue }}-50/40 dark:hover:bg-{{ $hue }}-900/15 transition-all">
+                    <div class="w-10 h-10 rounded-lg bg-{{ $hue }}-100 dark:bg-{{ $hue }}-900/35 text-{{ $hue }}-600 dark:text-{{ $hue }}-300 flex items-center justify-center flex-shrink-0">
+                        <i class="fa-solid {{ $icon }}"></i>
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <p class="text-xl font-extrabold text-gray-900 dark:text-white leading-none">{{ $queueCounts[$key] ?? 0 }}</p>
+                        <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 mt-0.5 truncate">{{ $label }}</p>
+                    </div>
+                </a>
+                @endforeach
+            </div>
+        </section>
+
+        <div class="border-t border-gray-100 dark:border-slate-700"></div>
+        @endif
+
+        {{-- Section 2: Quick Actions --}}
+        <section data-collapse-key="quick-actions">
+            <button type="button" data-collapse-toggle
+                    class="flex items-center gap-2 text-left group">
+                <span class="w-7 h-7 rounded-lg bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-300 inline-flex items-center justify-center">
+                    <i class="fa-solid fa-bolt text-xs"></i>
+                </span>
+                <h3 class="font-bold text-gray-900 dark:text-white text-sm">Quick Actions</h3>
+                <i class="fa-solid fa-chevron-down text-[10px] text-gray-400 dark:text-gray-500 transition-transform group-hover:text-gray-700 dark:group-hover:text-gray-200" data-collapse-chevron></i>
+            </button>
+            <div data-collapse-body class="mt-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+                @if(Auth::user()->can_('visits.checkin'))
+                <a href="{{ route('visits.index') }}#checkin" class="flex items-center gap-3 p-3 rounded-xl border-2 border-gray-100 dark:border-slate-700 hover:border-brand-300 dark:hover:border-brand-700 hover:bg-brand-50/50 dark:hover:bg-brand-900/15 transition-all">
+                    <div class="w-10 h-10 rounded-lg bg-brand-100 dark:bg-brand-900/40 text-brand-600 dark:text-brand-300 flex items-center justify-center flex-shrink-0">
+                        <i class="fa-solid fa-user-plus"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <p class="text-sm font-semibold text-gray-800 dark:text-gray-100 truncate">Check In</p>
+                        <p class="text-xs text-gray-400 dark:text-gray-500">Today's queue</p>
+                    </div>
+                </a>
+                @endif
+                @if(Auth::user()->can_('patients.view'))
+                <a href="{{ route('patients.index') }}" class="flex items-center gap-3 p-3 rounded-xl border-2 border-gray-100 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-700 hover:bg-blue-50/50 dark:hover:bg-blue-900/15 transition-all">
+                    <div class="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/35 text-blue-600 dark:text-blue-300 flex items-center justify-center flex-shrink-0">
+                        <i class="fa-solid fa-user-injured"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <p class="text-sm font-semibold text-gray-800 dark:text-gray-100 truncate">Patients</p>
+                        <p class="text-xs text-gray-400 dark:text-gray-500">Manage records</p>
+                    </div>
+                </a>
+                @endif
+                @if(Auth::user()->can_('medicines.create'))
+                <a href="{{ route('scan.index') }}" class="flex items-center gap-3 p-3 rounded-xl border-2 border-gray-100 dark:border-slate-700 hover:border-purple-300 dark:hover:border-purple-700 hover:bg-purple-50/50 dark:hover:bg-purple-900/15 transition-all">
+                    <div class="w-10 h-10 rounded-lg bg-purple-100 dark:bg-purple-900/35 text-purple-600 dark:text-purple-300 flex items-center justify-center flex-shrink-0">
+                        <i class="fa-solid fa-plus"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <p class="text-sm font-semibold text-gray-800 dark:text-gray-100 truncate">Add Medicine</p>
+                        <p class="text-xs text-gray-400 dark:text-gray-500">Add to inventory</p>
+                    </div>
+                </a>
+                @endif
+                @if(Auth::user()->can_('medicines.dispense'))
+                <a href="{{ route('medicines.index') }}" class="flex items-center gap-3 p-3 rounded-xl border-2 border-gray-100 dark:border-slate-700 hover:border-emerald-300 dark:hover:border-emerald-700 hover:bg-emerald-50/50 dark:hover:bg-emerald-900/15 transition-all">
+                    <div class="w-10 h-10 rounded-lg bg-emerald-100 dark:bg-emerald-900/35 text-emerald-600 dark:text-emerald-300 flex items-center justify-center flex-shrink-0">
+                        <i class="fa-solid fa-pills"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <p class="text-sm font-semibold text-gray-800 dark:text-gray-100 truncate">Inventory</p>
+                        <p class="text-xs text-gray-400 dark:text-gray-500">View stock</p>
+                    </div>
+                </a>
+                @endif
+                <a href="{{ route('chat.index') }}" class="flex items-center gap-3 p-3 rounded-xl border-2 border-gray-100 dark:border-slate-700 hover:border-amber-300 dark:hover:border-amber-700 hover:bg-amber-50/50 dark:hover:bg-amber-900/15 transition-all">
+                    <div class="w-10 h-10 rounded-lg bg-amber-100 dark:bg-amber-900/35 text-amber-600 dark:text-amber-300 flex items-center justify-center flex-shrink-0">
+                        <i class="fa-solid fa-comments"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <p class="text-sm font-semibold text-gray-800 dark:text-gray-100 truncate">Messages</p>
+                        <p class="text-xs text-gray-400 dark:text-gray-500">Staff chat</p>
+                    </div>
+                </a>
+            </div>
+        </section>
     </div>
 
     <!-- ── Two-column section ── -->
@@ -224,7 +293,10 @@
         <div class="dash-panel p-5 lg:col-span-2">
             <div class="flex items-center justify-between mb-4">
                 <h3 class="font-bold text-gray-900 dark:text-white text-sm flex items-center gap-2">
-                    <i class="fa-solid fa-thumbtack text-amber-500"></i> Pinned Patients
+                    <span class="w-7 h-7 rounded-lg bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-300 inline-flex items-center justify-center">
+                        <i class="fa-solid fa-thumbtack text-xs"></i>
+                    </span>
+                    Pinned Patients
                 </h3>
                 @if(Auth::user()->can_('patients.view'))
                 <a href="{{ route('patients.index') }}" class="text-xs text-blue-600 dark:text-blue-300 hover:underline font-medium">View all →</a>
@@ -259,7 +331,11 @@
         <div class="dash-panel p-5">
             <div class="flex items-center justify-between mb-4">
                 <h3 class="font-bold text-gray-900 dark:text-white text-sm flex items-center gap-2">
-                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Active Staff
+                    <span class="w-7 h-7 rounded-lg bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-300 inline-flex items-center justify-center relative">
+                        <i class="fa-solid fa-user-doctor text-xs"></i>
+                        <span class="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-[#1a2438] animate-pulse"></span>
+                    </span>
+                    Active Staff
                 </h3>
                 <a href="{{ route('staff.index') }}" class="text-xs text-indigo-600 dark:text-indigo-300 hover:underline font-medium">All →</a>
             </div>
@@ -318,7 +394,13 @@
     <div class="dash-panel p-5">
         <div class="flex items-center justify-between mb-4">
             <h3 class="font-bold text-gray-900 dark:text-white text-sm flex items-center gap-2">
-                <i class="fa-solid fa-triangle-exclamation text-amber-500"></i> Low Stock Alerts
+                <span class="w-7 h-7 rounded-lg bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-300 inline-flex items-center justify-center">
+                    <i class="fa-solid fa-triangle-exclamation text-xs"></i>
+                </span>
+                Low Stock Alerts
+                <span class="text-[10px] font-bold text-amber-700 dark:text-amber-300 bg-amber-100 dark:bg-amber-900/40 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                    {{ $lowStockMedicines->count() }}
+                </span>
             </h3>
             <a href="{{ route('medicines.index', ['view'=>'low']) }}" class="text-xs text-brand-600 dark:text-brand-300 hover:underline font-medium">View all →</a>
         </div>
@@ -356,6 +438,31 @@
     if (part) part.textContent = word;
     if (date) date.textContent = now.toLocaleDateString(undefined, {
         weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+    });
+})();
+
+// Hide/show toggle for Today's Queue & Quick Actions sections.
+// State persists in localStorage so a collapsed section stays collapsed across navigations.
+(function () {
+    document.querySelectorAll('[data-collapse-key]').forEach(function (section) {
+        const key      = 'dash-collapse:' + section.dataset.collapseKey;
+        const toggle   = section.querySelector('[data-collapse-toggle]');
+        const body     = section.querySelector('[data-collapse-body]');
+        const chevron  = section.querySelector('[data-collapse-chevron]');
+        if (!toggle || !body) return;
+
+        function apply(collapsed) {
+            body.style.display = collapsed ? 'none' : '';
+            if (chevron) chevron.style.transform = collapsed ? 'rotate(-90deg)' : '';
+            toggle.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+        }
+        apply(localStorage.getItem(key) === '1');
+
+        toggle.addEventListener('click', function () {
+            const next = body.style.display !== 'none';
+            apply(next);
+            localStorage.setItem(key, next ? '1' : '0');
+        });
     });
 })();
 </script>

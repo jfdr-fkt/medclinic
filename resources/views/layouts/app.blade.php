@@ -59,6 +59,9 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>ClinicMS — @yield('title', 'Dashboard')</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    {{-- Flatpickr loaded globally so every <input type="date"> gets the branded
+         calendar instead of the OS native picker (which looks foreign on each browser). --}}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4/dist/flatpickr.min.css">
     <script>
         // Apply dark/light mode class BEFORE Tailwind loads to prevent flash
         (function() {
@@ -347,6 +350,38 @@
             to   { opacity: 1; transform: translateY(0); }
         }
         .dark .cs-panel { background: #1a2438 !important; border-color: #2d3a52 !important; box-shadow: 0 10px 30px rgba(0,0,0,.5) !important; }
+        .cs-search-wrap {
+            position: sticky; top: 0; z-index: 1;
+            padding: .5rem .55rem;
+            background: #fff;
+            border-bottom: 1.5px solid #e5e7eb;
+        }
+        .dark .cs-search-wrap { background: #1a2438; border-bottom-color: #2d3a52; }
+        .cs-search-input {
+            width: 100%;
+            padding: .45rem .65rem;
+            font-size: .85rem;
+            border: 1.5px solid #e5e7eb;
+            border-radius: .55rem;
+            background: #f8fafc;
+            color: #111827;
+            outline: none;
+            transition: border-color .12s, box-shadow .12s;
+        }
+        .cs-search-input:focus { border-color: #0d9488; box-shadow: 0 0 0 3px rgba(13,148,136,.15); }
+        .dark .cs-search-input {
+            background: #243050; border-color: #3a4a66; color: #f1f5f9;
+        }
+        .dark .cs-search-input:focus { border-color: #14b8a6; box-shadow: 0 0 0 3px rgba(20,184,166,.2); }
+        .cs-empty {
+            padding: .65rem .9rem;
+            font-size: .85rem;
+            color: #9ca3af;
+            font-style: italic;
+            text-align: center;
+        }
+        .dark .cs-empty { color: #64748b; }
+
         .cs-option {
             padding: .6rem .9rem;
             cursor: pointer;
@@ -371,6 +406,199 @@
         .status-dot.busy      { @apply bg-red-400; }
         .status-dot.away      { @apply bg-amber-400; }
         .status-dot.offline   { @apply bg-gray-400; }
+
+        /* ── Branded calendar (flatpickr) — applied to every <input type="date">
+           via the auto-init in the global script block. Matches the system's
+           teal accent + rounded radii + dark mode parity. */
+        .flatpickr-calendar {
+            border-radius: 1rem !important;
+            border: 2px solid #e5e7eb !important;
+            box-shadow: 0 10px 30px rgba(0,0,0,.14) !important;
+            font-family: inherit !important;
+            padding: 8px !important;
+            width: 22rem !important;
+        }
+        .flatpickr-innerContainer, .flatpickr-rContainer, .dayContainer { width: 100% !important; }
+        .dayContainer { min-width: 100% !important; max-width: 100% !important; }
+        .flatpickr-days { width: 100% !important; }
+        .flatpickr-monthDropdown-months {
+            appearance: none !important; -webkit-appearance: none !important;
+            background: #f1f5f9 !important; color: #0f172a !important;
+            border: 1.5px solid #e5e7eb !important; border-radius: .55rem !important;
+            padding: .25rem .6rem !important; font-weight: 700 !important; font-size: .9rem !important;
+            cursor: pointer; transition: background .12s, border-color .12s;
+        }
+        .flatpickr-monthDropdown-months:hover { background: #ecfdf5 !important; border-color: #14b8a6 !important; }
+        .numInputWrapper input.cur-year {
+            background: #f1f5f9 !important; border: 1.5px solid #e5e7eb !important;
+            border-radius: .55rem !important; padding: .25rem .35rem !important;
+            font-weight: 700 !important; font-size: .9rem !important; color: #0f172a !important;
+        }
+        .dark .flatpickr-monthDropdown-months, .dark .numInputWrapper input.cur-year {
+            background: #243050 !important; border-color: #3f4d6b !important; color: #f1f5f9 !important;
+        }
+        .dark .flatpickr-monthDropdown-months:hover { background: rgba(20,184,166,.15) !important; border-color: #14b8a6 !important; }
+        .flatpickr-months { padding-top: 4px !important; }
+        .flatpickr-month { color: #0f172a !important; height: 38px !important; }
+        .flatpickr-current-month { font-weight: 700 !important; font-size: .95rem !important; padding-top: 6px !important; }
+        .flatpickr-weekday { color: #6b7280 !important; font-weight: 700 !important; font-size: .72rem !important; text-transform: uppercase; letter-spacing: .04em; }
+        .flatpickr-day { border-radius: .65rem !important; color: #1f2937 !important; font-weight: 500 !important; transition: background .12s, color .12s; }
+        .flatpickr-day:hover, .flatpickr-day.prevMonthDay:hover, .flatpickr-day.nextMonthDay:hover {
+            background: #ecfdf5 !important; border-color: transparent !important; color: #065f46 !important;
+        }
+        .flatpickr-day.today { border-color: #0d9488 !important; color: #0d9488 !important; font-weight: 700 !important; }
+        .flatpickr-day.selected, .flatpickr-day.selected:hover, .flatpickr-day.selected.today {
+            background: #0d9488 !important; border-color: #0d9488 !important; color: #fff !important;
+            box-shadow: 0 2px 8px rgba(13,148,136,.35) !important;
+        }
+        .flatpickr-day.flatpickr-disabled, .flatpickr-day.flatpickr-disabled:hover { color: #cbd5e1 !important; background: transparent !important; }
+        .flatpickr-day.prevMonthDay, .flatpickr-day.nextMonthDay { color: #cbd5e1 !important; }
+        .flatpickr-prev-month, .flatpickr-next-month { color: #6b7280 !important; fill: #6b7280 !important; padding: 8px !important; }
+        .flatpickr-prev-month:hover svg, .flatpickr-next-month:hover svg { fill: #0d9488 !important; }
+        .dark .flatpickr-calendar { background: #1a2438 !important; border-color: #2d3a52 !important; box-shadow: 0 10px 30px rgba(0,0,0,.5) !important; }
+        .dark .flatpickr-month, .dark .flatpickr-current-month,
+        .dark .flatpickr-current-month .flatpickr-monthDropdown-months,
+        .dark .flatpickr-current-month input.cur-year { color: #f1f5f9 !important; }
+        .dark .flatpickr-weekday { color: #94a3b8 !important; }
+        .dark .flatpickr-day { color: #e2e8f0 !important; }
+        .dark .flatpickr-day:hover { background: rgba(20,184,166,.15) !important; color: #6ee7b7 !important; }
+        .dark .flatpickr-day.today { border-color: #14b8a6 !important; color: #6ee7b7 !important; }
+        .dark .flatpickr-day.selected, .dark .flatpickr-day.selected:hover {
+            background: #14b8a6 !important; border-color: #14b8a6 !important; color: #042f2e !important;
+        }
+        .dark .flatpickr-day.prevMonthDay, .dark .flatpickr-day.nextMonthDay,
+        .dark .flatpickr-day.flatpickr-disabled { color: #475569 !important; }
+        .dark .flatpickr-prev-month, .dark .flatpickr-next-month { color: #94a3b8 !important; fill: #94a3b8 !important; }
+
+        /* Patient ID — single canonical style used everywhere the ID renders
+           (patient list, show page, queue, check-in dropdown) so the font + weight
+           is consistent across surfaces. */
+        .patient-id-text {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 0.92rem;
+            font-weight: 700;
+            letter-spacing: .02em;
+            color: #1e293b;
+        }
+        .dark .patient-id-text { color: #e2e8f0; }
+
+        /* ── Responsive tables: stack as cards on phones ──
+           On <md, each <tr> becomes a card laid out vertically:
+             [cell-primary]   — avatar + name + role/subtitle
+             ── divider ──
+             DETAILS section  — every other cell, label ABOVE value (stacked)
+             ── divider ──
+             [cell-actions]   — buttons at the bottom
+
+           Cells with `data-label` get their column header rendered as a small
+           uppercase label above the value. Mark identity cell with `cell-primary`
+           and actions with `cell-actions`. This mirrors mobile-card UX patterns
+           where label-on-top + value-below reads better than label-left/value-right. */
+        @media (max-width: 767px) {
+            .responsive-table,
+            .responsive-table tbody,
+            .responsive-table tr,
+            .responsive-table tbody td {
+                display: block;
+                width: 100%;
+            }
+            .responsive-table thead { display: none; }
+
+            /* Each <tr> is a card with its own padding + border + shadow. Border is
+               slightly stronger than the surrounding page background so each card
+               reads as a distinct unit at a glance. */
+            .responsive-table tr {
+                padding: 1rem 1.1rem;
+                margin: .75rem 0;
+                background: #fff;
+                border: 1.5px solid #cbd5e1;
+                border-radius: 1rem;
+                box-shadow: 0 1px 3px rgba(15,23,42,.06);
+            }
+            .dark .responsive-table tr {
+                background: #1a2438;
+                border-color: #3a4a66;
+                box-shadow: 0 2px 6px rgba(0,0,0,.3);
+            }
+            /* Staff page: each card gets a left accent bar in the staff member's role color.
+               Pages add `data-role-accent="<role>"` to the <tr> to opt in. */
+            .responsive-table tr[data-role-accent] { border-left-width: 4px; }
+            .responsive-table tr[data-role-accent="admin"]       { border-left-color: #475569; }
+            .responsive-table tr[data-role-accent="clinic_head"] { border-left-color: #a855f7; }
+            .responsive-table tr[data-role-accent="doctor"]      { border-left-color: #3b82f6; }
+            .responsive-table tr[data-role-accent="pharmacist"]  { border-left-color: #10b981; }
+            .responsive-table tr[data-role-accent="nurse"]       { border-left-color: #14b8a6; }
+            .responsive-table tr[data-role-accent="secretary"]   { border-left-color: #f59e0b; }
+            .responsive-table tr[data-role-accent="assistant"]   { border-left-color: #34d399; }
+            .responsive-table tr:hover { background: #fff !important; }
+            .dark .responsive-table tr:hover { background: #1a2438 !important; }
+            .responsive-table tr:first-child { margin-top: 0; }
+            .responsive-table tr:last-child { margin-bottom: 0; }
+
+            /* Reset all cells: full-width block, no borders, label-above-value */
+            .responsive-table tbody td {
+                padding: .65rem 0 !important;
+                border: 0 !important;
+                text-align: left !important;
+                vertical-align: top !important;
+            }
+
+            /* Label rendered ABOVE value as a small uppercase header — matches the
+               "DETAILS:" / "WHEN:" header style the user asked for. */
+            .responsive-table tbody td[data-label]::before {
+                content: attr(data-label);
+                display: block;
+                font-size: 0.68rem;
+                font-weight: 800;
+                text-transform: uppercase;
+                letter-spacing: .06em;
+                color: #64748b;
+                margin-bottom: .3rem;
+            }
+            .dark .responsive-table tbody td[data-label]::before { color: #94a3b8; }
+            .responsive-table tbody td[data-label] > * { text-align: left !important; }
+            .responsive-table tbody td[data-label] .flex { justify-content: flex-start !important; }
+            .responsive-table tbody td[data-label] .flex.flex-col { align-items: flex-start !important; }
+            .responsive-table tbody td[data-label] .text-center { text-align: left !important; }
+
+            /* Soft divider line between value cells so the card has visual rhythm */
+            .responsive-table tbody td[data-label] + td[data-label] {
+                border-top: 1px solid #f1f5f9 !important;
+                padding-top: .75rem !important;
+                margin-top: .15rem;
+            }
+            .dark .responsive-table tbody td[data-label] + td[data-label] {
+                border-top-color: #243050 !important;
+            }
+
+            /* Identity row at top: no label, slightly larger, divider below */
+            .responsive-table tbody td.cell-primary {
+                padding: 0 0 .85rem 0 !important;
+                border-bottom: 1px solid #f1f5f9 !important;
+                margin-bottom: .35rem;
+            }
+            .dark .responsive-table tbody td.cell-primary {
+                border-bottom-color: #243050 !important;
+            }
+            .responsive-table tbody td.cell-primary::before { display: none !important; }
+
+            /* Actions row at bottom: divider above, buttons fill width */
+            .responsive-table tbody td.cell-actions {
+                padding-top: .85rem !important;
+                margin-top: .35rem;
+                border-top: 1px solid #f1f5f9 !important;
+            }
+            .dark .responsive-table tbody td.cell-actions { border-top-color: #243050 !important; }
+            .responsive-table tbody td.cell-actions::before { display: none !important; }
+            .responsive-table tbody td.cell-actions .row-action { flex: 1; }
+
+            /* Empty/colspan rows — full row, centered */
+            .responsive-table tbody td[colspan] {
+                text-align: center !important;
+                padding: 2rem 1rem !important;
+            }
+            .responsive-table tbody td[colspan]::before { display: none !important; }
+        }
 
         /* Sidebar collapse: only icons remain */
         @media (min-width: 768px) {
@@ -428,6 +656,16 @@
             <div>
                 <p class="sidebar-section-title text-[11px] font-bold text-slate-400 uppercase tracking-widest px-3 mb-2">Clinical</p>
                 <ul class="space-y-1">
+                    @if(auth()->user()->can_('visits.view'))
+                    <li>
+                        <a href="{{ route('visits.index') }}" title="Today's Queue"
+                           class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold transition-all
+                               {{ request()->routeIs('visits.*') ? 'bg-brand-500/20 text-white border border-brand-400/40 shadow-sm' : 'text-slate-100 hover:bg-slate-700 hover:text-white' }}">
+                            <i class="fa-solid fa-clipboard-list w-5 text-center {{ request()->routeIs('visits.*') ? 'text-brand-300' : 'text-slate-300' }}"></i>
+                            <span class="nav-text">Today's Queue</span>
+                        </a>
+                    </li>
+                    @endif
                     @if(auth()->user()->can_('patients.view'))
                     <li>
                         <a href="{{ route('patients.index') }}" title="Patients"
@@ -553,6 +791,9 @@
             <div>
                 <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest px-3 mb-2">Clinical</p>
                 <ul class="space-y-1">
+                    @if(auth()->user()->can_('visits.view'))
+                    <li><a href="{{ route('visits.index') }}"   class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold {{ request()->routeIs('visits.*') ? 'bg-brand-500/20 text-white border border-brand-400/40' : 'text-slate-100 hover:bg-slate-700 hover:text-white' }}"><i class="fa-solid fa-clipboard-list w-5 text-center text-slate-300"></i> Today's Queue</a></li>
+                    @endif
                     @if(auth()->user()->can_('patients.view'))
                     <li><a href="{{ route('patients.index') }}"  class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold {{ request()->routeIs('patients.*') ? 'bg-brand-500/20 text-white border border-brand-400/40' : 'text-slate-100 hover:bg-slate-700 hover:text-white' }}"><i class="fa-solid fa-user-injured w-5 text-center text-slate-300"></i> Patients</a></li>
                     @endif
@@ -635,22 +876,34 @@
                 <div class="relative">
                     <button type="button" onclick="toggleDropdown('bellMenu')"
                             class="relative p-2 text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-slate-800 rounded-xl transition-colors"
-                            title="Notifications">
+                            title="Notifications"
+                            data-bell-count="{{ $bellCount }}"
+                            data-bell-alerts="{{ $bellAlertCount }}">
                         <i class="fa-solid fa-bell text-base"></i>
                         @if($bellCount > 0)
-                        <span class="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center ring-2 ring-white dark:ring-slate-900 leading-none">
+                        <span id="bellBadge" data-bell-badge
+                              class="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center ring-2 ring-white dark:ring-slate-900 leading-none">
                             {{ $bellCount > 9 ? '9+' : $bellCount }}
                         </span>
                         @elseif($bellAlertCount > 0)
-                        <span class="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-amber-500 ring-2 ring-white dark:ring-slate-900"></span>
+                        <span id="bellBadge" data-bell-badge
+                              class="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-amber-500 ring-2 ring-white dark:ring-slate-900"></span>
                         @endif
                     </button>
-                    <div id="bellMenu" class="hidden absolute right-0 mt-2 w-96 max-w-[calc(100vw-2rem)] bg-white dark:bg-slate-900 rounded-2xl shadow-xl border-2 border-gray-100 dark:border-slate-700 z-40 overflow-hidden">
-                        <div class="px-4 py-3 border-b border-gray-100 dark:border-slate-700 flex items-center justify-between">
+                    {{-- On phones the dropdown is fixed-position and centered so it never
+                         overflows off-screen left. On md+ it anchors to the bell as a popover. --}}
+                    <div id="bellMenu" class="hidden md:absolute fixed md:right-0 md:left-auto left-1/2 -translate-x-1/2 md:translate-x-0 top-16 md:top-auto md:mt-2 w-[calc(100vw-1rem)] sm:w-96 md:max-w-[calc(100vw-2rem)] bg-white dark:bg-slate-900 rounded-2xl shadow-xl border-2 border-gray-100 dark:border-slate-700 z-40 overflow-hidden">
+                        <div class="px-4 py-3 border-b border-gray-100 dark:border-slate-700 flex items-center justify-between gap-2">
                             <p class="font-bold text-gray-900 dark:text-white text-sm">Notifications</p>
-                            @if($bellHasAnything)
-                            <span class="text-xs text-gray-500 dark:text-gray-400">{{ $bellCount + $bellAlertCount }} new</span>
-                            @endif
+                            <div class="flex items-center gap-3">
+                                @if($bellHasAnything)
+                                <span class="text-xs text-gray-500 dark:text-gray-400">{{ $bellCount + $bellAlertCount }} new</span>
+                                <button type="button" id="markAllReadBtn"
+                                        class="text-xs font-semibold text-brand-600 dark:text-brand-300 hover:underline">
+                                    Mark all read
+                                </button>
+                                @endif
+                            </div>
                         </div>
 
                         <div class="max-h-[28rem] overflow-y-auto divide-y divide-gray-100 dark:divide-slate-700">
@@ -860,6 +1113,57 @@ function setStatus(status) {
     }).then(r => r.json()).then(() => location.reload());
 }
 
+// Bell: "Mark all read" — clears unread DMs server-side AND visually dismisses
+// the low-stock / expiring alert badge for this session. The dismissed snapshot
+// is stored in sessionStorage; if alert count grows beyond the snapshot, the
+// badge reappears on next page load.
+@auth
+(function () {
+    const bellBtn = document.querySelector('[data-bell-count]');
+
+    // On every page load: if user already dismissed alerts this session AND nothing
+    // new has appeared, hide the bell badge. (Server still renders the dropdown
+    // contents — only the head badge dot/count is suppressed visually.)
+    function applyDismissed() {
+        if (!bellBtn) return;
+        const dismissed = parseInt(sessionStorage.getItem('bell_dismissed_total') || '-1', 10);
+        const current   = parseInt(bellBtn.dataset.bellCount  || '0', 10)
+                        + parseInt(bellBtn.dataset.bellAlerts || '0', 10);
+        if (dismissed >= 0 && current <= dismissed) {
+            document.querySelectorAll('[data-bell-badge]').forEach(el => el.remove());
+        } else if (current > dismissed) {
+            sessionStorage.removeItem('bell_dismissed_total');
+        }
+    }
+    applyDismissed();
+
+    const btn = document.getElementById('markAllReadBtn');
+    if (!btn) return;
+    btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        btn.disabled = true;
+        btn.textContent = 'Marking…';
+        // Snapshot the current total so the badge stays hidden until a new alert lands.
+        const snap = parseInt(bellBtn?.dataset.bellCount || '0', 10)
+                   + parseInt(bellBtn?.dataset.bellAlerts || '0', 10);
+        sessionStorage.setItem('bell_dismissed_total', String(snap));
+        try {
+            await fetch('{{ route("chat.markAllRead") }}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
+                    'Accept': 'application/json',
+                },
+            });
+            location.reload();
+        } catch {
+            btn.disabled = false;
+            btn.textContent = 'Mark all read';
+        }
+    });
+})();
+@endauth
+
 // ───────────────────────────────────────────────────────────
 // Custom select — replaces native <select class="cs-select"> with a
 // fully styled trigger + rounded panel (native popup can't be styled).
@@ -886,6 +1190,42 @@ function setStatus(status) {
 
         const panel = document.createElement('div');
         panel.className = 'cs-panel hidden';
+
+        // Optional search box — opt in by adding data-searchable="true" to the <select>.
+        // Filters cs-option items by their visible label (case-insensitive).
+        let searchInput = null;
+        if (native.dataset.searchable === 'true' || native.dataset.searchable === '1') {
+            const searchWrap = document.createElement('div');
+            searchWrap.className = 'cs-search-wrap';
+            searchInput = document.createElement('input');
+            searchInput.type = 'text';
+            searchInput.placeholder = native.dataset.searchPlaceholder || 'Search…';
+            searchInput.className = 'cs-search-input';
+            searchInput.addEventListener('click', e => e.stopPropagation());
+            searchInput.addEventListener('keydown', e => e.stopPropagation());
+            searchInput.addEventListener('input', () => {
+                const q = searchInput.value.trim().toLowerCase();
+                let anyShown = false;
+                panel.querySelectorAll('.cs-option').forEach(item => {
+                    if (item.classList.contains('placeholder')) { item.style.display = 'none'; return; }
+                    const match = !q || item.textContent.toLowerCase().includes(q);
+                    item.style.display = match ? '' : 'none';
+                    if (match) anyShown = true;
+                });
+                let empty = panel.querySelector('.cs-empty');
+                if (!anyShown) {
+                    if (!empty) {
+                        empty = document.createElement('div');
+                        empty.className = 'cs-empty';
+                        empty.textContent = 'No matches';
+                        panel.appendChild(empty);
+                    }
+                } else if (empty) empty.remove();
+            });
+            searchWrap.appendChild(searchInput);
+            panel.appendChild(searchWrap);
+        }
+
         Array.from(native.options).forEach(opt => {
             const item = document.createElement('div');
             item.className = 'cs-option' + (!opt.value ? ' placeholder' : '');
@@ -900,6 +1240,11 @@ function setStatus(status) {
             panel.appendChild(item);
         });
         wrapper.appendChild(panel);
+
+        // Focus the search input when the panel opens for fast keyboard use.
+        if (searchInput) {
+            wrapper._csSearchInput = searchInput;
+        }
 
         updateCsTrigger(wrapper);
         native.addEventListener('change', () => updateCsTrigger(wrapper));
@@ -933,6 +1278,9 @@ function setStatus(status) {
         document.querySelectorAll('.cs-wrapper.open').forEach(w => { if (w !== wrapper) closeCs(w); });
         wrapper.classList.add('open');
         wrapper.querySelector('.cs-panel').classList.remove('hidden');
+        if (wrapper._csSearchInput) {
+            setTimeout(() => wrapper._csSearchInput.focus(), 30);
+        }
     }
     function closeCs(wrapper) {
         wrapper.classList.remove('open');
@@ -949,6 +1297,31 @@ function setStatus(status) {
     function initAll() { document.querySelectorAll('select.cs-select').forEach(initOne); }
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initAll);
     else initAll();
+})();
+</script>
+
+{{-- Flatpickr global init: replaces every native <input type="date"> with the
+     branded calendar. Pages that need different formats can opt out by adding
+     `data-no-flatpickr` to the input. --}}
+<script src="https://cdn.jsdelivr.net/npm/flatpickr@4"></script>
+<script>
+(function () {
+    function initFlatpickrAll() {
+        document.querySelectorAll('input[type="date"]:not([data-no-flatpickr])').forEach(el => {
+            if (el._flatpickrInited) return;
+            el._flatpickrInited = true;
+            flatpickr(el, {
+                dateFormat: 'Y-m-d',
+                allowInput: true,
+                monthSelectorType: 'static',
+                defaultDate: el.value || null,
+            });
+        });
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initFlatpickrAll);
+    else initFlatpickrAll();
+    // Re-init after dynamic content swaps (modals etc.) — call window._fpReinit() if needed.
+    window._fpReinit = initFlatpickrAll;
 })();
 </script>
 @stack('scripts')

@@ -49,19 +49,29 @@ class User extends Authenticatable
             // Only roles with a direct clinical relationship can see the directory tab. Doctors
             // and nurses are further restricted in PatientController to ONLY see patients they
             // are personally assigned to. Admin + clinic_head see everything (audit-logged).
-            // Pharmacist, secretary and assistant lose the Patients tab entirely.
-            'patients.view'         => in_array($r, ['admin','clinic_head','doctor','nurse']),
+            // Secretary is the front-desk role: registers new patients and looks them up to
+            // check them in, but is NOT allowed to view medical history (privacy).
+            // Pharmacist and assistant lose the Patients tab entirely.
+            'patients.view'         => in_array($r, ['admin','clinic_head','doctor','nurse','secretary']),
             'patients.view_medical' => in_array($r, ['admin','clinic_head','doctor','nurse']),
-            'patients.create'       => in_array($r, ['admin','clinic_head','doctor','nurse']),
+            'patients.create'       => in_array($r, ['admin','clinic_head','doctor','nurse','secretary']),
             'patients.delete'       => in_array($r, ['admin','clinic_head','doctor']),
             'patients.pin_all'      => in_array($r, ['admin','clinic_head','doctor']),
-            // Oversight roles see every patient; clinical roles see only their assigned ones.
-            'patients.view_all'     => in_array($r, ['admin','clinic_head']),
+            // Sees every patient instead of only-the-assigned-ones scope.
+            // Admin/clinic_head for oversight; secretary for front-desk lookup.
+            // Every cross-team open by these roles is still audit-logged.
+            'patients.view_all'     => in_array($r, ['admin','clinic_head','secretary']),
             // Medicine management — pharmacist is the dedicated restocking role
             'medicines.create'    => in_array($r, ['admin','clinic_head','pharmacist']),
             'medicines.delete'    => in_array($r, ['admin','clinic_head']),
             'medicines.dispense'  => in_array($r, ['admin','clinic_head','doctor','pharmacist','nurse']),
             'medicines.locations' => in_array($r, ['admin','clinic_head']),
+            // Today's queue / patient visits — secretary is the primary check-in role,
+            // clinical staff move patients through the status flow as they're seen.
+            'visits.view'         => in_array($r, ['admin','clinic_head','secretary','doctor','nurse','pharmacist']),
+            'visits.checkin'      => in_array($r, ['admin','clinic_head','secretary']),
+            'visits.status'       => in_array($r, ['admin','clinic_head','secretary','doctor','nurse','pharmacist']),
+            'visits.cancel'       => in_array($r, ['admin','clinic_head','secretary']),
             // Staff management
             'staff.create'        => $r === 'admin',
             'staff.delete'        => $r === 'admin',

@@ -8,6 +8,7 @@ use App\Models\Medicine;
 use App\Models\MedicineLocation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class MedicineController extends Controller
 {
@@ -137,21 +138,26 @@ class MedicineController extends Controller
     {
         if (!Auth::user()->can_('medicines.create')) abort(403, 'Only admins can add medicines.');
         $validated = $request->validate([
-            'name'            => 'required|string|max:255',
-            'generic_name'    => 'nullable|string',
-            'barcode'         => 'nullable|string|unique:medicines',
-            'qr_code'         => 'nullable|string|unique:medicines',
-            'location_id'     => 'required|exists:medicine_locations,id',
-            'type'            => 'required|in:prescription,normal',
-            'description'     => 'nullable|string',
-            'dosage'          => 'nullable|string',
-            'form'            => 'nullable|string',
-            'form_other_note' => 'nullable|string|max:255',
-            'image'           => 'nullable|image|max:4096',
-            'quantity'        => 'required|integer|min:0',
-            'min_stock_level' => 'required|integer|min:1',
-            'expiration_date' => 'required|date|after:today',
-            'batch_number'    => 'nullable|string',
+            'name'                  => 'required|string|max:255',
+            'generic_name'          => 'nullable|string',
+            'barcode'               => 'nullable|string|unique:medicines',
+            'qr_code'               => 'nullable|string|unique:medicines',
+            'location_id'           => 'required|exists:medicine_locations,id',
+            'type'                  => 'required|in:prescription,normal',
+            'description'           => 'nullable|string',
+            'dosage'                => 'nullable|string',
+            'form'                  => 'nullable|string',
+            'form_other_note'       => 'nullable|string|max:255',
+            'image'                 => 'nullable|image|max:4096',
+            'quantity'              => 'required|integer|min:0',
+            'min_stock_level'       => 'required|integer|min:1',
+            'expiration_date'       => 'required|date|after:today',
+            'batch_number'          => 'nullable|string',
+            'indications'           => 'nullable|string',
+            'dosage_instructions'   => 'nullable|string',
+            'side_effects'          => 'nullable|string',
+            'warnings'              => 'nullable|string',
+            'storage_instructions'  => 'nullable|string',
         ]);
 
         // "Other" form selected → note is mandatory.
@@ -167,16 +173,21 @@ class MedicineController extends Controller
         }
 
         $medicine = Medicine::create([
-            'name'            => $validated['name'],
-            'generic_name'    => $validated['generic_name'] ?? null,
-            'barcode'         => $validated['barcode'] ?? null,
-            'qr_code'         => $validated['qr_code'] ?? null,
-            'location_id'     => $validated['location_id'],
-            'type'            => $validated['type'],
-            'description'     => $validated['description'] ?? null,
-            'dosage'          => $validated['dosage'] ?? null,
-            'image_path'      => $imagePath,
-            'form_other_note' => $validated['form_other_note'] ?? null,
+            'name'                  => $validated['name'],
+            'generic_name'          => $validated['generic_name'] ?? null,
+            'barcode'               => $validated['barcode'] ?? null,
+            'qr_code'               => $validated['qr_code'] ?? null,
+            'location_id'           => $validated['location_id'],
+            'type'                  => $validated['type'],
+            'description'           => $validated['description'] ?? null,
+            'dosage'                => $validated['dosage'] ?? null,
+            'image_path'            => $imagePath,
+            'form_other_note'       => $validated['form_other_note'] ?? null,
+            'indications'           => $validated['indications'] ?? null,
+            'dosage_instructions'   => $validated['dosage_instructions'] ?? null,
+            'side_effects'          => $validated['side_effects'] ?? null,
+            'warnings'              => $validated['warnings'] ?? null,
+            'storage_instructions'  => $validated['storage_instructions'] ?? null,
         ]);
 
         Inventory::create([
@@ -216,12 +227,17 @@ class MedicineController extends Controller
     public function update(Request $request, Medicine $medicine)
     {
         $validated = $request->validate([
-            'name'         => 'required|string|max:255',
-            'generic_name' => 'nullable|string',
-            'location_id'  => 'required|exists:medicine_locations,id',
-            'type'         => 'required|in:prescription,normal',
-            'description'  => 'nullable|string',
-            'dosage'       => 'nullable|string',
+            'name'                  => 'required|string|max:255',
+            'generic_name'          => 'nullable|string',
+            'location_id'           => 'required|exists:medicine_locations,id',
+            'type'                  => 'required|in:prescription,normal',
+            'description'           => 'nullable|string',
+            'dosage'                => 'nullable|string',
+            'indications'           => 'nullable|string',
+            'dosage_instructions'   => 'nullable|string',
+            'side_effects'          => 'nullable|string',
+            'warnings'              => 'nullable|string',
+            'storage_instructions'  => 'nullable|string',
         ]);
         $medicine->update($validated);
 
@@ -304,6 +320,70 @@ class MedicineController extends Controller
         ]);
 
         return back()->with('success', "{$medicine->name} restored to active inventory.");
+    }
+
+    /**
+     * Append up to 5 gallery images to a medicine. Stored under storage/app/public/medicines/gallery
+     * and referenced via gallery_paths JSON. Caps at 5 total.
+     */
+    public function uploadGalleryImages(Request $request, Medicine $medicine)
+    {
+        if (!Auth::user()->can_('medicines.create')) abort(403, 'You cannot edit medicines.');
+        $request->validate([
+            'images'   => 'required|array|min:1|max:5',
+            'images.*' => 'image|mimes:jpeg,png,webp|max:4096',
+        ]);
+
+        $existing = is_array($medicine->gallery_paths) ? $medicine->gallery_paths : [];
+        $slotsLeft = 5 - count($existing);
+        if ($slotsLeft <= 0) {
+            return back()->with('error', 'Gallery is already full (max 5).');
+        }
+
+        $newPaths = [];
+        foreach (array_slice($request->file('images'), 0, $slotsLeft) as $file) {
+            $path = $file->store('medicines/gallery', 'public');
+            $newPaths[] = $path;
+        }
+        $medicine->update(['gallery_paths' => array_values(array_merge($existing, $newPaths))]);
+
+        ActivityLog::create([
+            'user_id'     => Auth::id(),
+            'action'      => 'medicine.gallery.add',
+            'entity_type' => Medicine::class,
+            'entity_id'   => $medicine->id,
+            'details'     => "Added " . count($newPaths) . " photo(s) to {$medicine->name}",
+        ]);
+
+        return back()->with('success', count($newPaths) . ' photo(s) added.');
+    }
+
+    /**
+     * Remove a single gallery image by its index (position in gallery_paths).
+     */
+    public function deleteGalleryImage(Request $request, Medicine $medicine)
+    {
+        if (!Auth::user()->can_('medicines.create')) abort(403, 'You cannot edit medicines.');
+        $request->validate(['index' => 'required|integer|min:0']);
+
+        $paths = is_array($medicine->gallery_paths) ? $medicine->gallery_paths : [];
+        $i = (int) $request->index;
+        if (!isset($paths[$i])) return back()->with('error', 'Photo not found.');
+
+        // Delete from disk (best-effort) then drop from JSON.
+        try { Storage::disk('public')->delete($paths[$i]); } catch (\Throwable $e) { /* ignore */ }
+        array_splice($paths, $i, 1);
+        $medicine->update(['gallery_paths' => array_values($paths)]);
+
+        ActivityLog::create([
+            'user_id'     => Auth::id(),
+            'action'      => 'medicine.gallery.remove',
+            'entity_type' => Medicine::class,
+            'entity_id'   => $medicine->id,
+            'details'     => "Removed a photo from {$medicine->name}",
+        ]);
+
+        return back()->with('success', 'Photo removed.');
     }
 
     public function dispense(Request $request, Medicine $medicine)

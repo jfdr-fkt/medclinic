@@ -221,6 +221,24 @@ class ChatController extends Controller
         return response()->json(['success' => true]);
     }
 
+    /**
+     * Mark every DM addressed to me as read AND mark every group I'm a member
+     * of as read up to now. Powers the bell dropdown's "Mark all read" button.
+     */
+    public function markAllRead()
+    {
+        Message::where('receiver_id', Auth::id())
+            ->where('is_read', false)
+            ->whereNull('group_id')
+            ->update(['is_read' => true]);
+
+        DB::table('chat_group_members')
+            ->where('user_id', Auth::id())
+            ->update(['last_read_at' => now()]);
+
+        return response()->json(['success' => true]);
+    }
+
     private function groupUnreadCounts()
     {
         return DB::table('chat_group_members as m')

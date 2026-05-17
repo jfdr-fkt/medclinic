@@ -57,16 +57,22 @@
 
 <div class="space-y-5">
 
-    <!-- Header -->
-    <div class="flex items-center justify-between flex-wrap gap-3">
-        <div>
-            <h1 class="text-2xl font-extrabold text-gray-900 dark:text-white">Audit Log</h1>
-            <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-                {{ $logs->total() }} entries &bull; Tracks oversight-role access to patient records
-            </p>
-        </div>
-        <div class="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-amber-50 dark:bg-amber-900/25 border-2 border-amber-200 dark:border-amber-800/50 text-amber-700 dark:text-amber-300 text-xs font-semibold">
-            <i class="fa-solid fa-shield-halved"></i> Sensitive access trail
+    <!-- Hero banner — amber/orange (sensitive access trail) -->
+    <div class="rounded-2xl overflow-hidden bg-gradient-to-r from-amber-600 via-orange-600 to-rose-600 text-white shadow-md relative">
+        <div class="absolute inset-0 opacity-20 pointer-events-none" style="background-image: radial-gradient(circle at 18% 30%, rgba(255,255,255,.55) 0, transparent 35%), radial-gradient(circle at 80% 75%, rgba(255,255,255,.35) 0, transparent 32%);"></div>
+        <div class="relative px-5 sm:px-6 py-5 flex items-center gap-4 flex-wrap">
+            <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-white/15 backdrop-blur-sm ring-1 ring-white/25 flex items-center justify-center flex-shrink-0">
+                <i class="fa-solid fa-shield-halved text-xl sm:text-2xl"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+                <h1 class="text-xl sm:text-2xl font-extrabold leading-tight">Audit Log</h1>
+                <p class="text-white/85 text-sm mt-0.5">
+                    <span class="font-bold">{{ $logs->total() }}</span> entries &bull; Tracks sensitive access to patient records, medicine dispenses, and staff changes
+                </p>
+            </div>
+            <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white text-amber-700 text-xs font-extrabold shadow-sm w-full sm:w-auto justify-center sm:justify-start">
+                <i class="fa-solid fa-lock"></i> Sensitive trail
+            </span>
         </div>
     </div>
 
@@ -127,9 +133,9 @@
     </form>
 
     <!-- Audit table -->
-    <div class="audit-card overflow-hidden">
+    <div class="audit-card overflow-hidden -mx-4 md:mx-0 rounded-none md:rounded-2xl border-x-0 md:border-x-2">
         <div class="overflow-x-auto">
-            <table class="min-w-full audit-table">
+            <table class="min-w-full audit-table responsive-table">
                 <thead>
                     <tr>
                         <th>User</th>
@@ -141,7 +147,7 @@
                 <tbody>
                     @forelse($logs as $log)
                     <tr>
-                        <td>
+                        <td class="cell-primary">
                             @if($log->user)
                             <div class="flex items-center gap-3">
                                 <x-avatar :user="$log->user" size="lg" />
@@ -154,7 +160,7 @@
                             <span class="text-sm text-gray-400 italic">System</span>
                             @endif
                         </td>
-                        <td class="text-center">
+                        <td class="text-center" data-label="Action">
                             @php
                                 // Color + icon by action category so the long list scans visually.
                                 $a = $log->action;
@@ -177,7 +183,7 @@
                                 <i class="fa-solid {{ $icon }} text-xs"></i> {{ $log->action }}
                             </span>
                         </td>
-                        <td>
+                        <td data-label="Details">
                             <p class="text-sm text-gray-700 dark:text-gray-200">{{ $log->details ?? '—' }}</p>
                             @php
                                 // Delete actions point at rows that no longer exist — the deep link would 404 on click.
@@ -200,7 +206,7 @@
                             </span>
                             @endif
                         </td>
-                        <td class="text-center">
+                        <td class="text-center" data-label="When">
                             <p class="text-sm text-gray-700 dark:text-gray-200">{{ $log->created_at->format('M j, Y g:i A') }}</p>
                             <p class="text-sm text-gray-500 dark:text-gray-400">{{ $log->created_at->diffForHumans() }}</p>
                         </td>

@@ -253,24 +253,33 @@
         $canLocations = $me->can_('medicines.locations');
     @endphp
 
-    <!-- Header -->
-    <div class="flex items-center justify-between flex-wrap gap-3">
-        <div>
-            <h1 class="text-2xl font-extrabold text-gray-900 dark:text-white">Medicines & Inventory</h1>
-            <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Track stock, locations, and expiry dates</p>
-        </div>
-        <div class="flex items-center gap-2 flex-wrap">
-            @if($canLocations)
-            <a href="{{ route('medicines.locations.index') }}"
-               class="inline-flex items-center gap-2 px-3 py-2.5 bg-amber-100 text-amber-700 hover:bg-amber-200 text-sm font-semibold rounded-xl transition-colors">
-                <i class="fa-solid fa-location-dot"></i> Locations
-            </a>
-            @endif
-            @if($canAddMed)
-            <a href="{{ route('scan.index') }}" class="btn-primary">
-                <i class="fa-solid fa-plus"></i> Add Medicine
-            </a>
-            @endif
+    <!-- Hero banner — emerald gradient (matches medicine emerald theme) -->
+    <div class="rounded-2xl overflow-hidden bg-gradient-to-r from-emerald-600 via-emerald-700 to-teal-700 text-white shadow-md relative">
+        <div class="absolute inset-0 opacity-20 pointer-events-none" style="background-image: radial-gradient(circle at 18% 30%, rgba(255,255,255,.55) 0, transparent 35%), radial-gradient(circle at 80% 75%, rgba(255,255,255,.35) 0, transparent 32%);"></div>
+        <div class="relative px-5 sm:px-6 py-5 flex items-center justify-between gap-4 flex-wrap">
+            <div class="flex items-center gap-4 min-w-0 flex-1">
+                <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-white/15 backdrop-blur-sm ring-1 ring-white/25 flex items-center justify-center flex-shrink-0">
+                    <i class="fa-solid fa-pills text-xl sm:text-2xl"></i>
+                </div>
+                <div class="min-w-0">
+                    <h1 class="text-xl sm:text-2xl font-extrabold leading-tight">Medicines &amp; Inventory</h1>
+                    <p class="text-white/85 text-sm mt-0.5">Track stock, locations, and expiry dates</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2 flex-wrap w-full sm:w-auto">
+                @if($canLocations)
+                <a href="{{ route('medicines.locations.index') }}"
+                   class="inline-flex flex-1 sm:flex-none items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white/15 hover:bg-white/25 ring-1 ring-white/20 text-white text-sm font-bold transition-colors">
+                    <i class="fa-solid fa-location-dot"></i> Locations
+                </a>
+                @endif
+                @if($canAddMed)
+                <a href="{{ route('scan.index') }}"
+                   class="inline-flex flex-1 sm:flex-none items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white text-emerald-700 hover:bg-emerald-50 text-sm font-bold transition-colors shadow-sm">
+                    <i class="fa-solid fa-plus"></i> Add Medicine
+                </a>
+                @endif
+            </div>
         </div>
     </div>
 
@@ -423,9 +432,9 @@
     @endif
 
     <!-- Medicine table -->
-    <div class="medicine-card overflow-hidden">
+    <div class="medicine-card overflow-hidden -mx-4 md:mx-0 rounded-none md:rounded-2xl border-x-0 md:border-x-2">
         <div class="overflow-x-auto">
-            <table class="min-w-full medicine-table">
+            <table class="min-w-full medicine-table responsive-table">
                 <thead>
                     <tr>
                         <th class="!text-left">Medicine</th>
@@ -469,7 +478,7 @@
                         data-medicine-id="{{ $m->id }}"
                         onclick="if(!event.target.closest('.row-action')) window.location=this.dataset.href"
                         class="group">
-                        <td>
+                        <td class="cell-primary">
                             <div class="flex items-center gap-3">
                                 @if($m->image_path)
                                 <img src="{{ $m->imageUrl() }}" alt="{{ $m->name }}"
@@ -485,21 +494,21 @@
                                 </div>
                             </div>
                         </td>
-                        <td class="text-center">
+                        <td class="text-center" data-label="Type">
                             @if($m->type === 'prescription')
                                 <span class="badge-rx-lg"><i class="fa-solid fa-prescription-bottle text-[10px]"></i> Rx</span>
                             @else
                                 <span class="badge-otc-lg"><i class="fa-solid fa-capsules text-[10px]"></i> OTC</span>
                             @endif
                         </td>
-                        <td class="text-center">
+                        <td class="text-center" data-label="Stock">
                             <p class="stock-num {{ $isArchivedMan || $isExpired ? 'text-gray-400 dark:text-gray-500 line-through' : ($qty <= 5 ? 'text-red-600 dark:text-red-300' : ($qty <= $min ? 'text-amber-600 dark:text-amber-300' : 'text-gray-900 dark:text-gray-100')) }}">{{ $qty }}</p>
                             <p class="text-sm med-meta">min {{ $min }}</p>
                         </td>
-                        <td class="text-center">
+                        <td class="text-center" data-label="Location">
                             <p class="text-sm text-gray-700 dark:text-gray-200">{{ $m->location?->full_location ?? '—' }}</p>
                         </td>
-                        <td class="text-center">
+                        <td class="text-center" data-label="{{ $activeFilter === 'archive' && $archiveTab !== 'expired' ? 'Archived' : 'Expiry' }}">
                             @if($isArchivedMan && $activeFilter === 'archive' && $archiveTab !== 'expired')
                                 <p class="text-sm font-semibold text-gray-800 dark:text-gray-100">{{ $m->archived_at->format('M j, Y') }}</p>
                                 <p class="text-sm med-meta">{{ $m->archived_at->diffForHumans() }}</p>
@@ -516,7 +525,7 @@
                                 <span class="text-sm med-meta italic">—</span>
                             @endif
                         </td>
-                        <td class="text-center">
+                        <td class="text-center" data-label="Status">
                             <span class="status-pill pill-{{ $pill[0] }}">
                                 <i class="fa-solid {{ $pill[1] }} text-xs"></i> {{ $pill[2] }}
                             </span>
@@ -524,7 +533,7 @@
                             <p class="text-xs med-meta mt-1 italic truncate max-w-[14rem] mx-auto" title="{{ $m->archive_reason }}">{{ $m->archive_reason }}</p>
                             @endif
                         </td>
-                        <td>
+                        <td class="cell-actions">
                             <div class="flex items-center gap-3 row-action w-full">
                                 @if($isArchivedMan)
                                     {{-- Archived: no dispense; offer restore + delete --}}

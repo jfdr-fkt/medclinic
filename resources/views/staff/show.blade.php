@@ -38,85 +38,88 @@
         <span class="text-sm text-gray-400 dark:text-gray-500">Back to Staff Directory</span>
     </div>
 
-    {{-- Profile header --}}
-    <div class="card overflow-hidden">
-        <div class="h-28 bg-gradient-to-r {{ $cfg['grad'] }}"></div>
-        <div class="px-6 pb-6 -mt-14">
-            <div class="flex items-end gap-4 flex-wrap">
-                @if($user->avatarUrl())
-                    <img src="{{ $user->avatarUrl() }}" alt="{{ $user->name }}"
-                         class="h-24 w-24 rounded-2xl object-cover ring-4 ring-white dark:ring-slate-900 shadow-lg flex-shrink-0">
-                @else
-                    <div class="h-24 w-24 rounded-2xl bg-gradient-to-br {{ $cfg['grad'] }} flex items-center justify-center text-white text-3xl font-bold ring-4 ring-white dark:ring-slate-900 shadow-lg flex-shrink-0">
-                        {{ strtoupper(substr($user->name, 0, 2)) }}
-                    </div>
-                @endif
-                <div class="flex-1 min-w-0 pb-1">
-                    <h2 class="text-2xl font-bold text-gray-900 dark:text-white truncate">{{ $user->name }}</h2>
-                    <div class="flex items-center gap-2 mt-1.5 flex-wrap">
-                        <span class="inline-flex items-center gap-1.5 {{ $cfg['bg'] }} {{ $cfg['text'] }} dark:bg-slate-800 dark:text-gray-200 px-2.5 py-1 rounded-full text-xs font-semibold">
-                            <i class="fa-solid {{ $cfg['icon'] }} text-[10px]"></i> {{ $user->roleLabel() }}
-                        </span>
-                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium
-                                     bg-{{ $statusHue }}-100 text-{{ $statusHue }}-700
-                                     dark:bg-{{ $statusHue }}-900/30 dark:text-{{ $statusHue }}-300">
-                            <span class="w-1.5 h-1.5 rounded-full bg-{{ $statusHue }}-400 {{ $user->isOnline() ? 'animate-pulse' : '' }}"></span>
-                            {{ $user->statusLabel() }}
-                        </span>
-                        @if($user->specialization)
-                        <span class="text-sm text-gray-500 dark:text-gray-400">&bull; {{ $user->specialization }}</span>
-                        @endif
-                    </div>
+    {{-- Profile header — flat in-gradient layout (no overlap bug) --}}
+    <div class="rounded-2xl overflow-hidden bg-gradient-to-r {{ $cfg['grad'] }} text-white shadow-md relative">
+        <div class="absolute inset-0 opacity-20 pointer-events-none" style="background-image: radial-gradient(circle at 18% 30%, rgba(255,255,255,.55) 0, transparent 35%), radial-gradient(circle at 80% 75%, rgba(255,255,255,.35) 0, transparent 32%);"></div>
+        <div class="relative px-5 sm:px-6 py-5 flex items-center gap-4 flex-wrap">
+            @if($user->avatarUrl())
+                <img src="{{ $user->avatarUrl() }}" alt="{{ $user->name }}"
+                     class="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl object-cover ring-2 ring-white/40 shadow-md flex-shrink-0">
+            @else
+                <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-white/15 backdrop-blur-sm ring-1 ring-white/25 flex items-center justify-center text-white text-xl sm:text-2xl font-extrabold flex-shrink-0">
+                    {{ strtoupper(substr($user->name, 0, 2)) }}
                 </div>
-                <div class="flex gap-2 pb-1 flex-shrink-0">
-                    <a href="{{ route('chat.index', ['with' => $user->id]) }}"
-                       class="inline-flex items-center gap-2 px-4 py-2 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 hover:bg-purple-200 dark:hover:bg-purple-900/50 rounded-xl text-sm font-semibold transition-colors">
-                        <i class="fa-solid fa-comment"></i> Message
-                    </a>
+            @endif
+            <div class="flex-1 min-w-0">
+                <h2 class="text-xl sm:text-2xl font-extrabold leading-tight truncate">{{ $user->name }}</h2>
+                <div class="flex items-center gap-2 mt-1.5 flex-wrap">
+                    <span class="inline-flex items-center gap-1.5 bg-white/20 ring-1 ring-white/25 text-white px-2.5 py-1 rounded-full text-xs font-bold">
+                        <i class="fa-solid {{ $cfg['icon'] }} text-[10px]"></i> {{ $user->roleLabel() }}
+                    </span>
+                    <span class="inline-flex items-center gap-1.5 bg-white text-{{ $statusHue }}-700 px-2.5 py-1 rounded-full text-xs font-bold shadow-sm">
+                        <span class="w-1.5 h-1.5 rounded-full bg-{{ $statusHue }}-500 {{ $user->isOnline() ? 'animate-pulse' : '' }}"></span>
+                        {{ $user->statusLabel() }}
+                    </span>
+                    @if($user->specialization)
+                    <span class="text-sm text-white/80">&bull; {{ $user->specialization }}</span>
+                    @endif
                 </div>
             </div>
+            <a href="{{ route('chat.index', ['with' => $user->id]) }}"
+               class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white text-purple-700 hover:bg-purple-50 text-sm font-bold transition-colors shadow-sm w-full sm:w-auto flex-shrink-0">
+                <i class="fa-solid fa-comment"></i> Message
+            </a>
         </div>
     </div>
 
     {{-- Contact + About --}}
     <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
         <div class="card p-5">
-            <h3 class="font-bold text-gray-800 dark:text-white text-sm mb-3 flex items-center gap-2">
-                <i class="fa-solid fa-address-card text-brand-500"></i> Contact
+            <h3 class="font-bold text-gray-900 dark:text-white text-base mb-4 flex items-center gap-2">
+                <span class="w-7 h-7 rounded-lg bg-brand-100 dark:bg-brand-900/40 text-brand-600 dark:text-brand-300 inline-flex items-center justify-center">
+                    <i class="fa-solid fa-address-card text-xs"></i>
+                </span>
+                Contact
             </h3>
-            <div class="space-y-2.5 text-sm">
-                <div class="flex items-start gap-2 min-w-0">
-                    <i class="fa-solid fa-envelope w-4 text-gray-400 dark:text-gray-500 mt-0.5 flex-shrink-0"></i>
-                    <span class="text-gray-700 dark:text-gray-200 break-all">{{ $user->email }}</span>
+            <div class="space-y-3 text-base">
+                <div class="flex items-start gap-3 min-w-0">
+                    <i class="fa-solid fa-envelope w-5 text-gray-400 dark:text-gray-500 mt-1 flex-shrink-0"></i>
+                    <span class="text-gray-800 dark:text-gray-100 font-medium break-all">{{ $user->email }}</span>
                 </div>
-                <div class="flex items-center gap-2">
-                    <i class="fa-solid fa-phone w-4 text-gray-400 dark:text-gray-500"></i>
-                    <span class="text-gray-700 dark:text-gray-200">{{ $user->phone ?? 'No phone' }}</span>
+                <div class="flex items-center gap-3">
+                    <i class="fa-solid fa-phone w-5 text-gray-400 dark:text-gray-500"></i>
+                    <span class="text-gray-800 dark:text-gray-100 font-medium">{{ $user->phone ?? 'No phone' }}</span>
                 </div>
                 @if($user->last_seen_at)
-                <div class="flex items-center gap-2">
-                    <i class="fa-solid fa-clock w-4 text-gray-400 dark:text-gray-500"></i>
-                    <span class="text-xs text-gray-500 dark:text-gray-400">Last seen {{ $user->last_seen_at->diffForHumans() }}</span>
+                <div class="flex items-center gap-3">
+                    <i class="fa-solid fa-clock w-5 text-gray-400 dark:text-gray-500"></i>
+                    <span class="text-sm text-gray-600 dark:text-gray-300">Last seen {{ $user->last_seen_at->diffForHumans() }}</span>
                 </div>
                 @endif
             </div>
         </div>
 
         <div class="card p-5 md:col-span-2">
-            <h3 class="font-bold text-gray-800 dark:text-white text-sm mb-3 flex items-center gap-2">
-                <i class="fa-solid fa-circle-info text-brand-500"></i> About
+            <h3 class="font-bold text-gray-900 dark:text-white text-base mb-4 flex items-center gap-2">
+                <span class="w-7 h-7 rounded-lg bg-brand-100 dark:bg-brand-900/40 text-brand-600 dark:text-brand-300 inline-flex items-center justify-center">
+                    <i class="fa-solid fa-circle-info text-xs"></i>
+                </span>
+                About
             </h3>
-            <p class="text-sm text-gray-700 dark:text-gray-200 leading-relaxed">{{ $user->bio ?? 'No bio provided.' }}</p>
-            <p class="text-xs text-gray-400 dark:text-gray-500 mt-3">Joined {{ $user->created_at?->format('F j, Y') }}</p>
+            <p class="text-base text-gray-800 dark:text-gray-100 leading-relaxed">{{ $user->bio ?? 'No bio provided.' }}</p>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-3">Joined {{ $user->created_at?->format('F j, Y') }}</p>
         </div>
     </div>
 
     {{-- Monthly shift schedule --}}
     <div class="card p-5">
         <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
-            <h3 class="font-bold text-gray-800 dark:text-white text-sm flex items-center gap-2">
-                <i class="fa-solid fa-calendar-days text-brand-500"></i> {{ $monthStart->format('F Y') }} Schedule
-                <span class="text-xs text-gray-500 dark:text-gray-400 font-normal">({{ $shifts->count() }} shifts)</span>
+            <h3 class="font-bold text-gray-900 dark:text-white text-base flex items-center gap-2">
+                <span class="w-7 h-7 rounded-lg bg-brand-100 dark:bg-brand-900/40 text-brand-600 dark:text-brand-300 inline-flex items-center justify-center">
+                    <i class="fa-solid fa-calendar-days text-xs"></i>
+                </span>
+                {{ $monthStart->format('F Y') }} Schedule
+                <span class="text-sm text-gray-500 dark:text-gray-400 font-medium">({{ $shifts->count() }} shifts)</span>
             </h3>
             <div class="flex flex-wrap gap-1.5 text-xs">
                 <span class="inline-flex items-center gap-1 bg-amber-100  text-amber-700  dark:bg-amber-900/30  dark:text-amber-200  px-2 py-0.5 rounded-full">Day</span>
@@ -157,13 +160,13 @@
                         $numText = 'text-gray-700 dark:text-gray-200';
                     }
                 @endphp
-                <div class="aspect-square min-h-[60px] rounded-lg border p-1.5 text-xs {{ $cellBg }}">
-                    <div class="font-bold {{ $numText }}">{{ $cursor->day }}</div>
+                <div class="aspect-square min-h-[72px] rounded-lg border p-1.5 text-xs {{ $cellBg }} flex flex-col">
+                    <div class="text-sm font-bold {{ $numText }} text-center">{{ $cursor->day }}</div>
                     @if($shift && $isCurrentMonth)
-                    <div class="mt-0.5 px-1 py-0.5 rounded border text-[9px] font-bold capitalize text-center {{ $shiftClass }}">
+                    <div class="mt-1 px-1 py-0.5 rounded border text-[10px] font-bold capitalize text-center {{ $shiftClass }}">
                         {{ $shift->shift_type === 'on_call' ? 'On Call' : $shift->shift_type }}
                     </div>
-                    <div class="text-[9px] text-gray-500 dark:text-gray-400 mt-0.5">{{ \Carbon\Carbon::parse($shift->start_time)->format('ga') }}–{{ \Carbon\Carbon::parse($shift->end_time)->format('ga') }}</div>
+                    <div class="text-[10px] font-semibold text-gray-600 dark:text-gray-300 mt-auto text-center">{{ \Carbon\Carbon::parse($shift->start_time)->format('ga') }}–{{ \Carbon\Carbon::parse($shift->end_time)->format('ga') }}</div>
                     @endif
                 </div>
                 @php $cursor->addDay(); @endphp
@@ -174,19 +177,21 @@
     {{-- Upcoming shifts beyond this month --}}
     @if($upcoming->count() > 0)
     <div class="card p-5">
-        <h3 class="font-bold text-gray-800 dark:text-white text-sm mb-3 flex items-center gap-2">
-            <i class="fa-solid fa-forward text-brand-500"></i> Upcoming (Next Month)
+        <h3 class="font-bold text-gray-900 dark:text-white text-base mb-4 flex items-center gap-2">
+            <span class="w-7 h-7 rounded-lg bg-brand-100 dark:bg-brand-900/40 text-brand-600 dark:text-brand-300 inline-flex items-center justify-center">
+                <i class="fa-solid fa-forward text-xs"></i>
+            </span>
+            Upcoming (Next Month)
         </h3>
         <div class="space-y-2">
             @foreach($upcoming as $s)
-            <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-slate-800/60 rounded-xl text-sm">
-                <div>
-                    <p class="font-medium text-gray-800 dark:text-gray-100">{{ \Carbon\Carbon::parse($s->shift_date)->format('l, F j') }}</p>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 capitalize">
-                        {{ $s->shift_type === 'on_call' ? 'On Call' : $s->shift_type }} &bull;
-                        {{ \Carbon\Carbon::parse($s->start_time)->format('g:i A') }}–{{ \Carbon\Carbon::parse($s->end_time)->format('g:i A') }}
-                    </p>
-                </div>
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 p-3 bg-gray-50 dark:bg-slate-800/60 rounded-xl">
+                <p class="font-semibold text-gray-900 dark:text-gray-100 text-sm">{{ \Carbon\Carbon::parse($s->shift_date)->format('l, F j') }}</p>
+                <p class="text-sm text-gray-600 dark:text-gray-300 font-medium capitalize sm:text-right">
+                    {{ $s->shift_type === 'on_call' ? 'On Call' : $s->shift_type }}
+                    &bull;
+                    {{ \Carbon\Carbon::parse($s->start_time)->format('g:i A') }}–{{ \Carbon\Carbon::parse($s->end_time)->format('g:i A') }}
+                </p>
             </div>
             @endforeach
         </div>
