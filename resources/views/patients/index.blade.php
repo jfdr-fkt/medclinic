@@ -306,29 +306,52 @@
                                         {{ $isPinned ? 'Pinned' : 'Pin' }}
                                         <i class="fa-solid fa-chevron-down text-[10px]"></i>
                                     </button>
-                                    <div id="pinMenu-{{ $patient->id }}" class="hidden absolute right-0 mt-2 w-52 bg-white dark:bg-slate-800 rounded-xl shadow-lg border-2 border-gray-100 dark:border-slate-700 py-2 z-20">
+                                    @php
+                                        $pinnedToList = $pinnedByOthers[$patient->id] ?? [];
+                                        $pinnedToCount = count($pinnedToList);
+                                    @endphp
+                                    <div id="pinMenu-{{ $patient->id }}" class="hidden absolute right-0 mt-2 w-60 bg-white dark:bg-slate-800 rounded-xl shadow-lg border-2 border-gray-100 dark:border-slate-700 py-2 z-20">
                                         @if($isPinned)
                                         <button type="button" onclick="event.stopPropagation(); pinPatient({{ $patient->id }}, 'self')"
                                                 class="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-slate-700 flex items-center gap-2">
                                             <i class="fa-solid fa-thumbtack-slash text-rose-500 w-4"></i> Unpin from myself
                                         </button>
-                                        <div class="my-1 border-t border-gray-100 dark:border-slate-700"></div>
                                         @else
                                         <button type="button" onclick="event.stopPropagation(); pinPatient({{ $patient->id }}, 'self')"
                                                 class="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-slate-700 flex items-center gap-2">
                                             <i class="fa-solid fa-user text-amber-500 w-4"></i> Pin to myself
                                         </button>
                                         @endif
+                                        <div class="my-1 border-t border-gray-100 dark:border-slate-700"></div>
                                         @if($canPinAll)
                                         <button type="button" onclick="event.stopPropagation(); pinPatient({{ $patient->id }}, 'all')"
                                                 class="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-slate-700 flex items-center gap-2">
                                             <i class="fa-solid fa-users text-brand-500 w-4"></i> Pin to everyone
                                         </button>
+                                        @if($pinnedToCount > 1)
+                                        <button type="button" onclick="event.stopPropagation(); pinPatient({{ $patient->id }}, 'unpin_all')"
+                                                class="w-full text-left px-4 py-2 text-sm text-rose-600 dark:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-900/20 flex items-center gap-2">
+                                            <i class="fa-solid fa-users-slash w-4"></i> Unpin from everyone
+                                            <span class="ml-auto text-[10px] text-gray-400">{{ $pinnedToCount }} staff</span>
+                                        </button>
+                                        @endif
                                         @endif
                                         <button type="button" onclick="event.stopPropagation(); openPinSomeoneModal({{ $patient->id }}, '{{ addslashes($patient->name) }}')"
                                                 class="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-slate-700 flex items-center gap-2">
                                             <i class="fa-solid fa-user-plus text-purple-500 w-4"></i> Pin to someone
                                         </button>
+                                        @if($canPinAll && $pinnedToCount > 0)
+                                        <div class="my-1 border-t border-gray-100 dark:border-slate-700"></div>
+                                        <p class="px-4 pt-1 pb-1 text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">Pinned for</p>
+                                        @foreach($pinnedToList as $pinnedUser)
+                                        <button type="button" onclick="event.stopPropagation(); pinPatient({{ $patient->id }}, 'unpin_{{ $pinnedUser['id'] }}')"
+                                                class="w-full text-left px-4 py-1.5 text-xs text-gray-600 dark:text-gray-300 hover:bg-rose-50 dark:hover:bg-rose-900/20 hover:text-rose-700 dark:hover:text-rose-300 flex items-center gap-2 group">
+                                            <i class="fa-solid fa-user w-3 text-gray-400 group-hover:text-rose-500"></i>
+                                            <span class="truncate flex-1">{{ $pinnedUser['name'] }}</span>
+                                            <i class="fa-solid fa-xmark text-[10px] opacity-0 group-hover:opacity-100"></i>
+                                        </button>
+                                        @endforeach
+                                        @endif
                                     </div>
                                 </div>
                                 @if($canDelete)

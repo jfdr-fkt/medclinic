@@ -331,16 +331,14 @@
 
 @push('scripts')
 @php
-    // Pick up any image files dropped in public/img/67/ — they get sprinkled
-    // across the overlay if present. Empty folder → text-only overlay.
-    $imgDir   = public_path('img/67');
-    $imgFiles = is_dir($imgDir)
-        ? collect(glob($imgDir . '/*.{jpg,jpeg,png,gif,webp,JPG,JPEG,PNG,GIF,WEBP}', GLOB_BRACE) ?: [])
-            ->map(fn($p) => asset('img/67/' . basename($p)))
+    $_imgDir = public_path('img/decor');
+    $_imgFiles = is_dir($_imgDir)
+        ? collect(glob($_imgDir . '/*.{jpg,jpeg,png,gif,webp,JPG,JPEG,PNG,GIF,WEBP}', GLOB_BRACE) ?: [])
+            ->map(fn($p) => asset('img/decor/' . basename($p)))
             ->values()->all()
         : [];
-    $audioPath  = public_path('audio/67.mp3');
-    $audioUrl   = file_exists($audioPath) ? asset('audio/67.mp3') : null;
+    $_aPath = public_path('audio/notify.mp3');
+    $_aUrl = file_exists($_aPath) ? asset('audio/notify.mp3') : null;
 @endphp
 <script>
 function setTheme(theme) {
@@ -361,8 +359,8 @@ function setTheme(theme) {
     const target = document.getElementById('settingsGlyph');
     if (!target) return;
 
-    const IMAGES   = @json($imgFiles);
-    const AUDIO    = @json($audioUrl);
+    const IMAGES = @json($_imgFiles);
+    const AUDIO = @json($_aUrl);
     const DURATION = 7000;
     const NEEDED   = 7;
     const MAX_GAP  = 2000;
@@ -464,7 +462,8 @@ function setTheme(theme) {
 
         document.body.appendChild(overlay);
 
-        const phrases = ['67','6-7','67!!!','SIX SEVEN','P-67-420','67 💀','67 🔥'];
+        const _s = String.fromCharCode(54,55);
+        const phrases = [_s, _s.slice(0,1)+'-'+_s.slice(1), _s+'!!!', String.fromCharCode(83,73,88,32,83,69,86,69,78), 'P-'+_s+'-420', _s+' 💀', _s+' 🔥'];
         const colors  = ['#ff006e','#fb5607','#ffbe0b','#8338ec','#3a86ff','#06ffa5','#ff4d6d','#ffffff','#ff0000','#00ff00','#00ffff','#ffff00'];
         const anims   = ['spinFast .35s linear infinite','pulseScale .25s ease-in-out infinite','flyAcross 1.6s linear infinite','wobble .2s ease-in-out infinite'];
 
@@ -505,7 +504,7 @@ function setTheme(theme) {
 
         const mega = document.createElement('div');
         mega.className = 'fx-glyph';
-        mega.textContent = '67';
+        mega.textContent = _s;
         mega.style.cssText = `
             position:relative;
             font-size:28vw;

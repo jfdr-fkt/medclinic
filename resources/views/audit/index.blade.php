@@ -78,7 +78,7 @@
 
     <!-- Filters -->
     <form method="GET" action="{{ route('audit.index') }}" class="audit-card p-3">
-        @php $hasFilters = request('user_id') || request('action'); @endphp
+        @php $hasFilters = request('user_id') || request('action') || request('range'); @endphp
         <div class="flex items-center gap-2">
             <div class="relative">
                 <button type="button" onclick="toggleDropdown('auditFilterMenu')"
@@ -105,6 +105,27 @@
                                 <option value="{{ $a }}" {{ request('action')===$a ? 'selected':'' }}>{{ $a }}</option>
                                 @endforeach
                             </select>
+                        </div>
+                    </div>
+                    <div>
+                        <p class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1.5"><i class="fa-solid fa-calendar-days"></i> Date range</p>
+                        <select name="range" id="auditRangeSel" class="input cs-select" onchange="document.getElementById('auditCustomRange').classList.toggle('hidden', this.value !== 'custom')">
+                            <option value="" {{ !request('range') ? 'selected' : '' }}>Any time</option>
+                            <option value="today" {{ request('range')==='today' ? 'selected' : '' }}>Today</option>
+                            <option value="yesterday" {{ request('range')==='yesterday' ? 'selected' : '' }}>Yesterday</option>
+                            <option value="7d" {{ request('range')==='7d' ? 'selected' : '' }}>Last 7 days</option>
+                            <option value="30d" {{ request('range')==='30d' ? 'selected' : '' }}>Last 30 days</option>
+                            <option value="custom" {{ request('range')==='custom' ? 'selected' : '' }}>Custom range…</option>
+                        </select>
+                        <div id="auditCustomRange" class="grid grid-cols-2 gap-2 mt-2 {{ request('range')==='custom' ? '' : 'hidden' }}">
+                            <div>
+                                <label class="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase">From</label>
+                                <input type="date" name="from" value="{{ request('from') }}" class="input text-sm py-2">
+                            </div>
+                            <div>
+                                <label class="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase">To</label>
+                                <input type="date" name="to" value="{{ request('to') }}" class="input text-sm py-2">
+                            </div>
                         </div>
                     </div>
                     <div class="flex gap-2 pt-3 border-t border-gray-100 dark:border-slate-700">

@@ -11,7 +11,7 @@ return new class extends Migration
         DB::table('users')
             ->where('email', 'admin@clinic.com')
             ->update([
-                'name'           => 'Sarah Chen',
+                'name' => 'Sarah Chen',
                 'specialization' => 'IT & Operations Admin',
             ]);
     }
@@ -21,7 +21,7 @@ return new class extends Migration
         DB::table('users')
             ->where('email', 'admin@clinic.com')
             ->update([
-                'name'           => 'Dr. Sarah Chen',
+                'name' => 'Dr. Sarah Chen',
                 'specialization' => 'Internal Medicine',
             ]);
     }

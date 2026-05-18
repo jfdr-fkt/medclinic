@@ -5,6 +5,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\MedicineController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PatientController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ScanController;
@@ -47,6 +48,7 @@ Route::middleware(['auth', 'no.back', 'force.pw.change'])->group(function () {
     Route::get('/visits',                       [VisitController::class, 'index'])->name('visits.index');
     Route::post('/visits',                      [VisitController::class, 'store'])->name('visits.store');
     Route::put('/visits/{visit}/status',        [VisitController::class, 'updateStatus'])->name('visits.status');
+    Route::put('/visits/{visit}/assign',         [VisitController::class, 'assign'])->name('visits.assign');
     Route::delete('/visits/{visit}',            [VisitController::class, 'destroy'])->name('visits.destroy');
 
     // Patients
@@ -96,6 +98,11 @@ Route::middleware(['auth', 'no.back', 'force.pw.change'])->group(function () {
     Route::delete('/staff/{user}',                [StaffController::class, 'destroy'])->name('staff.destroy');
     Route::get('/staff/{user}/shift-on',          [StaffController::class, 'shiftOn'])->name('staff.shifts.lookup');
     Route::post('/staff/shifts/store',            [StaffController::class, 'storeShift'])->name('staff.shifts.store');
+    Route::post('/staff/shifts/bulk',              [StaffController::class, 'bulkStoreShifts'])->name('staff.shifts.bulk');
+    Route::delete('/staff/shifts/{shift}',         [StaffController::class, 'destroyShift'])->name('staff.shifts.destroy');
+    Route::post('/staff/{user}/events',             [StaffController::class, 'storeEvent'])->name('staff.events.store');
+    Route::post('/staff/{user}/events/bulk',         [StaffController::class, 'bulkStoreEvents'])->name('staff.events.bulk');
+    Route::delete('/staff/events/{event}',          [StaffController::class, 'destroyEvent'])->name('staff.events.destroy');
 
     // Chat
     Route::get('/chat',                           [ChatController::class, 'index'])->name('chat.index');
@@ -106,6 +113,9 @@ Route::middleware(['auth', 'no.back', 'force.pw.change'])->group(function () {
     Route::post('/chat/groups/{group}/add',       [ChatController::class, 'addToGroup'])->name('chat.groups.add');
     Route::delete('/chat/messages/{message}',    [ChatController::class, 'destroyMessage'])->name('chat.messages.destroy');
     Route::post('/chat/mark-all-read',            [ChatController::class, 'markAllRead'])->name('chat.markAllRead');
+
+    Route::post('/notifications/{notification}/read', [NotificationController::class, 'markRead'])->name('notifications.markRead');
+    Route::post('/notifications/mark-all-read',       [NotificationController::class, 'markAllRead'])->name('notifications.markAllRead');
 
     // AJAX API endpoints
     Route::prefix('api')->group(function () {

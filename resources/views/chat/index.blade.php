@@ -222,7 +222,16 @@
                                 {{ strtoupper(substr($u->name, 0, 2)) }}
                             </div>
                             @endif
-                            <span class="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white dark:border-slate-900 {{ $u->isOnline() ? 'bg-emerald-400' : 'bg-gray-300 dark:bg-slate-600' }}"></span>
+                            @php
+                                $cChat = $u->statusColor();
+                                $dotChat = match($cChat) {
+                                    'emerald' => 'bg-emerald-400',
+                                    'red' => 'bg-red-500',
+                                    'amber' => 'bg-amber-400',
+                                    default => 'bg-gray-300 dark:bg-slate-600',
+                                };
+                            @endphp
+                            <span class="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white dark:border-slate-900 {{ $dotChat }}" title="{{ $u->statusLabel() }}"></span>
                         </div>
                         <div class="flex-1 min-w-0">
                             <p class="text-sm font-semibold text-gray-800 dark:text-gray-100 truncate">{{ $u->name }}</p>
@@ -265,16 +274,31 @@
                             {{ strtoupper(substr($withUser->name, 0, 2)) }}
                         </div>
                         @endif
-                        <span class="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-white dark:border-slate-900 {{ $withUser->isOnline() ? 'bg-emerald-400' : 'bg-gray-300 dark:bg-slate-600' }}"></span>
+                        @php
+                            $cHdr = $withUser->statusColor();
+                            $dotHdr = match($cHdr) {
+                                'emerald' => 'bg-emerald-400',
+                                'red' => 'bg-red-500',
+                                'amber' => 'bg-amber-400',
+                                default => 'bg-gray-300 dark:bg-slate-600',
+                            };
+                            $textHdr = match($cHdr) {
+                                'emerald' => 'text-emerald-600 dark:text-emerald-400',
+                                'red' => 'text-red-600 dark:text-red-400',
+                                'amber' => 'text-amber-600 dark:text-amber-400',
+                                default => 'text-gray-400 dark:text-gray-500',
+                            };
+                        @endphp
+                        <span class="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-white dark:border-slate-900 {{ $dotHdr }}" title="{{ $withUser->statusLabel() }}"></span>
                     </div>
                     <div class="min-w-0">
                         <p class="font-bold text-gray-900 dark:text-white group-hover:text-brand-700 dark:group-hover:text-brand-300 transition-colors truncate flex items-center gap-1.5">
                             {{ $withUser->name }}
                             <i class="fa-solid fa-arrow-up-right-from-square text-[10px] text-gray-300 dark:text-gray-600 group-hover:text-brand-500 transition-colors"></i>
                         </p>
-                        <p class="text-xs {{ $withUser->isOnline() ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-400 dark:text-gray-500' }}">
+                        <p class="text-xs {{ $textHdr }}">
                             @if($withUser->isOnline())
-                                <span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1 align-middle"></span> Online now
+                                <span class="inline-block w-1.5 h-1.5 rounded-full {{ $dotHdr }} mr-1 align-middle"></span> {{ $withUser->statusLabel() }}
                             @else
                                 {{ $withUser->last_seen_at ? 'Last seen '.$withUser->last_seen_at->diffForHumans() : 'Offline' }}
                             @endif

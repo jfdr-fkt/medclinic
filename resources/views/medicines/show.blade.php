@@ -94,7 +94,11 @@
         <div class="card p-4 text-center">
             <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-1">Stock</p>
             <p class="text-2xl font-extrabold {{ $qty <= 0 ? 'text-red-600' : ($qty <= $min ? 'text-amber-600' : 'text-gray-900 dark:text-white') }}">{{ $qty }}</p>
-            <p class="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">min {{ $min }}</p>
+            <p class="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">{{ $medicine->unitLabelPlural() }} · min {{ $min }}</p>
+            @if($qty > 0)
+            <p class="text-[11px] font-semibold text-brand-700 dark:text-brand-300 mt-1 leading-tight">{{ $medicine->breakdownLabel($qty) }}</p>
+            @endif
+            <p class="text-[10px] text-gray-400 dark:text-gray-500 mt-1">1 pack = {{ $medicine->blistersPerPack() }} blisters × {{ $medicine->unitsPerBlister() }} {{ $medicine->unitLabelPlural() }}</p>
         </div>
         <div class="card p-4 text-center">
             <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-1">Location</p>
@@ -270,26 +274,103 @@
         @endif
     </div>
 
-    {{-- ── Quick Dispense (only if active + has stock + permission) ── --}}
-    @if($canDisp && !$medicine->isArchivedManually() && !$isExpired && $qty > 0)
+    {{-- ── Quick Dispense / Return ── --}}
+    @if($canDisp && (!$medicine->isArchivedManually() || $qty >= 0))
     <div class="card p-5">
-        <h3 class="font-bold text-gray-900 dark:text-white text-base mb-4 flex items-center gap-2">
-            <span class="w-7 h-7 rounded-lg bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-300 inline-flex items-center justify-center">
-                <i class="fa-solid fa-hand-holding-medical text-xs"></i>
-            </span>
-            Quick Dispense
-        </h3>
-        <form method="POST" action="{{ route('medicines.dispense', $medicine) }}" class="flex flex-col sm:flex-row gap-2">
+        <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
+            <h3 class="font-bold text-gray-900 dark:text-white text-base flex items-center gap-2">
+                <span class="w-7 h-7 rounded-lg bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-300 inline-flex items-center justify-center">
+                    <i class="fa-solid fa-hand-holding-medical text-xs"></i>
+                </span>
+                Dispense or Return
+            </h3>
+            <div class="flex items-center gap-1 rounded-xl bg-gray-100 dark:bg-slate-800 p-1" id="dispActionToggle">
+                <button type="button" data-action="dispense" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-colors bg-white dark:bg-slate-900 text-gray-900 dark:text-white shadow-sm">Dispense</button>
+                <button type="button" data-action="return" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-colors text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">Return</button>
+            </div>
+        </div>
+        <form method="POST" action="{{ route('medicines.dispense', $medicine) }}" class="grid grid-cols-1 sm:grid-cols-12 gap-2" id="dispenseForm">
             @csrf
-            <input type="number" name="quantity" min="1" max="{{ $qty }}" placeholder="Quantity" required
-                   class="input sm:w-32">
-            <input type="text" name="notes" placeholder="Notes (patient name, reason for dispense)"
-                   class="input flex-1">
-            <button type="submit" class="btn-primary justify-center">
+            <input type="hidden" name="action" id="dispActionInput" value="dispense">
+            <input type="number" name="quantity" min="1" placeholder="Qty" required
+                   class="input sm:col-span-2" id="dispQty" oninput="updateDispPreview()">
+            <select name="unit" class="input cs-select sm:col-span-3" id="dispUnit" onchange="updateDispPreview()">
+                <option value="tablet">{{ Str::title($medicine->unitLabelPlural()) }}</option>
+                <option value="blister">Blisters ({{ $medicine->unitsPerBlister() }} {{ $medicine->unitLabelPlural() }} each)</option>
+                <option value="pack">Packs ({{ $medicine->unitsPerPack() }} {{ $medicine->unitLabelPlural() }} each)</option>
+            </select>
+            <input type="text" name="notes" placeholder="Notes (patient name, reason)"
+                   class="input sm:col-span-5">
+            <button type="submit" id="dispSubmitBtn" class="btn-primary justify-center sm:col-span-2">
                 <i class="fa-solid fa-hand-holding-medical"></i> Dispense
             </button>
         </form>
+        <p id="dispPreview" class="text-xs text-gray-500 dark:text-gray-400 mt-2.5"></p>
     </div>
+    @push('scripts')
+    <script>
+    (function() {
+        const unitsPerBlister = {{ $medicine->unitsPerBlister() }};
+        const unitsPerPack = {{ $medicine->unitsPerPack() }};
+        const currentStock = {{ $qty }};
+        const unitLabel = {!! json_encode($medicine->unitLabel()) !!};
+        const unitLabelPlural = {!! json_encode($medicine->unitLabelPlural()) !!};
+
+        function fromInput(qty, unit) {
+            if (unit === 'pack') return qty * unitsPerPack;
+            if (unit === 'blister') return qty * unitsPerBlister;
+            return qty;
+        }
+        function breakdown(units) {
+            const packs = Math.floor(units / unitsPerPack);
+            let rem = units - packs * unitsPerPack;
+            const blisters = Math.floor(rem / unitsPerBlister);
+            const loose = rem - blisters * unitsPerBlister;
+            const parts = [];
+            if (packs > 0) parts.push(`${packs} pack${packs===1?'':'s'}`);
+            if (blisters > 0) parts.push(`${blisters} blister${blisters===1?'':'s'}`);
+            if (loose > 0 || parts.length === 0) parts.push(`${loose} ${loose===1?unitLabel:unitLabelPlural}`);
+            return parts.join(', ');
+        }
+        window.updateDispPreview = function() {
+            const q = parseInt(document.getElementById('dispQty').value || '0', 10);
+            const u = document.getElementById('dispUnit').value;
+            const action = document.getElementById('dispActionInput').value;
+            const totalUnits = fromInput(q, u);
+            const preview = document.getElementById('dispPreview');
+            if (!q) { preview.textContent = ''; return; }
+            const newStock = action === 'return' ? currentStock + totalUnits : currentStock - totalUnits;
+            const verb = action === 'return' ? 'Adds back' : 'Takes';
+            let warning = '';
+            if (action === 'dispense' && newStock < 0) warning = ' ⚠ Not enough stock.';
+            preview.textContent = `${verb} ${totalUnits} ${unitLabelPlural}. Stock after: ${Math.max(0, newStock)} (${breakdown(Math.max(0,newStock))}).${warning}`;
+        };
+        document.querySelectorAll('#dispActionToggle button').forEach(b => {
+            b.addEventListener('click', () => {
+                document.querySelectorAll('#dispActionToggle button').forEach(bb => {
+                    bb.classList.remove('bg-white','dark:bg-slate-900','text-gray-900','dark:text-white','shadow-sm');
+                    bb.classList.add('text-gray-500','dark:text-gray-400');
+                });
+                b.classList.add('bg-white','dark:bg-slate-900','text-gray-900','dark:text-white','shadow-sm');
+                b.classList.remove('text-gray-500','dark:text-gray-400');
+                const action = b.dataset.action;
+                document.getElementById('dispActionInput').value = action;
+                const submitBtn = document.getElementById('dispSubmitBtn');
+                if (action === 'return') {
+                    submitBtn.innerHTML = '<i class="fa-solid fa-rotate-left"></i> Return';
+                    submitBtn.classList.remove('btn-primary');
+                    submitBtn.classList.add('btn-secondary');
+                } else {
+                    submitBtn.innerHTML = '<i class="fa-solid fa-hand-holding-medical"></i> Dispense';
+                    submitBtn.classList.add('btn-primary');
+                    submitBtn.classList.remove('btn-secondary');
+                }
+                updateDispPreview();
+            });
+        });
+    })();
+    </script>
+    @endpush
     @endif
 
     {{-- ── All Batches + Dispense History ── --}}
@@ -329,9 +410,22 @@
             @if($dispenseLogs->count() > 0)
             <div class="space-y-2 max-h-72 overflow-y-auto pr-1">
                 @foreach($dispenseLogs as $log)
-                <div class="flex items-start justify-between gap-2 p-3 bg-gray-50 dark:bg-slate-800/60 rounded-xl">
-                    <div class="min-w-0">
-                        <p class="text-sm font-semibold text-gray-900 dark:text-white">{{ $log->quantity }} units</p>
+                @php
+                    $unit = $log->unit ?: 'tablet';
+                    $unitDisp = $log->quantity === 1 ? $unit : $unit.'s';
+                    $totalUnits = $log->quantity_in_units ?? $log->quantity;
+                @endphp
+                <div class="flex items-start justify-between gap-2 p-3 {{ $log->is_return ? 'bg-sky-50/60 dark:bg-sky-900/15' : 'bg-gray-50 dark:bg-slate-800/60' }} rounded-xl">
+                    <div class="min-w-0 flex-1">
+                        <p class="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-1.5 flex-wrap">
+                            @if($log->is_return)
+                            <span class="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-sky-100 dark:bg-sky-900/40 text-sky-700 dark:text-sky-300"><i class="fa-solid fa-rotate-left text-[9px]"></i> Return</span>
+                            @endif
+                            {{ $log->quantity }} {{ $unitDisp }}
+                            @if($totalUnits !== $log->quantity)
+                            <span class="text-xs font-normal text-gray-400 dark:text-gray-500">({{ $totalUnits }} {{ $medicine->unitLabelPlural() }})</span>
+                            @endif
+                        </p>
                         <p class="text-xs text-gray-500 dark:text-gray-400 truncate">{{ $log->dispensedBy?->name ?? '—' }} @if($log->notes) &bull; {{ $log->notes }} @endif</p>
                     </div>
                     <p class="text-xs text-gray-400 dark:text-gray-500 flex-shrink-0 whitespace-nowrap">{{ $log->created_at->diffForHumans(null, true) }} ago</p>
@@ -396,6 +490,26 @@
             <div>
                 <label class="label flex items-center gap-1.5"><i class="fa-solid fa-box text-purple-500"></i> Storage Instructions</label>
                 <textarea name="storage_instructions" rows="2" class="input resize-y leading-relaxed" placeholder="Temperature, light, dryness, etc.">{{ $medicine->storage_instructions }}</textarea>
+            </div>
+
+            <div class="rounded-xl border-2 border-brand-200 dark:border-brand-800/40 bg-brand-50/40 dark:bg-brand-900/15 p-4 space-y-3">
+                <p class="text-sm font-bold text-brand-700 dark:text-brand-300 flex items-center gap-1.5"><i class="fa-solid fa-boxes-stacked"></i> Pack / Blister Hierarchy</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400">Defines how stock breaks down. Used when dispensing larger units than a single {{ $medicine->unitLabel() }}.</p>
+                <div class="grid grid-cols-3 gap-3">
+                    <div>
+                        <label class="label">Unit Name</label>
+                        <input type="text" name="unit_label" value="{{ $medicine->unit_label ?: 'tablet' }}" maxlength="32" class="input" placeholder="tablet / capsule / mL">
+                    </div>
+                    <div>
+                        <label class="label">Per Blister</label>
+                        <input type="number" name="units_per_blister" min="1" max="1000" value="{{ $medicine->unitsPerBlister() }}" class="input">
+                    </div>
+                    <div>
+                        <label class="label">Blisters / Pack</label>
+                        <input type="number" name="blisters_per_pack" min="1" max="1000" value="{{ $medicine->blistersPerPack() }}" class="input">
+                    </div>
+                </div>
+                <p class="text-xs text-gray-500 dark:text-gray-400">Current: 1 pack = <span class="font-bold text-brand-700 dark:text-brand-300">{{ $medicine->unitsPerPack() }}</span> {{ $medicine->unitLabelPlural() }}</p>
             </div>
 
             <div class="flex justify-between gap-3 pt-3 border-t border-gray-100 dark:border-slate-700">

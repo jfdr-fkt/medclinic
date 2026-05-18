@@ -503,7 +503,11 @@
                         </td>
                         <td class="text-center" data-label="Stock">
                             <p class="stock-num {{ $isArchivedMan || $isExpired ? 'text-gray-400 dark:text-gray-500 line-through' : ($qty <= 5 ? 'text-red-600 dark:text-red-300' : ($qty <= $min ? 'text-amber-600 dark:text-amber-300' : 'text-gray-900 dark:text-gray-100')) }}">{{ $qty }}</p>
-                            <p class="text-sm med-meta">min {{ $min }}</p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 leading-tight">{{ $m->unitLabelPlural() }}</p>
+                            @if($qty > 0)
+                            <p class="text-xs text-brand-600 dark:text-brand-300 font-semibold leading-tight mt-0.5">{{ $m->breakdownLabel($qty) }}</p>
+                            @endif
+                            <p class="text-xs med-meta mt-0.5">min {{ $min }}</p>
                         </td>
                         <td class="text-center" data-label="Location">
                             <p class="text-sm text-gray-700 dark:text-gray-200">{{ $m->location?->full_location ?? '—' }}</p>
@@ -613,9 +617,20 @@
         </div>
         <form id="dispenseForm" method="POST" class="px-6 py-5 space-y-4">
             @csrf
-            <div>
-                <label class="label">Quantity to Dispense <span class="text-red-500">*</span></label>
-                <input type="number" name="quantity" required min="1" id="dispenseQty" class="input" placeholder="1">
+            <input type="hidden" name="action" value="dispense">
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="label">Quantity <span class="text-red-500">*</span></label>
+                    <input type="number" name="quantity" required min="1" id="dispenseQty" class="input" placeholder="1">
+                </div>
+                <div>
+                    <label class="label">Unit</label>
+                    <select name="unit" id="dispenseUnit" class="input cs-select">
+                        <option value="tablet">Single units</option>
+                        <option value="blister">Blisters</option>
+                        <option value="pack">Packs</option>
+                    </select>
+                </div>
             </div>
             <div>
                 <label class="label">Notes</label>

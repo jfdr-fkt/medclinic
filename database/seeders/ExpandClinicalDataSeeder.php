@@ -58,7 +58,7 @@ class ExpandClinicalDataSeeder extends Seeder
             'P-2024-006' => ['sex'=>'female','blood_type'=>'AB+', 'height_cm'=>158, 'weight_kg'=>49.0, 'allergies'=>'Aspirin (causes hives)','chronic_conditions'=>'Chronic migraine',                          'emergency_contact_name'=>'Tomas Silang',     'emergency_contact_phone'=>'0917-555-0106'],
             'P-2024-007' => ['sex'=>'male',  'blood_type'=>'O+',  'height_cm'=>175, 'weight_kg'=>70.0, 'allergies'=>'NKDA',                 'chronic_conditions'=>'None',                                       'emergency_contact_name'=>'Procesa Bonifacio','emergency_contact_phone'=>'0917-555-0107'],
             'P-2024-008' => ['sex'=>'female','blood_type'=>'B-',  'height_cm'=>152, 'weight_kg'=>58.0, 'allergies'=>'NKDA',                 'chronic_conditions'=>'Type 2 Diabetes (insulin-dependent), Hypertension, Osteoarthritis', 'emergency_contact_name'=>'Juan Aquino',   'emergency_contact_phone'=>'0917-555-0108'],
-            'P-67-420'   => ['sex'=>'other', 'blood_type'=>'unknown','height_cm'=>167, 'weight_kg'=>67.0, 'allergies'=>'Allergic to taking life seriously', 'chronic_conditions'=>'Chronic meme syndrome',         'emergency_contact_name'=>'Mr. Meme',        'emergency_contact_phone'=>'0917-555-4200'],
+            'P-67-420' => ['sex'=>'other', 'blood_type'=>'unknown','height_cm'=>167, 'weight_kg'=>67.0, 'allergies'=>'Allergic to taking life seriously', 'chronic_conditions'=>'Chronic meme syndrome',         'emergency_contact_name'=>'Mr. Meme',        'emergency_contact_phone'=>'0917-555-4200'],
         ];
 
         foreach ($backfill as $pid => $fields) {
@@ -107,9 +107,9 @@ class ExpandClinicalDataSeeder extends Seeder
             $patient = Patient::firstOrCreate(
                 ['patient_id' => $p['patient_id']],
                 array_merge($p, [
-                    'assigned_nurse_id'  => $pickNurse($i),
+                    'assigned_nurse_id' => $pickNurse($i),
                     'assigned_doctor_id' => $pickDoctor($i),
-                    'last_visit'         => now()->subDays(rand(1, 60)),
+                    'last_visit' => now()->subDays(rand(1, 60)),
                 ])
             );
             if ($patient->wasRecentlyCreated) $needed--;
@@ -160,20 +160,20 @@ class ExpandClinicalDataSeeder extends Seeder
                 ['name' => $m['name']],
                 [
                     'generic_name' => $m['generic_name'],
-                    'barcode'      => $m['barcode'],
-                    'qr_code'      => $m['qr_code'],
-                    'location_id'  => $m['loc']?->id,
-                    'type'         => $m['type'],
-                    'dosage'       => $m['dosage'],
+                    'barcode' => $m['barcode'],
+                    'qr_code' => $m['qr_code'],
+                    'location_id' => $m['loc']?->id,
+                    'type' => $m['type'],
+                    'dosage' => $m['dosage'],
                 ]
             );
             if ($med->wasRecentlyCreated) {
                 Inventory::create([
-                    'medicine_id'     => $med->id,
-                    'quantity'        => $m['qty'],
+                    'medicine_id' => $med->id,
+                    'quantity' => $m['qty'],
                     'min_stock_level' => $m['min'],
                     'expiration_date' => $m['exp'],
-                    'batch_number'    => $m['batch'],
+                    'batch_number' => $m['batch'],
                 ]);
                 $needed--;
             }

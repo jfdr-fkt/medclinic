@@ -49,7 +49,13 @@ class VisitController extends Controller
             ? Patient::orderBy('name')->get(['id', 'name', 'patient_id'])
             : collect();
 
-        return view('visits.index', compact('visits', 'counts', 'date', 'statusFilter', 'patients'));
+        $clinicalStaff = \App\Models\User::whereIn('role', ['doctor','nurse','pharmacist','clinic_head'])
+            ->where('is_active', true)
+            ->orderBy('role')
+            ->orderBy('name')
+            ->get(['id','name','role']);
+
+        return view('visits.index', compact('visits', 'counts', 'date', 'statusFilter', 'patients', 'clinicalStaff'));
     }
 
     public function store(Request $request)
@@ -63,12 +69,12 @@ class VisitController extends Controller
             // Quick-register the walk-in inline. Only minimum fields; the full
             // record can be completed later from /patients.
             $validated = $request->validate([
-                'new_patient_name'           => 'required|string|max:255',
-                'new_patient_date_of_birth'  => 'nullable|date',
-                'new_patient_sex'            => 'nullable|in:male,female,other',
-                'new_patient_phone'          => 'nullable|string|max:50',
-                'visit_type'                 => 'required|in:appointment,walk_in',
-                'reason'                     => 'nullable|string|max:255',
+                'new_patient_name' => 'required|string|max:255',
+                'new_patient_date_of_birth' => 'nullable|date',
+                'new_patient_sex' => 'nullable|in:male,female,other',
+                'new_patient_phone' => 'nullable|string|max:50',
+                'visit_type' => 'required|in:appointment,walk_in',
+                'reason' => 'nullable|string|max:255',
             ]);
 
             // Assign a unique patient ID like the regular Add Patient flow does.
@@ -77,20 +83,20 @@ class VisitController extends Controller
             } while (Patient::where('patient_id', $candidate)->exists());
 
             $patient = Patient::create([
-                'patient_id'    => $candidate,
-                'name'          => $validated['new_patient_name'],
+                'patient_id' => $candidate,
+                'name' => $validated['new_patient_name'],
                 'date_of_birth' => $validated['new_patient_date_of_birth'] ?? null,
-                'sex'           => $validated['new_patient_sex'] ?? null,
-                'phone'         => $validated['new_patient_phone'] ?? null,
-                'last_visit'    => now(),
+                'sex' => $validated['new_patient_sex'] ?? null,
+                'phone' => $validated['new_patient_phone'] ?? null,
+                'last_visit' => now(),
             ]);
 
             ActivityLog::create([
-                'user_id'     => $me->id,
-                'action'      => 'patient.create',
+                'user_id' => $me->id,
+                'action' => 'patient.create',
                 'entity_type' => Patient::class,
-                'entity_id'   => $patient->id,
-                'details'     => "Quick-registered {$patient->name} ({$patient->patient_id}) at check-in",
+                'entity_id' => $patient->id,
+                'details' => "Quick-registered {$patient->name} ({$patient->patient_id}) at check-in",
             ]);
 
             $patientId = $patient->id;
@@ -98,7 +104,7 @@ class VisitController extends Controller
             $validated = $request->validate([
                 'patient_id' => 'required|exists:patients,id',
                 'visit_type' => 'required|in:appointment,walk_in',
-                'reason'     => 'nullable|string|max:255',
+                'reason' => 'nullable|string|max:255',
             ]);
             $patientId = $validated['patient_id'];
         }
@@ -113,21 +119,21 @@ class VisitController extends Controller
         }
 
         $visit = Visit::create([
-            'patient_id'    => $patientId,
-            'recorded_by'   => $me->id,
+            'patient_id' => $patientId,
+            'recorded_by' => $me->id,
             'checked_in_at' => now(),
-            'status'        => 'waiting',
-            'visit_type'    => $validated['visit_type'],
-            'reason'        => $validated['reason'] ?? null,
+            'status' => 'waiting',
+            'visit_type' => $validated['visit_type'],
+            'reason' => $validated['reason'] ?? null,
         ]);
 
         $patient = Patient::find($patientId);
         ActivityLog::create([
-            'user_id'     => $me->id,
-            'action'      => 'visit.checkin',
+            'user_id' => $me->id,
+            'action' => 'visit.checkin',
             'entity_type' => Visit::class,
-            'entity_id'   => $visit->id,
-            'details'     => "Checked in {$patient->name} ({$patient->patient_id}) as {$visit->typeLabel()}",
+            'entity_id' => $visit->id,
+            'details' => "Checked in {$patient->name} ({$patient->patient_id}) as {$visit->typeLabel()}",
         ]);
 
         return back()->with('success', "{$patient->name} checked in.");
@@ -156,14 +162,45 @@ class VisitController extends Controller
         $visit->save();
 
         ActivityLog::create([
-            'user_id'     => $me->id,
-            'action'      => 'visit.status',
+            'user_id' => $me->id,
+            'action' => 'visit.status',
             'entity_type' => Visit::class,
-            'entity_id'   => $visit->id,
-            'details'     => "Status: {$prev} → {$validated['status']} for {$visit->patient->name}",
+            'entity_id' => $visit->id,
+            'details' => "Status: {$prev} → {$validated['status']} for {$visit->patient->name}",
         ]);
 
         return back()->with('success', 'Status updated.');
+    }
+
+    public function assign(Request $request, Visit $visit)
+    {
+        $me = Auth::user();
+        $isClaim = $request->boolean('claim');
+        if ($isClaim) {
+            if (!$me->can_('visits.claim')) abort(403, 'You cannot claim visits.');
+            $staffId = $me->id;
+        } else {
+            if (!$me->can_('visits.assign_any')) abort(403, 'You cannot reassign visits.');
+            $validated = $request->validate([
+                'staff_id' => 'nullable|exists:users,id',
+            ]);
+            $staffId = $validated['staff_id'] ?? null;
+        }
+        if (!$visit->isActive()) {
+            return back()->with('error', 'Cannot reassign a finished visit.');
+        }
+        $prev = $visit->currentStaff?->name ?? 'Unassigned';
+        $visit->current_staff_id = $staffId;
+        $visit->save();
+        $newName = $staffId ? (\App\Models\User::find($staffId)?->name ?? '—') : 'Unassigned';
+        ActivityLog::create([
+            'user_id' => $me->id,
+            'action' => 'visit.assign',
+            'entity_type' => Visit::class,
+            'entity_id' => $visit->id,
+            'details' => "Reassigned from {$prev} to {$newName} for {$visit->patient->name}",
+        ]);
+        return back()->with('success', $isClaim ? 'Claimed.' : 'Reassigned.');
     }
 
     public function destroy(Visit $visit)
@@ -178,11 +215,11 @@ class VisitController extends Controller
 
         if ($alreadyFinished) {
             ActivityLog::create([
-                'user_id'     => $me->id,
-                'action'      => 'visit.remove',
+                'user_id' => $me->id,
+                'action' => 'visit.remove',
                 'entity_type' => Visit::class,
-                'entity_id'   => $visit->id,
-                'details'     => "Removed {$visit->status} visit for {$patientName}",
+                'entity_id' => $visit->id,
+                'details' => "Removed {$visit->status} visit for {$patientName}",
             ]);
             $visit->delete();
             return back()->with('success', 'Visit removed from queue.');
@@ -193,11 +230,11 @@ class VisitController extends Controller
         $visit->save();
 
         ActivityLog::create([
-            'user_id'     => $me->id,
-            'action'      => 'visit.cancel',
+            'user_id' => $me->id,
+            'action' => 'visit.cancel',
             'entity_type' => Visit::class,
-            'entity_id'   => $visit->id,
-            'details'     => "Cancelled visit for {$patientName}",
+            'entity_id' => $visit->id,
+            'details' => "Cancelled visit for {$patientName}",
         ]);
 
         return back()->with('success', 'Visit cancelled.');

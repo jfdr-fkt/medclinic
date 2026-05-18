@@ -138,26 +138,26 @@ class MedicineController extends Controller
     {
         if (!Auth::user()->can_('medicines.create')) abort(403, 'Only admins can add medicines.');
         $validated = $request->validate([
-            'name'                  => 'required|string|max:255',
-            'generic_name'          => 'nullable|string',
-            'barcode'               => 'nullable|string|unique:medicines',
-            'qr_code'               => 'nullable|string|unique:medicines',
-            'location_id'           => 'required|exists:medicine_locations,id',
-            'type'                  => 'required|in:prescription,normal',
-            'description'           => 'nullable|string',
-            'dosage'                => 'nullable|string',
-            'form'                  => 'nullable|string',
-            'form_other_note'       => 'nullable|string|max:255',
-            'image'                 => 'nullable|image|max:4096',
-            'quantity'              => 'required|integer|min:0',
-            'min_stock_level'       => 'required|integer|min:1',
-            'expiration_date'       => 'required|date|after:today',
-            'batch_number'          => 'nullable|string',
-            'indications'           => 'nullable|string',
-            'dosage_instructions'   => 'nullable|string',
-            'side_effects'          => 'nullable|string',
-            'warnings'              => 'nullable|string',
-            'storage_instructions'  => 'nullable|string',
+            'name' => 'required|string|max:255',
+            'generic_name' => 'nullable|string',
+            'barcode' => 'nullable|string|unique:medicines',
+            'qr_code' => 'nullable|string|unique:medicines',
+            'location_id' => 'required|exists:medicine_locations,id',
+            'type' => 'required|in:prescription,normal',
+            'description' => 'nullable|string',
+            'dosage' => 'nullable|string',
+            'form' => 'nullable|string',
+            'form_other_note' => 'nullable|string|max:255',
+            'image' => 'nullable|image|max:4096',
+            'quantity' => 'required|integer|min:0',
+            'min_stock_level' => 'required|integer|min:1',
+            'expiration_date' => 'required|date|after:today',
+            'batch_number' => 'nullable|string',
+            'indications' => 'nullable|string',
+            'dosage_instructions' => 'nullable|string',
+            'side_effects' => 'nullable|string',
+            'warnings' => 'nullable|string',
+            'storage_instructions' => 'nullable|string',
         ]);
 
         // "Other" form selected → note is mandatory.
@@ -173,37 +173,37 @@ class MedicineController extends Controller
         }
 
         $medicine = Medicine::create([
-            'name'                  => $validated['name'],
-            'generic_name'          => $validated['generic_name'] ?? null,
-            'barcode'               => $validated['barcode'] ?? null,
-            'qr_code'               => $validated['qr_code'] ?? null,
-            'location_id'           => $validated['location_id'],
-            'type'                  => $validated['type'],
-            'description'           => $validated['description'] ?? null,
-            'dosage'                => $validated['dosage'] ?? null,
-            'image_path'            => $imagePath,
-            'form_other_note'       => $validated['form_other_note'] ?? null,
-            'indications'           => $validated['indications'] ?? null,
-            'dosage_instructions'   => $validated['dosage_instructions'] ?? null,
-            'side_effects'          => $validated['side_effects'] ?? null,
-            'warnings'              => $validated['warnings'] ?? null,
-            'storage_instructions'  => $validated['storage_instructions'] ?? null,
+            'name' => $validated['name'],
+            'generic_name' => $validated['generic_name'] ?? null,
+            'barcode' => $validated['barcode'] ?? null,
+            'qr_code' => $validated['qr_code'] ?? null,
+            'location_id' => $validated['location_id'],
+            'type' => $validated['type'],
+            'description' => $validated['description'] ?? null,
+            'dosage' => $validated['dosage'] ?? null,
+            'image_path' => $imagePath,
+            'form_other_note' => $validated['form_other_note'] ?? null,
+            'indications' => $validated['indications'] ?? null,
+            'dosage_instructions' => $validated['dosage_instructions'] ?? null,
+            'side_effects' => $validated['side_effects'] ?? null,
+            'warnings' => $validated['warnings'] ?? null,
+            'storage_instructions' => $validated['storage_instructions'] ?? null,
         ]);
 
         Inventory::create([
-            'medicine_id'     => $medicine->id,
-            'quantity'        => $validated['quantity'],
+            'medicine_id' => $medicine->id,
+            'quantity' => $validated['quantity'],
             'min_stock_level' => $validated['min_stock_level'],
             'expiration_date' => $validated['expiration_date'],
-            'batch_number'    => $validated['batch_number'] ?? null,
+            'batch_number' => $validated['batch_number'] ?? null,
         ]);
 
         ActivityLog::create([
-            'user_id'     => Auth::id(),
-            'action'      => 'medicine.create',
+            'user_id' => Auth::id(),
+            'action' => 'medicine.create',
             'entity_type' => Medicine::class,
-            'entity_id'   => $medicine->id,
-            'details'     => "Added medicine {$medicine->name} (qty {$validated['quantity']}, batch {$validated['batch_number']})",
+            'entity_id' => $medicine->id,
+            'details' => "Added medicine {$medicine->name} (qty {$validated['quantity']}, batch {$validated['batch_number']})",
         ]);
 
         if ($request->wantsJson()) {
@@ -227,26 +227,29 @@ class MedicineController extends Controller
     public function update(Request $request, Medicine $medicine)
     {
         $validated = $request->validate([
-            'name'                  => 'required|string|max:255',
-            'generic_name'          => 'nullable|string',
-            'location_id'           => 'required|exists:medicine_locations,id',
-            'type'                  => 'required|in:prescription,normal',
-            'description'           => 'nullable|string',
-            'dosage'                => 'nullable|string',
-            'indications'           => 'nullable|string',
-            'dosage_instructions'   => 'nullable|string',
-            'side_effects'          => 'nullable|string',
-            'warnings'              => 'nullable|string',
-            'storage_instructions'  => 'nullable|string',
+            'name' => 'required|string|max:255',
+            'generic_name' => 'nullable|string',
+            'location_id' => 'required|exists:medicine_locations,id',
+            'type' => 'required|in:prescription,normal',
+            'description' => 'nullable|string',
+            'dosage' => 'nullable|string',
+            'indications' => 'nullable|string',
+            'dosage_instructions' => 'nullable|string',
+            'side_effects' => 'nullable|string',
+            'warnings' => 'nullable|string',
+            'storage_instructions' => 'nullable|string',
+            'units_per_blister' => 'nullable|integer|min:1|max:1000',
+            'blisters_per_pack' => 'nullable|integer|min:1|max:1000',
+            'unit_label' => 'nullable|string|max:32',
         ]);
         $medicine->update($validated);
 
         ActivityLog::create([
-            'user_id'     => Auth::id(),
-            'action'      => 'medicine.update',
+            'user_id' => Auth::id(),
+            'action' => 'medicine.update',
             'entity_type' => Medicine::class,
-            'entity_id'   => $medicine->id,
-            'details'     => "Updated medicine {$medicine->name}",
+            'entity_id' => $medicine->id,
+            'details' => "Updated medicine {$medicine->name}",
         ]);
 
         return back()->with('success', 'Medicine updated!');
@@ -257,11 +260,11 @@ class MedicineController extends Controller
         if (!Auth::user()->can_('medicines.delete')) abort(403, 'Only admins can delete medicine records.');
 
         ActivityLog::create([
-            'user_id'     => Auth::id(),
-            'action'      => 'medicine.delete',
+            'user_id' => Auth::id(),
+            'action' => 'medicine.delete',
             'entity_type' => Medicine::class,
-            'entity_id'   => $medicine->id,
-            'details'     => "Removed medicine {$medicine->name}",
+            'entity_id' => $medicine->id,
+            'details' => "Removed medicine {$medicine->name}",
         ]);
 
         $medicine->delete();
@@ -278,23 +281,23 @@ class MedicineController extends Controller
     {
         if (!Auth::user()->can_('medicines.delete')) abort(403, 'Only admins and clinic heads can archive medicines.');
         $validated = $request->validate([
-            'reason'                 => 'required|string|max:255',
-            'archive_location_type'  => 'required|in:med_room,storage',
+            'reason' => 'required|string|max:255',
+            'archive_location_type' => 'required|in:med_room,storage',
         ]);
 
         $medicine->update([
-            'archived_at'            => now(),
-            'archived_by'            => Auth::id(),
-            'archive_reason'         => $validated['reason'],
-            'archive_location_type'  => $validated['archive_location_type'],
+            'archived_at' => now(),
+            'archived_by' => Auth::id(),
+            'archive_reason' => $validated['reason'],
+            'archive_location_type' => $validated['archive_location_type'],
         ]);
 
         ActivityLog::create([
-            'user_id'     => Auth::id(),
-            'action'      => 'medicine.archive',
+            'user_id' => Auth::id(),
+            'action' => 'medicine.archive',
             'entity_type' => Medicine::class,
-            'entity_id'   => $medicine->id,
-            'details'     => "Archived {$medicine->name} ({$validated['archive_location_type']}) — {$validated['reason']}",
+            'entity_id' => $medicine->id,
+            'details' => "Archived {$medicine->name} ({$validated['archive_location_type']}) — {$validated['reason']}",
         ]);
 
         return back()->with('success', "{$medicine->name} archived.");
@@ -305,18 +308,18 @@ class MedicineController extends Controller
         if (!Auth::user()->can_('medicines.delete')) abort(403, 'Only admins and clinic heads can unarchive medicines.');
 
         $medicine->update([
-            'archived_at'            => null,
-            'archived_by'            => null,
-            'archive_reason'         => null,
-            'archive_location_type'  => 'med_room',
+            'archived_at' => null,
+            'archived_by' => null,
+            'archive_reason' => null,
+            'archive_location_type' => 'med_room',
         ]);
 
         ActivityLog::create([
-            'user_id'     => Auth::id(),
-            'action'      => 'medicine.unarchive',
+            'user_id' => Auth::id(),
+            'action' => 'medicine.unarchive',
             'entity_type' => Medicine::class,
-            'entity_id'   => $medicine->id,
-            'details'     => "Restored {$medicine->name} to active inventory",
+            'entity_id' => $medicine->id,
+            'details' => "Restored {$medicine->name} to active inventory",
         ]);
 
         return back()->with('success', "{$medicine->name} restored to active inventory.");
@@ -330,7 +333,7 @@ class MedicineController extends Controller
     {
         if (!Auth::user()->can_('medicines.create')) abort(403, 'You cannot edit medicines.');
         $request->validate([
-            'images'   => 'required|array|min:1|max:5',
+            'images' => 'required|array|min:1|max:5',
             'images.*' => 'image|mimes:jpeg,png,webp|max:4096',
         ]);
 
@@ -348,11 +351,11 @@ class MedicineController extends Controller
         $medicine->update(['gallery_paths' => array_values(array_merge($existing, $newPaths))]);
 
         ActivityLog::create([
-            'user_id'     => Auth::id(),
-            'action'      => 'medicine.gallery.add',
+            'user_id' => Auth::id(),
+            'action' => 'medicine.gallery.add',
             'entity_type' => Medicine::class,
-            'entity_id'   => $medicine->id,
-            'details'     => "Added " . count($newPaths) . " photo(s) to {$medicine->name}",
+            'entity_id' => $medicine->id,
+            'details' => "Added " . count($newPaths) . " photo(s) to {$medicine->name}",
         ]);
 
         return back()->with('success', count($newPaths) . ' photo(s) added.');
@@ -376,11 +379,11 @@ class MedicineController extends Controller
         $medicine->update(['gallery_paths' => array_values($paths)]);
 
         ActivityLog::create([
-            'user_id'     => Auth::id(),
-            'action'      => 'medicine.gallery.remove',
+            'user_id' => Auth::id(),
+            'action' => 'medicine.gallery.remove',
             'entity_type' => Medicine::class,
-            'entity_id'   => $medicine->id,
-            'details'     => "Removed a photo from {$medicine->name}",
+            'entity_id' => $medicine->id,
+            'details' => "Removed a photo from {$medicine->name}",
         ]);
 
         return back()->with('success', 'Photo removed.');
@@ -388,48 +391,70 @@ class MedicineController extends Controller
 
     public function dispense(Request $request, Medicine $medicine)
     {
-        $request->validate([
-            'quantity'   => 'required|integer|min:1',
+        $validated = $request->validate([
+            'quantity' => 'required|integer|min:1',
+            'unit' => 'nullable|in:tablet,blister,pack',
+            'action' => 'nullable|in:dispense,return',
             'patient_id' => 'nullable|exists:patients,id',
-            'notes'      => 'nullable|string',
+            'notes' => 'nullable|string',
         ]);
 
-        if ($medicine->isArchivedManually()) {
+        $unit = $validated['unit'] ?? 'tablet';
+        $action = $validated['action'] ?? 'dispense';
+        $isReturn = $action === 'return';
+
+        if (!$isReturn && $medicine->isArchivedManually()) {
             return back()->withErrors(['quantity' => 'This medicine is archived and cannot be dispensed. Restore it first.']);
         }
-        if ($medicine->isExpired()) {
+        if (!$isReturn && $medicine->isExpired()) {
             return back()->withErrors(['quantity' => 'This medicine is expired and cannot be dispensed.']);
         }
 
+        $unitsInTablets = $medicine->unitsFromInput((int) $validated['quantity'], $unit);
+
         $inventory = $medicine->latestInventory;
-        if (!$inventory || $inventory->quantity < $request->quantity) {
-            return back()->withErrors(['quantity' => 'Not enough stock.']);
+        if (!$inventory) {
+            return back()->withErrors(['quantity' => 'No inventory record for this medicine.']);
+        }
+        if (!$isReturn && $inventory->quantity < $unitsInTablets) {
+            return back()->withErrors(['quantity' => "Not enough stock. Available: " . $medicine->breakdownLabel($inventory->quantity)]);
         }
 
-        $inventory->decrement('quantity', $request->quantity);
+        if ($isReturn) {
+            $inventory->increment('quantity', $unitsInTablets);
+        } else {
+            $inventory->decrement('quantity', $unitsInTablets);
+        }
 
         DispenseLog::create([
-            'medicine_id'    => $medicine->id,
-            'patient_id'     => $request->patient_id,
-            'dispensed_by'   => Auth::id(),
-            'quantity'       => $request->quantity,
-            'notes'          => $request->notes,
+            'medicine_id' => $medicine->id,
+            'patient_id' => $validated['patient_id'] ?? null,
+            'dispensed_by' => Auth::id(),
+            'quantity' => $validated['quantity'],
+            'unit' => $unit,
+            'quantity_in_units' => $unitsInTablets,
+            'is_return' => $isReturn,
+            'notes' => $validated['notes'] ?? null,
         ]);
+
+        $verb = $isReturn ? 'Returned' : 'Dispensed';
+        $unitPlural = $validated['quantity'] === 1 ? $unit : $unit.'s';
+        $detail = "{$verb} {$validated['quantity']} {$unitPlural} ({$unitsInTablets} {$medicine->unitLabelPlural()}) of {$medicine->name}";
 
         ActivityLog::create([
-            'user_id'     => Auth::id(),
-            'action'      => 'medicine.dispense',
+            'user_id' => Auth::id(),
+            'action' => $isReturn ? 'medicine.return' : 'medicine.dispense',
             'entity_type' => Medicine::class,
-            'entity_id'   => $medicine->id,
-            'details'     => "Dispensed {$request->quantity} unit(s) of {$medicine->name}" . ($request->notes ? " — {$request->notes}" : ''),
+            'entity_id' => $medicine->id,
+            'details' => $detail . ($validated['notes'] ?? null ? " — {$validated['notes']}" : ''),
         ]);
 
-        return back()->with('success', "{$request->quantity} unit(s) of {$medicine->name} dispensed.");
+        return back()->with('success', "{$detail}.");
     }
 
     public function locationsIndex()
     {
-        if (!Auth::user()->can_('medicines.locations')) abort(403, 'Only admins can manage locations.');
+        if (!Auth::user()->can_('medicines.locations')) abort(403, 'You cannot manage storage locations.');
         $locations = MedicineLocation::withCount('medicines')->orderBy('storage_type')->orderBy('cabinet')->orderBy('shelf')->get();
         return view('medicines.locations', compact('locations'));
     }
@@ -439,11 +464,11 @@ class MedicineController extends Controller
         if (!Auth::user()->can_('medicines.locations')) abort(403, 'Only admins can manage locations.');
         $validated = $request->validate([
             'storage_type' => 'required|string|max:50',
-            'cabinet'      => 'required|string|max:100',
-            'shelf'        => 'required|string|max:50',
-            'level'        => 'required|string|max:50',
-            'section'      => 'nullable|string|max:50',
-            'notes'        => 'nullable|string|max:255',
+            'cabinet' => 'required|string|max:100',
+            'shelf' => 'required|string|max:50',
+            'level' => 'required|string|max:50',
+            'section' => 'nullable|string|max:50',
+            'notes' => 'nullable|string|max:255',
         ]);
         MedicineLocation::create($validated);
         return back()->with('success', 'Location added!');
@@ -454,11 +479,11 @@ class MedicineController extends Controller
         if (!Auth::user()->can_('medicines.locations')) abort(403, 'Only admins can manage locations.');
         $validated = $request->validate([
             'storage_type' => 'required|string|max:50',
-            'cabinet'      => 'required|string|max:100',
-            'shelf'        => 'required|string|max:50',
-            'level'        => 'required|string|max:50',
-            'section'      => 'nullable|string|max:50',
-            'notes'        => 'nullable|string|max:255',
+            'cabinet' => 'required|string|max:100',
+            'shelf' => 'required|string|max:50',
+            'level' => 'required|string|max:50',
+            'section' => 'nullable|string|max:50',
+            'notes' => 'nullable|string|max:255',
         ]);
         $location->update($validated);
         return back()->with('success', 'Location updated!');
@@ -483,10 +508,10 @@ class MedicineController extends Controller
 
         if ($medicine) {
             return response()->json([
-                'found'       => true,
-                'medicine'    => $medicine,
-                'location'    => $medicine->location?->full_location,
-                'stock'       => $medicine->totalStock(),
+                'found' => true,
+                'medicine' => $medicine,
+                'location' => $medicine->location?->full_location,
+                'stock' => $medicine->totalStock(),
             ]);
         }
         return response()->json(['found' => false]);

@@ -75,8 +75,8 @@ class ChatController extends Controller
     {
         $request->validate([
             'receiver_id' => 'nullable|exists:users,id',
-            'group_id'    => 'nullable|exists:chat_groups,id',
-            'body'        => 'required|string|max:1000',
+            'group_id' => 'nullable|exists:chat_groups,id',
+            'body' => 'required|string|max:1000',
         ]);
 
         if (!$request->receiver_id && !$request->group_id) {
@@ -92,19 +92,19 @@ class ChatController extends Controller
         }
 
         $message = Message::create([
-            'sender_id'   => Auth::id(),
+            'sender_id' => Auth::id(),
             'receiver_id' => $request->receiver_id,
-            'group_id'    => $request->group_id,
-            'body'        => $request->body,
+            'group_id' => $request->group_id,
+            'body' => $request->body,
         ]);
 
         return response()->json([
             'success' => true,
             'message' => [
-                'id'         => $message->id,
-                'body'       => $message->body,
-                'sender_id'  => $message->sender_id,
-                'sender'     => Auth::user()->name,
+                'id' => $message->id,
+                'body' => $message->body,
+                'sender_id' => $message->sender_id,
+                'sender' => Auth::user()->name,
                 'created_at' => $message->created_at->format('g:i A'),
             ],
         ]);
@@ -148,12 +148,12 @@ class ChatController extends Controller
         }
 
         return response()->json($messages->map(fn($m) => [
-            'id'         => $m->id,
-            'body'       => $m->body,
-            'sender_id'  => $m->sender_id,
-            'sender'     => $m->sender->name,
+            'id' => $m->id,
+            'body' => $m->body,
+            'sender_id' => $m->sender_id,
+            'sender' => $m->sender->name,
             'created_at' => $m->created_at->format('g:i A'),
-            'is_mine'    => $m->sender_id === Auth::id(),
+            'is_mine' => $m->sender_id === Auth::id(),
         ]));
     }
 
@@ -178,22 +178,22 @@ class ChatController extends Controller
             ->pluck('max_id', 'receiver_id');
 
         return response()->json([
-            'dm_unread'    => $dmUnread,
+            'dm_unread' => $dmUnread,
             'group_unread' => $this->groupUnreadCounts(),
-            'seen_until'   => $seenUntil,
+            'seen_until' => $seenUntil,
         ]);
     }
 
     public function storeGroup(Request $request)
     {
         $validated = $request->validate([
-            'name'      => 'required|string|max:255',
-            'members'   => 'required|array|min:1',
+            'name' => 'required|string|max:255',
+            'members' => 'required|array|min:1',
             'members.*' => 'exists:users,id',
         ]);
 
         $group = ChatGroup::create([
-            'name'       => $validated['name'],
+            'name' => $validated['name'],
             'created_by' => Auth::id(),
         ]);
 

@@ -16,7 +16,7 @@ class Visit extends Model
     }
 
     protected $casts = [
-        'checked_in_at'  => 'datetime',
+        'checked_in_at' => 'datetime',
         'checked_out_at' => 'datetime',
     ];
 
@@ -32,26 +32,26 @@ class Visit extends Model
     public function statusLabel(): string
     {
         return match($this->status) {
-            'waiting'      => 'Waiting',
-            'with_nurse'   => 'With Nurse',
-            'with_doctor'  => 'With Doctor',
-            'pharmacy'     => 'Pharmacy',
-            'completed'    => 'Completed',
-            'cancelled'    => 'Cancelled',
-            default        => ucfirst($this->status),
+            'waiting' => 'Waiting',
+            'with_nurse' => 'With Nurse',
+            'with_doctor' => 'With Doctor',
+            'pharmacy' => 'Pharmacy',
+            'completed' => 'Completed',
+            'cancelled' => 'Cancelled',
+            default => ucfirst($this->status),
         };
     }
 
     public function statusColor(): string
     {
         return match($this->status) {
-            'waiting'      => 'amber',
-            'with_nurse'   => 'cyan',
-            'with_doctor'  => 'blue',
-            'pharmacy'     => 'purple',
-            'completed'    => 'emerald',
-            'cancelled'    => 'gray',
-            default        => 'slate',
+            'waiting' => 'amber',
+            'with_nurse' => 'cyan',
+            'with_doctor' => 'blue',
+            'pharmacy' => 'purple',
+            'completed' => 'emerald',
+            'cancelled' => 'gray',
+            default => 'slate',
         };
     }
 }

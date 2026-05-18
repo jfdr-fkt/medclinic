@@ -4,11 +4,13 @@
 
 @section('content')
 @php
-    $me            = Auth::user();
-    $canCheckIn    = $me->can_('visits.checkin');
-    $canStatus     = $me->can_('visits.status');
-    $canCancel     = $me->can_('visits.cancel');
-    $isToday       = $date->isToday();
+    $me = Auth::user();
+    $canCheckIn = $me->can_('visits.checkin');
+    $canStatus = $me->can_('visits.status');
+    $canCancel = $me->can_('visits.cancel');
+    $canClaim = $me->can_('visits.claim');
+    $canAssignAny = $me->can_('visits.assign_any');
+    $isToday = $date->isToday();
 
     // Visible status pills + their counts (always all 6 so the pill row stays consistent).
     $statusOptions = [
@@ -262,47 +264,85 @@
                         </span>
                     </td>
                     <td class="cell-actions">
-                        {{-- Direct status picker: a real <select> submits on change so the
-                             user can jump to ANY stage in one tap, no dropdown menu overflow.
-                             Cancel/Remove sits beside it. --}}
-                        <div class="flex items-center gap-2 row-action w-full flex-wrap">
-                            @if($canStatus && $v->isActive() && $isToday)
-                            <form method="POST" action="{{ route('visits.status', $v) }}" class="row-action flex-1 min-w-0"
-                                  id="statusForm-{{ $v->id }}"
-                                  onclick="event.stopPropagation()">
-                                @csrf @method('PUT')
-                                <select name="status"
-                                        onchange="if(confirm('Move {{ addslashes($v->patient->name ?? 'this patient') }} to '+this.options[this.selectedIndex].text+'?')) this.form.submit(); else this.value='{{ $v->status }}';"
-                                        onclick="event.stopPropagation()"
-                                        class="input cs-select font-bold text-sm py-2.5 w-full">
-                                    <option value="{{ $v->status }}" selected disabled>Move to…</option>
-                                    @foreach(['waiting','with_nurse','with_doctor','pharmacy','completed','cancelled'] as $opt)
-                                        @if($opt !== $v->status)
-                                        <option value="{{ $opt }}">{{ $statusOptions[$opt][0] }}</option>
-                                        @endif
-                                    @endforeach
-                                </select>
-                            </form>
-                            @endif
+                        <div class="flex flex-col gap-2 row-action w-full">
+                            <div class="flex items-center gap-2 flex-wrap">
+                                @if($canStatus && $v->isActive() && $isToday)
+                                <form method="POST" action="{{ route('visits.status', $v) }}" class="row-action flex-1 min-w-0"
+                                      id="statusForm-{{ $v->id }}"
+                                      onclick="event.stopPropagation()">
+                                    @csrf @method('PUT')
+                                    <select name="status"
+                                            onchange="if(confirm('Move {{ addslashes($v->patient->name ?? 'this patient') }} to '+this.options[this.selectedIndex].text+'?')) this.form.submit(); else this.value='{{ $v->status }}';"
+                                            onclick="event.stopPropagation()"
+                                            class="input cs-select font-bold text-sm py-2.5 w-full">
+                                        <option value="{{ $v->status }}" selected disabled>Move to…</option>
+                                        @foreach(['waiting','with_nurse','with_doctor','pharmacy','completed','cancelled'] as $opt)
+                                            @if($opt !== $v->status)
+                                            <option value="{{ $opt }}">{{ $statusOptions[$opt][0] }}</option>
+                                            @endif
+                                        @endforeach
+                                    </select>
+                                </form>
+                                @endif
 
-                            @if($canCancel && $isFinished && $isToday)
-                            <form method="POST" action="{{ route('visits.destroy', $v) }}" class="inline row-action flex-1"
-                                  onsubmit="event.stopPropagation(); return confirm('Remove this visit from the queue?');"
-                                  onclick="event.stopPropagation()">
-                                @csrf @method('DELETE')
-                                <button type="submit" onclick="event.stopPropagation()" class="q-btn q-btn-cancel w-full" title="Remove visit">
-                                    <i class="fa-solid fa-trash"></i> Remove
-                                </button>
-                            </form>
-                            @elseif($canCancel && $v->isActive() && $isToday)
-                            <form method="POST" action="{{ route('visits.destroy', $v) }}" class="inline row-action"
-                                  onsubmit="event.stopPropagation(); return confirm('Cancel this visit?');"
-                                  onclick="event.stopPropagation()">
-                                @csrf @method('DELETE')
-                                <button type="submit" onclick="event.stopPropagation()" class="q-btn q-btn-cancel" title="Cancel visit">
-                                    <i class="fa-solid fa-xmark"></i> Cancel
-                                </button>
-                            </form>
+                                @if($canCancel && $isFinished && $isToday)
+                                <form method="POST" action="{{ route('visits.destroy', $v) }}" class="inline row-action"
+                                      onsubmit="event.stopPropagation(); return confirm('Remove this visit from the queue?');"
+                                      onclick="event.stopPropagation()">
+                                    @csrf @method('DELETE')
+                                    <button type="submit" onclick="event.stopPropagation()" class="q-btn q-btn-cancel" title="Remove visit">
+                                        <i class="fa-solid fa-trash"></i> Remove
+                                    </button>
+                                </form>
+                                @elseif($canCancel && $v->isActive() && $isToday)
+                                <form method="POST" action="{{ route('visits.destroy', $v) }}" class="inline row-action"
+                                      onsubmit="event.stopPropagation(); return confirm('Cancel this visit?');"
+                                      onclick="event.stopPropagation()">
+                                    @csrf @method('DELETE')
+                                    <button type="submit" onclick="event.stopPropagation()" class="q-btn q-btn-cancel" title="Cancel visit">
+                                        <i class="fa-solid fa-xmark"></i> Cancel
+                                    </button>
+                                </form>
+                                @endif
+                            </div>
+
+                            @if($v->isActive() && $isToday && ($canClaim || $canAssignAny))
+                            <div class="flex items-center gap-2 flex-wrap text-xs">
+                                @if($canClaim && (int)$v->current_staff_id !== (int)$me->id)
+                                <form method="POST" action="{{ route('visits.assign', $v) }}" class="inline row-action"
+                                      onclick="event.stopPropagation()"
+                                      onsubmit="event.stopPropagation()">
+                                    @csrf @method('PUT')
+                                    <input type="hidden" name="claim" value="1">
+                                    <button type="submit" class="q-btn" style="background:#ecfeff;color:#0e7490;" title="Take this patient">
+                                        <i class="fa-solid fa-hand-pointer"></i> Take
+                                    </button>
+                                </form>
+                                @elseif($canClaim && (int)$v->current_staff_id === (int)$me->id)
+                                <span class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-teal-50 text-teal-700 font-semibold">
+                                    <i class="fa-solid fa-circle-check"></i> Yours
+                                </span>
+                                @endif
+
+                                @if($canAssignAny)
+                                <form method="POST" action="{{ route('visits.assign', $v) }}" class="row-action flex-1 min-w-[180px]"
+                                      onclick="event.stopPropagation()"
+                                      onsubmit="event.stopPropagation()">
+                                    @csrf @method('PUT')
+                                    <select name="staff_id"
+                                            onchange="if(confirm('Assign {{ addslashes($v->patient->name ?? 'this patient') }} to '+(this.options[this.selectedIndex].text)+'?')) this.form.submit(); else this.value='{{ $v->current_staff_id }}';"
+                                            onclick="event.stopPropagation()"
+                                            class="input cs-select text-sm py-2 w-full">
+                                        <option value="">Unassigned</option>
+                                        @foreach($clinicalStaff as $s)
+                                        <option value="{{ $s->id }}" @selected((int)$v->current_staff_id === (int)$s->id)>
+                                            {{ $s->name }} ({{ Str::title(str_replace('_',' ',$s->role)) }})
+                                        </option>
+                                        @endforeach
+                                    </select>
+                                </form>
+                                @endif
+                            </div>
                             @endif
                         </div>
                     </td>

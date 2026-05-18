@@ -10,20 +10,20 @@ class BackfillMonthOfShiftsSeeder extends Seeder
     public function run(): void
     {
         $shiftPatterns = [
-            'morning'   => ['07:00', '15:00'],
+            'morning' => ['07:00', '15:00'],
             'afternoon' => ['15:00', '23:00'],
-            'night'     => ['23:00', '07:00'],
-            'on_call'   => ['09:00', '17:00'],
+            'night' => ['23:00', '07:00'],
+            'on_call' => ['09:00', '17:00'],
         ];
 
         $scheduleRules = [
-            'admin'       => ['pool'=>['morning'],                      'weekdays'=>[1,2,3,4,5],     'offRate'=>0.05],
+            'admin' => ['pool'=>['morning'],                      'weekdays'=>[1,2,3,4,5],     'offRate'=>0.05],
             'clinic_head' => ['pool'=>['morning','on_call'],            'weekdays'=>[1,2,3,4,5],     'offRate'=>0.10],
-            'doctor'      => ['pool'=>['morning','afternoon','on_call'],'weekdays'=>[1,2,3,4,5,6,7], 'offRate'=>0.20],
-            'pharmacist'  => ['pool'=>['morning','afternoon'],          'weekdays'=>[1,2,3,4,5,6],   'offRate'=>0.10],
-            'nurse'       => ['pool'=>['morning','afternoon','night'],  'weekdays'=>[1,2,3,4,5,6,7], 'offRate'=>0.20],
-            'secretary'   => ['pool'=>['morning'],                      'weekdays'=>[1,2,3,4,5],     'offRate'=>0.05],
-            'assistant'   => ['pool'=>['morning','afternoon'],          'weekdays'=>[1,2,3,4,5,6],   'offRate'=>0.15],
+            'doctor' => ['pool'=>['morning','afternoon','on_call'],'weekdays'=>[1,2,3,4,5,6,7], 'offRate'=>0.20],
+            'pharmacist' => ['pool'=>['morning','afternoon'],          'weekdays'=>[1,2,3,4,5,6],   'offRate'=>0.10],
+            'nurse' => ['pool'=>['morning','afternoon','night'],  'weekdays'=>[1,2,3,4,5,6,7], 'offRate'=>0.20],
+            'secretary' => ['pool'=>['morning'],                      'weekdays'=>[1,2,3,4,5],     'offRate'=>0.05],
+            'assistant' => ['pool'=>['morning','afternoon'],          'weekdays'=>[1,2,3,4,5,6],   'offRate'=>0.15],
         ];
 
         // Wipe any existing shifts in the 30-day window so the backfill is deterministic
@@ -46,12 +46,12 @@ class BackfillMonthOfShiftsSeeder extends Seeder
                 [$start, $end] = $shiftPatterns[$shiftKey];
 
                 Shift::create([
-                    'user_id'    => $staffMember->id,
+                    'user_id' => $staffMember->id,
                     'shift_type' => $shiftKey,
                     'shift_date' => $date,
                     'start_time' => $start,
-                    'end_time'   => $end,
-                    'is_active'  => $d === 0,
+                    'end_time' => $end,
+                    'is_active' => $d === 0,
                 ]);
             }
         }

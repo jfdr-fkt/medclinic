@@ -30,8 +30,8 @@ class SeedMissingDemoRolesSeeder extends Seeder
             User::firstOrCreate(
                 ['email' => $data['email']],
                 array_merge($data, [
-                    'password'     => Hash::make('password'),
-                    'is_active'    => true,
+                    'password' => Hash::make('password'),
+                    'is_active' => true,
                     'last_seen_at' => now(),
                 ])
             );

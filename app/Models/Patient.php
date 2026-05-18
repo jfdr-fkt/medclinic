@@ -12,8 +12,8 @@ class Patient extends Model {
     ];
     protected $casts = [
         'date_of_birth' => 'date',
-        'last_visit'    => 'datetime',
-        'weight_kg'     => 'decimal:2',
+        'last_visit' => 'datetime',
+        'weight_kg' => 'decimal:2',
     ];
 
     public function bmi(): ?float

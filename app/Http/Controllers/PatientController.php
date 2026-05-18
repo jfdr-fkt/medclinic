@@ -45,11 +45,23 @@ class PatientController extends Controller
         $query->orderBy($sortField, $sortDir);
 
         $patients = $query->paginate(15)->withQueryString();
-        $nurses   = User::where('role', 'nurse')->orderBy('name')->get();
-        $doctors  = User::where('role', 'doctor')->orderBy('name')->get();
-        $pinnedIds = Auth::user()->pinnedPatients()->pluck('patients.id')->toArray();
+        $nurses = User::where('role', 'nurse')->orderBy('name')->get();
+        $doctors = User::where('role', 'doctor')->orderBy('name')->get();
+        $pinnedIds = $user->pinnedPatients()->pluck('patients.id')->toArray();
 
-        return view('patients.index', compact('patients', 'nurses', 'doctors', 'pinnedIds', 'sortField', 'sortDir'));
+        $pinnedByOthers = [];
+        if ($user->can_('patients.pin_all')) {
+            $rows = DB::table('pinned_patients')
+                ->whereIn('patient_id', $patients->pluck('id'))
+                ->join('users', 'users.id', '=', 'pinned_patients.user_id')
+                ->select('pinned_patients.patient_id', 'users.id as user_id', 'users.name')
+                ->get();
+            foreach ($rows as $r) {
+                $pinnedByOthers[$r->patient_id][] = ['id' => $r->user_id, 'name' => $r->name];
+            }
+        }
+
+        return view('patients.index', compact('patients', 'nurses', 'doctors', 'pinnedIds', 'pinnedByOthers', 'sortField', 'sortDir'));
     }
 
     public function store(Request $request)
@@ -57,22 +69,22 @@ class PatientController extends Controller
         $user = Auth::user();
         if (!$user->can_('patients.create')) abort(403, 'Not authorized to add patients.');
         $validated = $request->validate([
-            'name'                     => 'required|string|max:255',
-            'date_of_birth'            => 'nullable|date',
-            'sex'                      => 'nullable|in:male,female,other',
-            'blood_type'               => 'nullable|in:A+,A-,B+,B-,AB+,AB-,O+,O-',
-            'height_cm'                => 'nullable|numeric|min:20|max:260',
-            'weight_kg'                => 'nullable|numeric|min:0.5|max:500',
-            'phone'                    => 'nullable|string|max:50',
-            'address'                  => 'nullable|string',
-            'allergies'                => 'nullable|string|max:1000',
-            'chronic_conditions'       => 'nullable|string|max:1000',
-            'medical_history'          => 'nullable|string',
-            'assigned_nurse_id'        => 'nullable|exists:users,id',
-            'assigned_doctor_id'       => 'nullable|exists:users,id',
-            'emergency_contact_name'    => 'nullable|string|max:255',
-            'emergency_contact_phone'   => 'nullable|string|max:50',
-            'emergency_contact_2_name'  => 'nullable|string|max:255',
+            'name' => 'required|string|max:255',
+            'date_of_birth' => 'nullable|date',
+            'sex' => 'nullable|in:male,female,other',
+            'blood_type' => 'nullable|in:A+,A-,B+,B-,AB+,AB-,O+,O-',
+            'height_cm' => 'nullable|numeric|min:20|max:260',
+            'weight_kg' => 'nullable|numeric|min:0.5|max:500',
+            'phone' => 'nullable|string|max:50',
+            'address' => 'nullable|string',
+            'allergies' => 'nullable|string|max:1000',
+            'chronic_conditions' => 'nullable|string|max:1000',
+            'medical_history' => 'nullable|string',
+            'assigned_nurse_id' => 'nullable|exists:users,id',
+            'assigned_doctor_id' => 'nullable|exists:users,id',
+            'emergency_contact_name' => 'nullable|string|max:255',
+            'emergency_contact_phone' => 'nullable|string|max:50',
+            'emergency_contact_2_name' => 'nullable|string|max:255',
             'emergency_contact_2_phone' => 'nullable|string|max:50',
         ]);
 
@@ -85,11 +97,11 @@ class PatientController extends Controller
         $patient = Patient::create($validated);
 
         ActivityLog::create([
-            'user_id'     => $user->id,
-            'action'      => 'patient.create',
+            'user_id' => $user->id,
+            'action' => 'patient.create',
             'entity_type' => Patient::class,
-            'entity_id'   => $patient->id,
-            'details'     => "Created record for {$patient->name} ({$patient->patient_id})",
+            'entity_id' => $patient->id,
+            'details' => "Created record for {$patient->name} ({$patient->patient_id})",
         ]);
 
         return redirect()->route('patients.index')->with('success', "Patient added — ID assigned: {$patient->patient_id}");
@@ -116,11 +128,11 @@ class PatientController extends Controller
         // HIPAA / PH Data Privacy Act pattern of "minimum necessary access + full audit trail".
         if ($user->can_('patients.view_all') && !$isAssigned) {
             ActivityLog::create([
-                'user_id'     => $user->id,
-                'action'      => 'patient.view',
+                'user_id' => $user->id,
+                'action' => 'patient.view',
                 'entity_type' => Patient::class,
-                'entity_id'   => $patient->id,
-                'details'     => "Viewed record of {$patient->name} ({$patient->patient_id})",
+                'entity_id' => $patient->id,
+                'details' => "Viewed record of {$patient->name} ({$patient->patient_id})",
             ]);
         }
 
@@ -134,32 +146,32 @@ class PatientController extends Controller
     {
         $user = Auth::user();
         $validated = $request->validate([
-            'name'                     => 'required|string|max:255',
-            'date_of_birth'            => 'nullable|date',
-            'sex'                      => 'nullable|in:male,female,other',
-            'blood_type'               => 'nullable|in:A+,A-,B+,B-,AB+,AB-,O+,O-',
-            'height_cm'                => 'nullable|numeric|min:20|max:260',
-            'weight_kg'                => 'nullable|numeric|min:0.5|max:500',
-            'phone'                    => 'nullable|string|max:50',
-            'address'                  => 'nullable|string',
-            'allergies'                => 'nullable|string|max:1000',
-            'chronic_conditions'       => 'nullable|string|max:1000',
-            'medical_history'          => 'nullable|string',
-            'assigned_nurse_id'        => 'nullable|exists:users,id',
-            'assigned_doctor_id'       => 'nullable|exists:users,id',
-            'emergency_contact_name'    => 'nullable|string|max:255',
-            'emergency_contact_phone'   => 'nullable|string|max:50',
-            'emergency_contact_2_name'  => 'nullable|string|max:255',
+            'name' => 'required|string|max:255',
+            'date_of_birth' => 'nullable|date',
+            'sex' => 'nullable|in:male,female,other',
+            'blood_type' => 'nullable|in:A+,A-,B+,B-,AB+,AB-,O+,O-',
+            'height_cm' => 'nullable|numeric|min:20|max:260',
+            'weight_kg' => 'nullable|numeric|min:0.5|max:500',
+            'phone' => 'nullable|string|max:50',
+            'address' => 'nullable|string',
+            'allergies' => 'nullable|string|max:1000',
+            'chronic_conditions' => 'nullable|string|max:1000',
+            'medical_history' => 'nullable|string',
+            'assigned_nurse_id' => 'nullable|exists:users,id',
+            'assigned_doctor_id' => 'nullable|exists:users,id',
+            'emergency_contact_name' => 'nullable|string|max:255',
+            'emergency_contact_phone' => 'nullable|string|max:50',
+            'emergency_contact_2_name' => 'nullable|string|max:255',
             'emergency_contact_2_phone' => 'nullable|string|max:50',
         ]);
         $patient->update($validated);
 
         ActivityLog::create([
-            'user_id'     => $user->id,
-            'action'      => 'patient.update',
+            'user_id' => $user->id,
+            'action' => 'patient.update',
             'entity_type' => Patient::class,
-            'entity_id'   => $patient->id,
-            'details'     => "Updated record for {$patient->name} ({$patient->patient_id})",
+            'entity_id' => $patient->id,
+            'details' => "Updated record for {$patient->name} ({$patient->patient_id})",
         ]);
 
         return back()->with('success', 'Patient updated!');
@@ -174,29 +186,29 @@ class PatientController extends Controller
         $user = Auth::user();
         if (!$user->can_('patients.create')) abort(403, 'You cannot edit patient records.');
         $request->validate([
-            'images'   => 'required|array|min:1|max:8',
+            'images' => 'required|array|min:1|max:8',
             'images.*' => 'image|mimes:jpeg,png,webp|max:6144',
-            'caption'  => 'nullable|string|max:255',
+            'caption' => 'nullable|string|max:255',
         ]);
 
         $created = 0;
         foreach ($request->file('images') as $file) {
             $path = $file->store('patients/photos', 'public');
             PatientImage::create([
-                'patient_id'  => $patient->id,
+                'patient_id' => $patient->id,
                 'uploaded_by' => $user->id,
-                'path'        => $path,
-                'caption'     => $request->input('caption'),
+                'path' => $path,
+                'caption' => $request->input('caption'),
             ]);
             $created++;
         }
 
         ActivityLog::create([
-            'user_id'     => $user->id,
-            'action'      => 'patient.image.add',
+            'user_id' => $user->id,
+            'action' => 'patient.image.add',
             'entity_type' => Patient::class,
-            'entity_id'   => $patient->id,
-            'details'     => "Added {$created} photo(s) to {$patient->name} ({$patient->patient_id})",
+            'entity_id' => $patient->id,
+            'details' => "Added {$created} photo(s) to {$patient->name} ({$patient->patient_id})",
         ]);
 
         return back()->with('success', "{$created} photo(s) uploaded.");
@@ -217,11 +229,11 @@ class PatientController extends Controller
         $image->delete();
 
         ActivityLog::create([
-            'user_id'     => $user->id,
-            'action'      => 'patient.image.remove',
+            'user_id' => $user->id,
+            'action' => 'patient.image.remove',
             'entity_type' => Patient::class,
-            'entity_id'   => $patient->id,
-            'details'     => "Removed a photo from {$patient->name} ({$patient->patient_id})",
+            'entity_id' => $patient->id,
+            'details' => "Removed a photo from {$patient->name} ({$patient->patient_id})",
         ]);
 
         return back()->with('success', 'Photo removed.');
@@ -233,11 +245,11 @@ class PatientController extends Controller
         if (!$user->can_('patients.delete')) abort(403, 'Only admins and doctors can delete patient records.');
 
         ActivityLog::create([
-            'user_id'     => $user->id,
-            'action'      => 'patient.delete',
+            'user_id' => $user->id,
+            'action' => 'patient.delete',
             'entity_type' => Patient::class,
-            'entity_id'   => $patient->id,
-            'details'     => "Deleted record for {$patient->name} ({$patient->patient_id})",
+            'entity_id' => $patient->id,
+            'details' => "Deleted record for {$patient->name} ({$patient->patient_id})",
         ]);
 
         $patient->delete();
@@ -248,22 +260,31 @@ class PatientController extends Controller
     {
         $user = Auth::user();
         $target = $request->input('target', 'self');
+        $canPinAll = $user->can_('patients.pin_all');
 
         if ($target === 'all') {
-            if (!in_array($user->role, ['admin', 'doctor'])) {
-                return response()->json(['success' => false, 'error' => 'Not authorized'], 403);
-            }
+            if (!$canPinAll) return response()->json(['success' => false, 'error' => 'Not authorized'], 403);
             $userIds = User::pluck('id')->all();
             DB::table('pinned_patients')->where('patient_id', $patient->id)->delete();
             $rows = array_map(fn($uid) => ['user_id' => $uid, 'patient_id' => $patient->id], $userIds);
             DB::table('pinned_patients')->insert($rows);
             $msg = "Pinned for everyone ({$patient->name}).";
+        } elseif ($target === 'unpin_all') {
+            if (!$canPinAll) return response()->json(['success' => false, 'error' => 'Not authorized'], 403);
+            DB::table('pinned_patients')->where('patient_id', $patient->id)->delete();
+            $msg = "Unpinned from everyone ({$patient->name}).";
         } elseif ($target === 'self') {
             $result = $user->pinnedPatients()->toggle($patient->id);
             $msg = !empty($result['attached']) ? 'Patient pinned to your dashboard!' : 'Patient unpinned.';
+        } elseif (str_starts_with((string)$target, 'unpin_')) {
+            if (!$canPinAll) return response()->json(['success' => false, 'error' => 'Not authorized'], 403);
+            $targetUserId = (int) substr($target, 6);
+            $targetUser = User::findOrFail($targetUserId);
+            $targetUser->pinnedPatients()->detach($patient->id);
+            $msg = "Unpinned from {$targetUser->name}.";
         } else {
             $targetUser = User::findOrFail($target);
-            $result = $targetUser->pinnedPatients()->syncWithoutDetaching([$patient->id]);
+            $targetUser->pinnedPatients()->syncWithoutDetaching([$patient->id]);
             $msg = "Pinned for {$targetUser->name}.";
         }
 
@@ -280,11 +301,11 @@ class PatientController extends Controller
             ->take(10)
             ->get()
             ->map(fn($p) => [
-                'id'         => $p->id,
+                'id' => $p->id,
                 'patient_id' => $p->patient_id,
-                'name'       => $p->name,
-                'nurse'      => $p->nurse?->name,
-                'doctor'     => $p->doctor?->name,
+                'name' => $p->name,
+                'nurse' => $p->nurse?->name,
+                'doctor' => $p->doctor?->name,
             ]);
         return response()->json($patients);
     }

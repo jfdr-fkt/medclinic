@@ -79,29 +79,29 @@ class DemoDataSeeder extends Seeder
 
         foreach ($meds as $m) {
             $med = Medicine::create([
-                'name'         => $m['name'],
+                'name' => $m['name'],
                 'generic_name' => $m['generic_name'],
-                'barcode'      => $m['barcode'],
-                'qr_code'      => $m['qr_code'],
-                'location_id'  => $locs[$m['loc'] - 1]->id,
-                'type'         => $m['type'],
-                'dosage'       => $m['dosage'],
+                'barcode' => $m['barcode'],
+                'qr_code' => $m['qr_code'],
+                'location_id' => $locs[$m['loc'] - 1]->id,
+                'type' => $m['type'],
+                'dosage' => $m['dosage'],
             ]);
             Inventory::create([
-                'medicine_id'     => $med->id,
-                'quantity'        => $m['qty'],
+                'medicine_id' => $med->id,
+                'quantity' => $m['qty'],
                 'min_stock_level' => $m['min'],
                 'expiration_date' => $m['exp'],
-                'batch_number'    => $m['batch'],
+                'batch_number' => $m['batch'],
             ]);
         }
 
         // Standard healthcare shift patterns
         $shiftPatterns = [
-            'morning'   => ['07:00', '15:00'],
+            'morning' => ['07:00', '15:00'],
             'afternoon' => ['15:00', '23:00'],
-            'night'     => ['23:00', '07:00'],
-            'on_call'   => ['09:00', '17:00'],
+            'night' => ['23:00', '07:00'],
+            'on_call' => ['09:00', '17:00'],
         ];
 
         // Per-role realistic scheduling rules:
@@ -109,13 +109,13 @@ class DemoDataSeeder extends Seeder
         //   weekdays = days of week worked (1=Mon … 7=Sun)
         //   offRate  = chance per eligible day to be a rest day (0–1)
         $scheduleRules = [
-            'admin'       => ['pool'=>['morning'],                      'weekdays'=>[1,2,3,4,5],     'offRate'=>0.05],
+            'admin' => ['pool'=>['morning'],                      'weekdays'=>[1,2,3,4,5],     'offRate'=>0.05],
             'clinic_head' => ['pool'=>['morning','on_call'],            'weekdays'=>[1,2,3,4,5],     'offRate'=>0.10],
-            'doctor'      => ['pool'=>['morning','afternoon','on_call'],'weekdays'=>[1,2,3,4,5,6,7], 'offRate'=>0.20],
-            'pharmacist'  => ['pool'=>['morning','afternoon'],          'weekdays'=>[1,2,3,4,5,6],   'offRate'=>0.10],
-            'nurse'       => ['pool'=>['morning','afternoon','night'],  'weekdays'=>[1,2,3,4,5,6,7], 'offRate'=>0.20],
-            'secretary'   => ['pool'=>['morning'],                      'weekdays'=>[1,2,3,4,5],     'offRate'=>0.05],
-            'assistant'   => ['pool'=>['morning','afternoon'],          'weekdays'=>[1,2,3,4,5,6],   'offRate'=>0.15],
+            'doctor' => ['pool'=>['morning','afternoon','on_call'],'weekdays'=>[1,2,3,4,5,6,7], 'offRate'=>0.20],
+            'pharmacist' => ['pool'=>['morning','afternoon'],          'weekdays'=>[1,2,3,4,5,6],   'offRate'=>0.10],
+            'nurse' => ['pool'=>['morning','afternoon','night'],  'weekdays'=>[1,2,3,4,5,6,7], 'offRate'=>0.20],
+            'secretary' => ['pool'=>['morning'],                      'weekdays'=>[1,2,3,4,5],     'offRate'=>0.05],
+            'assistant' => ['pool'=>['morning','afternoon'],          'weekdays'=>[1,2,3,4,5,6],   'offRate'=>0.15],
         ];
 
         // Generate 30 days of realistic shifts for ALL staff.
@@ -136,12 +136,12 @@ class DemoDataSeeder extends Seeder
                 [$start, $end] = $shiftPatterns[$shiftKey];
 
                 Shift::create([
-                    'user_id'    => $staffMember->id,
+                    'user_id' => $staffMember->id,
                     'shift_type' => $shiftKey,
                     'shift_date' => $date,
                     'start_time' => $start,
-                    'end_time'   => $end,
-                    'is_active'  => $d === 0,
+                    'end_time' => $end,
+                    'is_active' => $d === 0,
                 ]);
             }
         }

@@ -5,7 +5,7 @@ use Illuminate\Database\Eloquent\Model;
 class MedicineLocation extends Model {
     protected $fillable = ['storage_type','cabinet','shelf','level','section','notes'];
 
-    public function medicines() { return $this->hasMany(Medicine::class); }
+    public function medicines() { return $this->hasMany(Medicine::class, 'location_id'); }
 
     public function getFullLocationAttribute() {
         $type = $this->storage_type ?: 'Cabinet';

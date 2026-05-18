@@ -10,7 +10,7 @@ class AuditLogController extends Controller
 {
     public function index(Request $request)
     {
-        if (!Auth::user()->can_('audit.view')) abort(403, 'Only admins can view the audit trail.');
+        if (!Auth::user()->can_('audit.view')) abort(403, 'You cannot view the audit trail.');
 
         $query = ActivityLog::with(['user', 'patient'])->latest();
 
@@ -28,10 +28,34 @@ class AuditLogController extends Controller
             });
         }
 
-        $logs    = $query->paginate(25)->withQueryString();
-        $users   = User::orderBy('name')->get();
+        $range = $request->get('range');
+        $from = $request->get('from');
+        $to = $request->get('to');
+        if ($range && $range !== 'custom') {
+            $now = now();
+            switch ($range) {
+                case 'today':
+                    $query->whereDate('created_at', $now->toDateString());
+                    break;
+                case 'yesterday':
+                    $query->whereDate('created_at', $now->copy()->subDay()->toDateString());
+                    break;
+                case '7d':
+                    $query->where('created_at', '>=', $now->copy()->subDays(7));
+                    break;
+                case '30d':
+                    $query->where('created_at', '>=', $now->copy()->subDays(30));
+                    break;
+            }
+        } elseif ($range === 'custom') {
+            if ($from) $query->whereDate('created_at', '>=', $from);
+            if ($to) $query->whereDate('created_at', '<=', $to);
+        }
+
+        $logs = $query->paginate(25)->withQueryString();
+        $users = User::orderBy('name')->get();
         $actions = ActivityLog::select('action')->distinct()->pluck('action');
 
-        return view('audit.index', compact('logs', 'users', 'actions'));
+        return view('audit.index', compact('logs', 'users', 'actions', 'range', 'from', 'to'));
     }
 }

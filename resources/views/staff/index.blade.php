@@ -4,7 +4,11 @@
 
 @section('content')
 @php
-    $isAdmin = Auth::user()->role === 'admin';
+    $me = Auth::user();
+    $isAdmin = $me->role === 'admin';
+    $canManageShifts = $me->can_('staff.shifts.manage');
+    $canCreateStaff = $me->can_('staff.create');
+    $canDeleteStaff = $me->can_('staff.delete');
     // Role styling — light + dark variants used inline across the page
     $roleColors = [
         'admin'       => ['bg'=>'bg-slate-100',   'darkBg'=>'dark:bg-slate-800/60',  'text'=>'text-slate-700',   'darkText'=>'dark:text-slate-200',   'border'=>'border-slate-200',   'darkBorder'=>'dark:border-slate-700',     'grad'=>'from-slate-500 to-slate-700',    'icon'=>'fa-user-shield',                'label'=>'Admin'],
@@ -196,8 +200,32 @@
     transition: background .12s;
 }
 .btn-row-delete:hover { background:#fecaca; }
-.dark .btn-row-delete       { background: rgba(239,68,68,.18); color:#fca5a5; }
+.dark .btn-row-delete { background: rgba(239,68,68,.18); color:#fca5a5; }
 .dark .btn-row-delete:hover { background: rgba(239,68,68,.28); }
+
+/* Role-colored staff pills (shared with bulk-assign modal) */
+.staff-pill { display: inline-flex; align-items: center; gap: .45rem; padding: .4rem .8rem; border-radius: 999px; font-size: .82rem; font-weight: 600; border: 1.5px solid transparent; cursor: pointer; transition: all .12s; }
+.staff-pill[data-role="admin"] { background: #f1f5f9; color: #334155; border-color: #94a3b8; }
+.dark .staff-pill[data-role="admin"] { background: rgba(71,85,105,.22); color: #cbd5e1; border-color: rgba(148,163,184,.4); }
+.staff-pill[data-role="clinic_head"] { background: #faf5ff; color: #7e22ce; border-color: #c084fc; }
+.dark .staff-pill[data-role="clinic_head"] { background: rgba(147,51,234,.18); color: #e9d5ff; border-color: rgba(192,132,252,.45); }
+.staff-pill[data-role="doctor"] { background: #eff6ff; color: #1d4ed8; border-color: #60a5fa; }
+.dark .staff-pill[data-role="doctor"] { background: rgba(59,130,246,.18); color: #bfdbfe; border-color: rgba(96,165,250,.45); }
+.staff-pill[data-role="pharmacist"] { background: #ecfdf5; color: #047857; border-color: #34d399; }
+.dark .staff-pill[data-role="pharmacist"] { background: rgba(16,185,129,.18); color: #a7f3d0; border-color: rgba(52,211,153,.45); }
+.staff-pill[data-role="nurse"] { background: #f0fdfa; color: #0f766e; border-color: #2dd4bf; }
+.dark .staff-pill[data-role="nurse"] { background: rgba(20,184,166,.22); color: #99f6e4; border-color: rgba(45,212,191,.5); }
+.staff-pill[data-role="secretary"] { background: #fffbeb; color: #b45309; border-color: #fbbf24; }
+.dark .staff-pill[data-role="secretary"] { background: rgba(245,158,11,.2); color: #fde68a; border-color: rgba(251,191,36,.5); }
+.staff-pill[data-role="assistant"] { background: #ecfdf5; color: #047857; border-color: #6ee7b7; }
+.dark .staff-pill[data-role="assistant"] { background: rgba(52,211,153,.2); color: #d1fae5; border-color: rgba(110,231,183,.45); }
+.staff-pill:hover { filter: brightness(.96); transform: translateY(-1px); }
+.dark .staff-pill:hover { filter: brightness(1.1); }
+.staff-pill .pill-x { display: none; width: 1.1rem; height: 1.1rem; align-items: center; justify-content: center; border-radius: 999px; background: rgba(255,255,255,.4); font-size: .65rem; }
+.staff-pill.is-selected { background: #0d9488 !important; color: #fff !important; border-color: #0d9488 !important; box-shadow: 0 2px 8px rgba(13,148,136,.35); }
+.staff-pill.is-selected .pill-x { display: inline-flex; }
+.gs-role-filter-btn { white-space: nowrap; cursor: pointer; }
+.gs-role-filter-btn.is-active { background: #0d9488 !important; color: #fff !important; border-color: #0d9488 !important; }
 </style>
 @endpush
 
@@ -214,15 +242,22 @@
                 <div class="min-w-0">
                     <h1 class="text-xl sm:text-2xl font-extrabold leading-tight">Staff Directory</h1>
                     <p class="text-white/80 text-sm mt-0.5">
-                        <span class="font-bold">{{ $staff->total() }}</span> members &bull; {{ $isAdmin ? 'Manage staff and assign shifts' : 'View clinic staff and shifts' }}
+                        <span class="font-bold">{{ $staff->total() }}</span> members &bull; {{ $canManageShifts ? 'Manage staff and assign shifts' : 'View clinic staff and shifts' }}
                     </p>
                 </div>
             </div>
-            @if($isAdmin)
-            <button onclick="openAddStaffModal()" class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white text-teal-700 hover:bg-teal-50 text-sm font-bold transition-colors shadow-sm w-full sm:w-auto flex-shrink-0">
-                <i class="fa-solid fa-user-plus"></i> Add Staff
-            </button>
-            @endif
+            <div class="flex items-center gap-2 flex-wrap w-full sm:w-auto">
+                @if($canManageShifts)
+                <button type="button" onclick="openGlobalShiftPicker()" class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border-2 border-white/40 text-white hover:bg-white/15 text-sm font-bold transition-colors flex-1 sm:flex-initial">
+                    <i class="fa-solid fa-calendar-plus"></i> Add Shift
+                </button>
+                @endif
+                @if($canCreateStaff)
+                <button type="button" onclick="openAddStaffModal()" class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white text-teal-700 hover:bg-teal-50 text-sm font-bold transition-colors shadow-sm flex-1 sm:flex-initial">
+                    <i class="fa-solid fa-user-plus"></i> Add Staff
+                </button>
+                @endif
+            </div>
         </div>
     </div>
 
@@ -341,11 +376,19 @@
                         data-role-accent="{{ $member->role }}"
                         onclick="if(!event.target.closest('.row-action')) window.location=this.dataset.href"
                         class="group">
+                        @php $isSelfRow = $member->id === auth()->id(); @endphp
                         <td class="cell-primary">
                             <div class="flex items-center gap-3">
                                 <x-avatar :user="$member" size="lg" :gradient="$cfg['grad']" />
                                 <div class="min-w-0">
-                                    <p class="font-semibold text-sm text-gray-900 dark:text-white group-hover:text-brand-700 dark:group-hover:text-brand-300 transition-colors truncate">{{ $member->name }}</p>
+                                    <p class="font-semibold text-sm text-gray-900 dark:text-white group-hover:text-brand-700 dark:group-hover:text-brand-300 transition-colors truncate flex items-center gap-1.5">
+                                        {{ $member->name }}
+                                        @if($isSelfRow)
+                                        <span class="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-brand-100 dark:bg-brand-900/40 text-brand-700 dark:text-brand-300 ring-1 ring-brand-300 dark:ring-brand-700/50">
+                                            <i class="fa-solid fa-circle-user text-[10px]"></i> You
+                                        </span>
+                                        @endif
+                                    </p>
                                     <p class="text-sm staff-meta truncate">{{ $member->specialization ?? '—' }}</p>
                                 </div>
                             </div>
@@ -394,28 +437,25 @@
                             </div>
                         </td>
                         <td class="cell-actions">
-                            <div class="flex items-center gap-3 row-action w-full">
-                                @if($isAdmin)
-                                <button type="button" onclick="event.stopPropagation(); openShiftModal({{ $member->id }}, '{{ addslashes($member->name) }}')"
-                                        class="row-action btn-row-primary"
-                                        title="{{ $todayShift ? 'Revise Shift' : 'Assign Shift' }}">
-                                    <i class="fa-solid fa-calendar-plus"></i> Shift
-                                </button>
-                                @endif
+                            <div class="flex items-center gap-2 row-action w-full justify-end">
+                                @if(!$isSelfRow)
                                 <a href="{{ route('chat.index', ['with' => $member->id]) }}" onclick="event.stopPropagation()"
-                                   class="row-action btn-row-secondary"
+                                   class="row-action btn-row-secondary flex-1"
                                    title="Message">
                                     <i class="fa-solid fa-comment"></i> Chat
                                 </a>
-                                @if(auth()->user()->can_('staff.delete') && $member->id !== auth()->id())
+                                @if($canDeleteStaff)
                                 <form method="POST" action="{{ route('staff.destroy', $member) }}" class="inline row-action"
                                       onsubmit="event.stopPropagation(); return confirm('Remove {{ addslashes($member->name) }} from staff? This cannot be undone.');"
                                       onclick="event.stopPropagation()">
                                     @csrf @method('DELETE')
                                     <button type="submit" onclick="event.stopPropagation()" class="row-action btn-row-delete" title="Delete">
-                                        <i class="fa-solid fa-trash"></i>
+                                        <i class="fa-solid fa-trash"></i> Delete
                                     </button>
                                 </form>
+                                @endif
+                                @else
+                                <span class="text-xs text-gray-400 dark:text-gray-500 italic">No actions</span>
                                 @endif
                             </div>
                         </td>
@@ -439,52 +479,79 @@
     </div>
 </div>
 
-@if($isAdmin)
-<!-- ── Assign Shift Modal ── -->
-<div id="shiftModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-    <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-md border-2 border-gray-100 dark:border-slate-700">
-        <div class="bg-gradient-to-r from-brand-600 to-brand-700 px-6 py-5 text-white">
+@if($canManageShifts)
+@php
+    $pickerStaff = \App\Models\User::where('is_active', true)
+        ->whereNot('id', auth()->id())
+        ->orderBy('role')->orderBy('name')
+        ->get(['id','name','role','specialization']);
+    $pickerGrouped = $pickerStaff->groupBy('role');
+    $pickerRoleOrder = ['clinic_head','doctor','nurse','pharmacist','secretary','assistant'];
+    $pickerRoleLabels = ['clinic_head'=>'Clinic Head','doctor'=>'Doctor','nurse'=>'Nurse','pharmacist'=>'Pharmacist','secretary'=>'Secretary','assistant'=>'Assistant'];
+@endphp
+<div id="globalShiftPickerModal" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-3 backdrop-blur-sm" onclick="if(event.target===this) closeGlobalShiftPicker()">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden border-2 border-gray-100 dark:border-slate-700">
+        <div class="bg-gradient-to-r from-brand-600 to-teal-700 px-6 py-5 text-white flex items-center justify-between flex-shrink-0">
+            <div>
+                <h3 class="text-lg font-bold">Add Shift</h3>
+                <p class="text-xs text-white/85 mt-0.5">Pick one or more staff. You'll stage the actual shifts on the next screen.</p>
+            </div>
+            <button type="button" onclick="closeGlobalShiftPicker()" class="w-9 h-9 rounded-xl flex items-center justify-center hover:bg-white/20"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="px-5 pt-4 pb-3 flex-shrink-0 border-b border-gray-100 dark:border-slate-700 space-y-3">
+            <div class="relative">
+                <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm pointer-events-none"></i>
+                <input type="text" id="gsPickSearch" oninput="filterGsPick()" placeholder="Search staff…" class="input pl-10 text-sm py-2">
+            </div>
+            <div class="flex items-center gap-2 flex-wrap">
+                <button type="button" onclick="gsPickToggleRoleFilter('all')" data-rf="all" class="gs-role-filter-btn is-active px-2.5 py-1 rounded-full text-xs font-bold border-2 border-gray-200 dark:border-slate-700">All</button>
+                @foreach($pickerRoleOrder as $rk)
+                    @if(isset($pickerGrouped[$rk]) && $pickerGrouped[$rk]->count() > 0)
+                    <button type="button" onclick="gsPickToggleRoleFilter('{{ $rk }}')" data-rf="{{ $rk }}" class="gs-role-filter-btn staff-pill" data-role="{{ $rk }}">
+                        {{ $pickerRoleLabels[$rk] }} <span class="opacity-70">({{ $pickerGrouped[$rk]->count() }})</span>
+                    </button>
+                    @endif
+                @endforeach
+            </div>
             <div class="flex items-center justify-between">
-                <div>
-                    <h3 class="text-lg font-bold">Assign Shift</h3>
-                    <p class="text-xs text-white/80 mt-0.5">Schedule a work shift for this staff member</p>
+                <span id="gsPickSelectedSummary" class="text-xs font-semibold text-gray-500 dark:text-gray-400">0 selected</span>
+                <div class="flex items-center gap-2">
+                    <button type="button" onclick="gsPickSelectAll()" class="text-xs font-bold text-brand-600 dark:text-brand-300 hover:underline">Select all visible</button>
+                    <span class="text-gray-300 dark:text-slate-600">·</span>
+                    <button type="button" onclick="gsPickClearAll()" class="text-xs font-bold text-rose-600 dark:text-rose-300 hover:underline">Clear all</button>
                 </div>
-                <button type="button" onclick="closeShiftModal()" class="w-9 h-9 rounded-xl flex items-center justify-center text-white/80 hover:text-white hover:bg-white/20 transition-colors"><i class="fa-solid fa-xmark"></i></button>
             </div>
         </div>
-        <form id="shiftForm" action="{{ route('staff.shifts.store') }}" method="POST" class="px-6 py-5 space-y-4">
-            @csrf
-            <input type="hidden" name="user_id" id="shiftUserId">
-            <div><label class="label">Staff Member</label><input type="text" id="shiftStaffName" readonly class="input bg-gray-50 dark:bg-slate-800 text-gray-500 dark:text-gray-400"></div>
-            <div>
-                <label class="label">Shift Type <span class="text-red-500">*</span></label>
-                <select name="shift_type" id="shiftTypeSelect" required class="input">
-                    <option value="morning">Day Shift (7:00 AM – 3:00 PM)</option>
-                    <option value="afternoon">Evening Shift (3:00 PM – 11:00 PM)</option>
-                    <option value="night">Night Shift (11:00 PM – 7:00 AM)</option>
-                    <option value="on_call">On Call (Custom hours)</option>
-                </select>
+        <div class="p-5 flex-1 overflow-y-auto">
+            <div id="gsPickList" class="space-y-3">
+                @foreach($pickerRoleOrder as $rk)
+                    @if(isset($pickerGrouped[$rk]) && $pickerGrouped[$rk]->count() > 0)
+                    <div class="gs-pick-group" data-role-group="{{ $rk }}">
+                        <p class="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-1.5">{{ $pickerRoleLabels[$rk] }} <span class="font-normal normal-case">({{ $pickerGrouped[$rk]->count() }})</span></p>
+                        <div class="flex flex-wrap gap-1.5">
+                            @foreach($pickerGrouped[$rk] as $ps)
+                            <button type="button" data-staff-id="{{ $ps->id }}" data-staff-name="{{ $ps->name }}" data-role="{{ $ps->role }}" data-name="{{ strtolower($ps->name) }}"
+                                    class="gs-pick-row staff-pill" data-role="{{ $ps->role }}" onclick="gsPickToggle(this)">
+                                <span>{{ $ps->name }}</span>
+                                <span class="pill-x"><i class="fa-solid fa-xmark"></i></span>
+                            </button>
+                            @endforeach
+                        </div>
+                    </div>
+                    @endif
+                @endforeach
             </div>
-            <div><label class="label">Date <span class="text-red-500">*</span></label><input type="date" name="shift_date" id="shiftDate" required value="{{ date('Y-m-d') }}" class="input"></div>
-            <div id="shiftConflictWarning" class="hidden rounded-xl border-2 border-amber-300 dark:border-amber-700/60 bg-amber-50 dark:bg-amber-900/25 text-amber-800 dark:text-amber-200 px-3 py-2.5 text-xs flex items-start gap-2">
-                <i class="fa-solid fa-triangle-exclamation mt-0.5"></i>
-                <div>
-                    <p class="font-bold">Existing shift on this date</p>
-                    <p id="shiftConflictDetail" class="mt-0.5"></p>
-                    <p class="mt-1 text-[11px] italic">Saving will replace the existing shift.</p>
-                </div>
-            </div>
-            <div class="grid grid-cols-2 gap-4">
-                <div><label class="label">Start <span class="text-red-500">*</span></label><input type="time" name="start_time" id="startTime" required value="07:00" class="input"></div>
-                <div><label class="label">End <span class="text-red-500">*</span></label><input type="time" name="end_time" id="endTime" required value="15:00" class="input"></div>
-            </div>
-            <div class="flex justify-between gap-3 pt-3 border-t border-gray-100 dark:border-slate-700">
-                <button type="button" onclick="closeShiftModal()" class="btn-secondary">Cancel</button>
-                <button type="submit" class="btn-primary"><i class="fa-solid fa-floppy-disk"></i> Save Shift</button>
-            </div>
-        </form>
+            <p id="gsPickEmpty" class="hidden text-xs text-gray-400 dark:text-gray-500 italic py-2 text-center">No matches.</p>
+        </div>
+        <div class="border-t border-gray-100 dark:border-slate-700 px-5 py-3 flex items-center justify-between gap-3 flex-shrink-0">
+            <button type="button" onclick="closeGlobalShiftPicker()" class="btn-secondary">Cancel</button>
+            <button type="button" id="gsPickContinueBtn" disabled onclick="gsPickContinue()" class="btn-primary disabled:opacity-50 disabled:cursor-not-allowed">
+                <i class="fa-solid fa-arrow-right"></i> Continue
+            </button>
+        </div>
     </div>
 </div>
+@endif
 
 <!-- ── Add Staff Modal ── -->
 {{-- The outer container clips with rounded-2xl + overflow-hidden, then a flex column
@@ -653,50 +720,85 @@
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/flatpickr@4"></script>
 <script>
-function openShiftModal(userId, userName) {
-    document.getElementById('shiftUserId').value = userId;
-    document.getElementById('shiftStaffName').value = userName;
-    document.getElementById('shiftModal').classList.remove('hidden');
-    document.body.style.overflow = 'hidden';
-    checkShiftConflict();
-}
-function closeShiftModal()    { document.getElementById('shiftModal').classList.add('hidden'); document.body.style.overflow = ''; }
-
-// Ping the server to see if this user already has a shift on the chosen date.
-// Surfaces an amber warning so the admin knows save will overwrite (updateOrCreate behavior).
-async function checkShiftConflict() {
-    const userId = document.getElementById('shiftUserId').value;
-    const date   = document.getElementById('shiftDate').value;
-    const warn   = document.getElementById('shiftConflictWarning');
-    const detail = document.getElementById('shiftConflictDetail');
-    if (!userId || !date) { warn.classList.add('hidden'); return; }
-    try {
-        const r = await fetch(`/staff/${userId}/shift-on?date=${encodeURIComponent(date)}`, { headers: { 'Accept': 'application/json' } });
-        if (!r.ok) { warn.classList.add('hidden'); return; }
-        const j = await r.json();
-        if (j.exists) {
-            const label = j.shift_type === 'on_call' ? 'On Call'
-                        : j.shift_type.charAt(0).toUpperCase() + j.shift_type.slice(1) + ' shift';
-            detail.textContent = `${label} (${j.start_time} – ${j.end_time})`;
-            warn.classList.remove('hidden');
-        } else {
-            warn.classList.add('hidden');
-        }
-    } catch (e) {
-        warn.classList.add('hidden');
-    }
-}
-document.getElementById('shiftDate').addEventListener('change', checkShiftConflict);
-function openAddStaffModal()  { document.getElementById('addStaffModal').classList.remove('hidden'); document.body.style.overflow = 'hidden'; }
+function openAddStaffModal() { document.getElementById('addStaffModal').classList.remove('hidden'); document.body.style.overflow = 'hidden'; }
 function closeAddStaffModal() { document.getElementById('addStaffModal').classList.add('hidden'); document.body.style.overflow = ''; }
 
-document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeShiftModal(); closeAddStaffModal(); } });
+let gsPickActiveRole = 'all';
+function openGlobalShiftPicker() {
+    const m = document.getElementById('globalShiftPickerModal');
+    if (!m) return;
+    document.querySelectorAll('.gs-pick-row').forEach(p => p.classList.remove('is-selected'));
+    gsPickActiveRole = 'all';
+    document.querySelectorAll('.gs-role-filter-btn').forEach(b => b.classList.toggle('is-active', b.dataset.rf === 'all'));
+    document.getElementById('gsPickSearch').value = '';
+    refreshGsPickSummary();
+    filterGsPick();
+    m.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+    setTimeout(() => document.getElementById('gsPickSearch')?.focus(), 30);
+}
+function closeGlobalShiftPicker() {
+    const m = document.getElementById('globalShiftPickerModal');
+    if (!m) return;
+    m.classList.add('hidden');
+    document.body.style.overflow = '';
+}
+function gsPickToggle(btn) {
+    btn.classList.toggle('is-selected');
+    refreshGsPickSummary();
+}
+function gsPickToggleRoleFilter(role) {
+    gsPickActiveRole = role;
+    document.querySelectorAll('.gs-role-filter-btn').forEach(b => b.classList.toggle('is-active', b.dataset.rf === role));
+    filterGsPick();
+}
+function gsPickSelectAll() {
+    document.querySelectorAll('.gs-pick-row').forEach(row => {
+        if (row.offsetParent === null) return;
+        row.classList.add('is-selected');
+    });
+    refreshGsPickSummary();
+}
+function gsPickClearAll() {
+    document.querySelectorAll('.gs-pick-row.is-selected').forEach(row => row.classList.remove('is-selected'));
+    refreshGsPickSummary();
+}
+function refreshGsPickSummary() {
+    const count = document.querySelectorAll('.gs-pick-row.is-selected').length;
+    document.getElementById('gsPickSelectedSummary').textContent = `${count} selected`;
+    document.getElementById('gsPickContinueBtn').disabled = count === 0;
+}
+function filterGsPick() {
+    const q = (document.getElementById('gsPickSearch').value || '').toLowerCase().trim();
+    let total = 0;
+    document.querySelectorAll('.gs-pick-group').forEach(grp => {
+        const groupRole = grp.dataset.roleGroup;
+        const roleOk = gsPickActiveRole === 'all' || groupRole === gsPickActiveRole;
+        let shown = 0;
+        grp.querySelectorAll('.gs-pick-row').forEach(row => {
+            const name = row.dataset.name || '';
+            const nameOk = !q || name.includes(q);
+            const visible = roleOk && nameOk;
+            row.style.display = visible ? '' : 'none';
+            if (visible) shown++;
+        });
+        grp.style.display = shown > 0 ? '' : 'none';
+        total += shown;
+    });
+    document.getElementById('gsPickEmpty').classList.toggle('hidden', total > 0);
+}
+function gsPickContinue() {
+    const selected = Array.from(document.querySelectorAll('.gs-pick-row.is-selected'));
+    if (selected.length === 0) return;
+    const ids = selected.map(p => parseInt(p.dataset.staffId));
+    const baseId = ids[0];
+    const extras = ids.slice(1);
+    const url = '/staff/' + baseId + (extras.length ? '?bulk_extras=' + extras.join(',') : '') + '#bulk';
+    window.location.href = url;
+}
 
-document.getElementById('shiftTypeSelect').addEventListener('change', function () {
-    const times = { morning:['07:00','15:00'], afternoon:['15:00','23:00'], night:['23:00','07:00'], on_call:['09:00','17:00'] };
-    const [s, e] = times[this.value] || ['',''];
-    document.getElementById('startTime').value = s;
-    document.getElementById('endTime').value   = e;
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') { closeAddStaffModal(); closeGlobalShiftPicker(); }
 });
 
 // Branded date picker for Add Staff dates — uses static month nav so the OS-styled
@@ -711,5 +813,4 @@ document.querySelectorAll('.staff-date').forEach(el => {
 });
 </script>
 @endpush
-@endif
 @endsection

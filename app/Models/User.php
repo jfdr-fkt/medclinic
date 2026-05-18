@@ -18,11 +18,11 @@ class User extends Authenticatable
     protected function casts(): array
     {
         return [
-            'last_seen_at'         => 'datetime',
-            'date_of_birth'        => 'date',
-            'hire_date'            => 'date',
-            'is_active'            => 'boolean',
-            'colorblind_mode'      => 'boolean',
+            'last_seen_at' => 'datetime',
+            'date_of_birth' => 'date',
+            'hire_date' => 'date',
+            'is_active' => 'boolean',
+            'colorblind_mode' => 'boolean',
             'must_change_password' => 'boolean',
         ];
     }
@@ -45,40 +45,26 @@ class User extends Authenticatable
     {
         $r = $this->role;
         return match($action) {
-            // Patient records — HIPAA / PH Data Privacy Act minimum-necessary access.
-            // Only roles with a direct clinical relationship can see the directory tab. Doctors
-            // and nurses are further restricted in PatientController to ONLY see patients they
-            // are personally assigned to. Admin + clinic_head see everything (audit-logged).
-            // Secretary is the front-desk role: registers new patients and looks them up to
-            // check them in, but is NOT allowed to view medical history (privacy).
-            // Pharmacist and assistant lose the Patients tab entirely.
-            'patients.view'         => in_array($r, ['admin','clinic_head','doctor','nurse','secretary']),
+            'patients.view' => in_array($r, ['admin','clinic_head','doctor','nurse','secretary']),
             'patients.view_medical' => in_array($r, ['admin','clinic_head','doctor','nurse']),
-            'patients.create'       => in_array($r, ['admin','clinic_head','doctor','nurse','secretary']),
-            'patients.delete'       => in_array($r, ['admin','clinic_head','doctor']),
-            'patients.pin_all'      => in_array($r, ['admin','clinic_head','doctor']),
-            // Sees every patient instead of only-the-assigned-ones scope.
-            // Admin/clinic_head for oversight; secretary for front-desk lookup.
-            // Every cross-team open by these roles is still audit-logged.
-            'patients.view_all'     => in_array($r, ['admin','clinic_head','secretary']),
-            // Medicine management — pharmacist is the dedicated restocking role
-            'medicines.create'    => in_array($r, ['admin','clinic_head','pharmacist']),
-            'medicines.delete'    => in_array($r, ['admin','clinic_head']),
-            'medicines.dispense'  => in_array($r, ['admin','clinic_head','doctor','pharmacist','nurse']),
-            'medicines.locations' => in_array($r, ['admin','clinic_head']),
-            // Today's queue / patient visits — secretary is the primary check-in role,
-            // clinical staff move patients through the status flow as they're seen.
-            'visits.view'         => in_array($r, ['admin','clinic_head','secretary','doctor','nurse','pharmacist']),
-            'visits.checkin'      => in_array($r, ['admin','clinic_head','secretary']),
-            'visits.status'       => in_array($r, ['admin','clinic_head','secretary','doctor','nurse','pharmacist']),
-            'visits.cancel'       => in_array($r, ['admin','clinic_head','secretary']),
-            // Staff management
-            'staff.create'        => $r === 'admin',
-            'staff.delete'        => $r === 'admin',
+            'patients.create' => in_array($r, ['admin','clinic_head','doctor','nurse','secretary']),
+            'patients.delete' => in_array($r, ['admin','clinic_head']),
+            'patients.pin_all' => in_array($r, ['admin','clinic_head']),
+            'patients.view_all' => in_array($r, ['admin','clinic_head','secretary']),
+            'medicines.create' => in_array($r, ['admin','clinic_head','pharmacist']),
+            'medicines.delete' => in_array($r, ['admin','clinic_head']),
+            'medicines.dispense' => in_array($r, ['admin','clinic_head','doctor','pharmacist','nurse']),
+            'medicines.locations' => in_array($r, ['admin','clinic_head','pharmacist']),
+            'visits.view' => in_array($r, ['admin','clinic_head','secretary','doctor','nurse','pharmacist','assistant']),
+            'visits.checkin' => in_array($r, ['admin','clinic_head','secretary']),
+            'visits.status' => in_array($r, ['admin','clinic_head','secretary','doctor','nurse','pharmacist']),
+            'visits.cancel' => in_array($r, ['admin','clinic_head','secretary']),
+            'visits.claim' => in_array($r, ['doctor','nurse','pharmacist']),
+            'visits.assign_any' => in_array($r, ['admin','clinic_head','secretary']),
+            'staff.create' => $r === 'admin',
+            'staff.delete' => $r === 'admin',
             'staff.shifts.manage' => in_array($r, ['admin','clinic_head']),
-            // Audit log — admin sees who accessed which patient records.
-            // Required by HIPAA / PH Data Privacy Act: "minimum necessary access" + audit trail.
-            'audit.view'          => $r === 'admin',
+            'audit.view' => in_array($r, ['admin','clinic_head']),
             default => false,
         };
     }
@@ -86,14 +72,14 @@ class User extends Authenticatable
     public function roleLabel(): string
     {
         return match($this->role) {
-            'admin'       => 'Admin',
+            'admin' => 'Admin',
             'clinic_head' => 'Clinic Head',
-            'doctor'      => 'Doctor',
-            'pharmacist'  => 'Pharmacist',
-            'nurse'       => 'Nurse',
-            'secretary'   => 'Secretary',
-            'assistant'   => 'Assistant',
-            default       => ucfirst(str_replace('_', ' ', $this->role)),
+            'doctor' => 'Doctor',
+            'pharmacist' => 'Pharmacist',
+            'nurse' => 'Nurse',
+            'secretary' => 'Secretary',
+            'assistant' => 'Assistant',
+            default => ucfirst(str_replace('_', ' ', $this->role)),
         };
     }
 
@@ -113,8 +99,8 @@ class User extends Authenticatable
     {
         if (!$this->isOnline()) return 'gray';
         return match($this->status) {
-            'busy'  => 'red',
-            'away'  => 'amber',
+            'busy' => 'red',
+            'away' => 'amber',
             default => 'emerald',
         };
     }

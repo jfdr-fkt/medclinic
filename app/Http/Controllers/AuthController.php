@@ -17,7 +17,7 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         $credentials = $request->validate([
-            'email'    => 'required|email',
+            'email' => 'required|email',
             'password' => 'required',
         ]);
 
@@ -43,21 +43,21 @@ class AuthController extends Controller
     public function register(Request $request)
     {
         $validated = $request->validate([
-            'name'     => 'required|string|max:255',
-            'email'    => 'required|email|unique:users',
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users',
             'password' => 'required|min:6|confirmed',
-            'role'     => 'required|in:nurse,doctor,assistant,admin',
-            'phone'    => 'nullable|string|max:50',
+            'role' => 'required|in:nurse,doctor,assistant,admin',
+            'phone' => 'nullable|string|max:50',
         ]);
 
         $user = User::create([
-            'name'     => $validated['name'],
-            'email'    => $validated['email'],
+            'name' => $validated['name'],
+            'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
-            'role'     => $validated['role'],
-            'phone'    => $validated['phone'] ?? null,
+            'role' => $validated['role'],
+            'phone' => $validated['phone'] ?? null,
             'is_active' => true,
-            'status'    => 'available',
+            'status' => 'available',
             'last_seen_at' => now(),
         ]);
 
@@ -104,7 +104,7 @@ class AuthController extends Controller
         }
 
         $user->update([
-            'password'             => Hash::make($request->password),
+            'password' => Hash::make($request->password),
             'must_change_password' => false,
         ]);
 

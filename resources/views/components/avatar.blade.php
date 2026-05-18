@@ -24,6 +24,15 @@
     </div>
     @endif
     @if($showStatus && $user)
-    <span class="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white {{ $user->isOnline() ? 'bg-emerald-400' : 'bg-gray-300' }}"></span>
+    @php
+        $cAv = $user->statusColor();
+        $dotAv = match($cAv) {
+            'emerald' => 'bg-emerald-400',
+            'red' => 'bg-red-500',
+            'amber' => 'bg-amber-400',
+            default => 'bg-gray-300',
+        };
+    @endphp
+    <span class="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white {{ $dotAv }}" title="{{ $user->statusLabel() }}"></span>
     @endif
 </div>

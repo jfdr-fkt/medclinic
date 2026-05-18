@@ -14,13 +14,13 @@ class DashboardController extends Controller
         // Today's queue snapshot — drives both the headline stat and the live counts panel.
         $todayVisits = Visit::whereDate('checked_in_at', today())->get();
         $queueCounts = [
-            'total'        => $todayVisits->count(),
-            'waiting'      => $todayVisits->where('status', 'waiting')->count(),
-            'with_nurse'   => $todayVisits->where('status', 'with_nurse')->count(),
-            'with_doctor'  => $todayVisits->where('status', 'with_doctor')->count(),
-            'pharmacy'     => $todayVisits->where('status', 'pharmacy')->count(),
-            'completed'    => $todayVisits->where('status', 'completed')->count(),
-            'in_progress'  => $todayVisits->whereIn('status', ['with_nurse','with_doctor','pharmacy'])->count(),
+            'total' => $todayVisits->count(),
+            'waiting' => $todayVisits->where('status', 'waiting')->count(),
+            'with_nurse' => $todayVisits->where('status', 'with_nurse')->count(),
+            'with_doctor' => $todayVisits->where('status', 'with_doctor')->count(),
+            'pharmacy' => $todayVisits->where('status', 'pharmacy')->count(),
+            'completed' => $todayVisits->where('status', 'completed')->count(),
+            'in_progress' => $todayVisits->whereIn('status', ['with_nurse','with_doctor','pharmacy'])->count(),
         ];
         $todayPatients = $queueCounts['total'];
 

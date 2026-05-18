@@ -18,12 +18,12 @@ class ProfileController extends Controller
     {
         $user = Auth::user();
         $validated = $request->validate([
-            'name'           => 'required|string|max:255',
-            'email'          => ['required', 'email', Rule::unique('users')->ignore($user->id)],
-            'phone'          => 'nullable|string|max:50',
+            'name' => 'required|string|max:255',
+            'email' => ['required', 'email', Rule::unique('users')->ignore($user->id)],
+            'phone' => 'nullable|string|max:50',
             'specialization' => 'nullable|string|max:255',
-            'bio'            => 'nullable|string|max:500',
-            'avatar'         => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'bio' => 'nullable|string|max:500',
+            'avatar' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
         ]);
 
         // HR-controlled fields: only admin / clinic_head can change name and specialization.
@@ -60,7 +60,7 @@ class ProfileController extends Controller
     {
         $request->validate([
             'current_password' => 'required',
-            'password'         => 'required|min:6|confirmed',
+            'password' => 'required|min:6|confirmed',
         ]);
 
         if (!Hash::check($request->current_password, Auth::user()->password)) {
@@ -77,9 +77,9 @@ class ProfileController extends Controller
         Auth::user()->update(['status' => $request->status]);
         return response()->json([
             'success' => true,
-            'status'  => Auth::user()->status,
-            'label'   => Auth::user()->statusLabel(),
-            'color'   => Auth::user()->statusColor(),
+            'status' => Auth::user()->status,
+            'label' => Auth::user()->statusLabel(),
+            'color' => Auth::user()->statusColor(),
         ]);
     }
 
@@ -93,7 +93,7 @@ class ProfileController extends Controller
     public function appearance(Request $request)
     {
         $validated = $request->validate([
-            'font_size'       => 'nullable|in:sm,md,lg,xl',
+            'font_size' => 'nullable|in:sm,md,lg,xl',
             'colorblind_mode' => 'nullable|boolean',
         ]);
         Auth::user()->update(array_filter($validated, fn($v) => $v !== null));
